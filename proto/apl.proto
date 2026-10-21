@@ -100,7 +100,7 @@ message APLAction {
 }
 
 
-// NextIndex: 137
+// NextIndex: 138
 message APLValue {
 	UUID uuid = 85;
 
@@ -232,6 +232,7 @@ APLValueWarlockAssignedCurseIsActive warlock_assigned_curse_is_active = 59;
 		APLValueWarlockActivePet warlock_active_pet = 135;
 		APLValueProtectionPaladinDamageTakenLastGlobal protection_paladin_damage_taken_last_global = 100;
 		APLValueDruidBleedIsActive druid_bleed_is_active = 68;
+		APLValueDruidExcessEnergy druid_excess_energy = 137;
 
 		// Variable reference
 		APLValueVariableRef variable_ref = 111;
@@ -781,6 +782,8 @@ message APLValueWarlockActivePet {
 message APLValueDruidBleedIsActive {
 	UnitReference target_unit = 1;
 }
+// The cat's energy above what its pending Rip and Rake refreshes need held back.
+message APLValueDruidExcessEnergy {}
 message APLValueAfflictionCurrentSnapshot {
 	ActionID spell_id = 1;
 	UnitReference target_unit = 2;
