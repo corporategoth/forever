@@ -66,7 +66,7 @@ func TestGlobalCooldownPctMod(t *testing.T) {
 		{"without a mod", func() {}, 1500 * time.Millisecond, 1500 * time.Millisecond},
 		{"with the percent mod", pct.Activate, 1350 * time.Millisecond, 1350 * time.Millisecond},
 		// (1500 - 400) x 0.9 = 990, which the GCD minimum floors at a second.
-		{"with both mods", flat.Activate, 990 * time.Millisecond, time.Second},
+		{"with both mods", flat.Activate, time.Second, time.Second},
 		{"with the flat mod alone", pct.Deactivate, 1100 * time.Millisecond, 1100 * time.Millisecond},
 		{"after both were removed", flat.Deactivate, 1500 * time.Millisecond, 1500 * time.Millisecond},
 	}

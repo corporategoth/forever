@@ -326,8 +326,7 @@ func (value *APLValueSpellGCDHastedDuration) GetDuration(_ *Simulation) time.Dur
 	if value.spell.IgnoreHaste {
 		return defaultCast.GCDTime()
 	}
-	gcdMin := TernaryDuration(defaultCast.GCDMin != 0, defaultCast.GCDMin, GCDMin)
-	return max(gcdMin, value.spell.hastedGCD(defaultCast.GCD))
+	return max(defaultCast.GCDMin, value.spell.hastedGCD(defaultCast.GCD))
 }
 
 func (value *APLValueSpellGCDHastedDuration) GetFloat(sim *Simulation) float64 {

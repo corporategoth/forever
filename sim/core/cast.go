@@ -63,7 +63,8 @@ type Cast struct {
 	// The length of time the GCD will be on CD as a result of this cast.
 	GCD time.Duration
 
-	// The minimum length of time for the GCD. Can be left out to use the default of 1s
+	// The minimum length of time for the GCD. Can be left out to use the default of 1s, and never
+	// goes below it.
 	GCDMin time.Duration
 
 	// The amount of time between the call to spell.Cast() and when the spell
@@ -77,17 +78,18 @@ type Cast struct {
 func (cast *Cast) GCDTime() time.Duration {
 	gcd := max(0, cast.GCD)
 	if cast.GCD > 0 {
-		if cast.GCDMin != 0 {
-			gcd = max(cast.GCDMin, gcd)
-		} else {
-			gcd = max(GCDMin, gcd)
-		}
+		gcd = max(GCDMin, cast.GCDMin, gcd)
 	}
 	return gcd
 }
 
+// Haste stops at the GCD floor, so a GCD that extreme haste rounds down to nothing still holds the
+// next cast for 1s.
 func (spell *Spell) hastedGCD(gcd time.Duration) time.Duration {
-	return max(0, spell.Unit.ApplyCastSpeed(gcd)).Round(time.Millisecond)
+	if gcd <= 0 {
+		return 0
+	}
+	return max(GCDMin, spell.Unit.ApplyCastSpeed(gcd).Round(time.Millisecond))
 }
 
 func (cast *Cast) EffectiveTime() time.Duration {
