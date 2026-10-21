@@ -9882,12 +9882,22 @@
 						"windfury_over_flametongue": {
 							"type": "string"
 						},
+						"elemental_stormstrike": {
+							"type": "string"
+						},
 						"label": {
 							"type": "string"
 						}
 					},
 					"additionalProperties": false,
-					"required": ["profession_requirement", "unspent_talent_points", "broken_talents", "windfury_over_flametongue", "label"]
+					"required": [
+						"profession_requirement",
+						"unspent_talent_points",
+						"broken_talents",
+						"windfury_over_flametongue",
+						"elemental_stormstrike",
+						"label"
+					]
 				},
 				"buttons": {
 					"type": "object",

@@ -775,6 +775,15 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestFeralBear-AllItems-IdoloftheDream-220606"
+ value: {
+  dps: 454.72757
+  tps: 767.32272
+  dtps: 375.97808
+  hps: 84.81231
+ }
+}
+dps_results: {
  key: "TestFeralBear-AllItems-IdoloftheMoon-23197"
  value: {
   dps: 454.72757
