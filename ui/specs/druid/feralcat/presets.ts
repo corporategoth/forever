@@ -95,7 +95,7 @@ export const BEARWEAVE_APL = PresetUtils.makePresetAPLRotation('Bearweave', Bear
 
 // Naturalist in place of Natural Shapeshifter.
 export const CatTalents = PresetUtils.makePresetTalents('Cat', SavedTalents.create({ talentsString: '050022-35200032121131212051-052' }));
-export const HybridTalents = PresetUtils.makePresetTalents('Hybrid', SavedTalents.create({ talentsString: '050022-05230332121131212051-04' }));
+export const HybridTalents = PresetUtils.makePresetTalents('Hybrid', SavedTalents.create({ talentsString: '050022-35230332121132212051-' }));
 
 export const BearweaveBuild = PresetUtils.makePresetBuild('Bearweave (45s fights)', {
 	talents: CatTalents,
