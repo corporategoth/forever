@@ -81,11 +81,11 @@ export const SHADOWMELD_APL = PresetUtils.makePresetAPLRotation('Monocat, Shadow
 // from 60 to 300 seconds.
 export const ENERGIZED_APL = PresetUtils.makePresetAPLRotation('Monocat, Energized (High Order Skyborne)', EnergizedApl);
 // Uses Thistle Tea and optional Sapper, with racial actions gated by availability.
-// The Prowl opener requires prepull Clearcasting; Shadowmeld enables Ravage during combat.
+// Opens with Berserk and Ravage from Prowl; during combat, Shadowmeld enables Ravage on Clearcasting.
 export const JVMES_APL = {
 	...PresetUtils.makePresetAPLRotation('Monocat, adaptive racials and Sapper', JvmesApl),
 	tooltip:
-		'Maintains Rip and Rake, saves Bite for fight end, and uses available racial abilities and optional Sapper. Opens with Ravage when prepull Clearcasting is enabled.',
+		'Opens with Berserk and Ravage, maintains bleeds, and saves Bite for fight end. Later Berserks pool to 60 energy or Clearcasting when time permits. Named conditions explain racial abilities, optional Sapper and resource use.',
 };
 export const RAVAGE_APL = PresetUtils.makePresetAPLRotation('Ravage opener', RavageApl);
 export const POUNCE_APL = PresetUtils.makePresetAPLRotation('Pounce opener', PounceApl);
