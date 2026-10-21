@@ -1606,6 +1606,37 @@
 				},
 				"close": {
 					"type": "string"
+				},
+				"release_info": {
+					"type": "object",
+					"properties": {
+						"game_version": {
+							"type": "string"
+						},
+						"built": {
+							"type": "string"
+						},
+						"commit_link": {
+							"type": "string"
+						},
+						"sim_build": {
+							"type": "string"
+						},
+						"changed": {
+							"type": "string"
+						},
+						"details": {
+							"type": "string"
+						},
+						"presets": {
+							"type": "string"
+						},
+						"engine": {
+							"type": "string"
+						}
+					},
+					"additionalProperties": false,
+					"required": ["game_version", "built", "commit_link", "sim_build", "changed", "details", "presets", "engine"]
 				}
 			},
 			"additionalProperties": false,
@@ -1646,7 +1677,8 @@
 				"significance",
 				"action_names",
 				"action_tags",
-				"close"
+				"close",
+				"release_info"
 			]
 		},
 		"sim": {

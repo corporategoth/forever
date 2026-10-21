@@ -105,6 +105,7 @@ const spec = {
 	isMeleeDpsSpec: true,
 	isRangedDpsSpec: false,
 	launch: { phase: Phase.Phase1, status: LaunchStatus.Launched },
+	simLink: '/forever/warrior/dps/',
 };
 const player = { sim, getPlayerSpec: () => spec } as never;
 const def = { className: 'arms-warrior-sim-ui', encounterPicker: { showExecuteProportion: true } } as never;

@@ -34,6 +34,10 @@ jobs:
               uses: actions/checkout@v5
               with:
                   ref: ${{ inputs.ref }}
+                  # The full history, so the build can name each spec's last change (tools/vite/build_info.mts).
+                  # git log over paths reads commits and trees only, so the file contents stay out of it.
+                  fetch-depth: 0
+                  filter: blob:none
 
             - name: Check commit blacklist 🔎
               run: |
@@ -89,6 +93,9 @@ jobs:
               run: npm run storybook:build
 
             - name: Build 🔧
+              env:
+                  # The release the page shows names the commit the preview comment names, not the merge commit.
+                  BUILD_COMMIT: ${{ github.event.pull_request.head.sha }}
               run: |
                   make dist/forever/.dirstamp
 
