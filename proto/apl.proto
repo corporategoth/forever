@@ -99,7 +99,7 @@ message APLAction {
 }
 
 
-// NextIndex: 136
+// NextIndex: 137
 message APLValue {
 	UUID uuid = 85;
 
@@ -150,6 +150,7 @@ message APLValue {
 		// Unit values
 		APLValueUnitIsMoving unit_is_moving = 72;
 		APLValueUnitDistance unit_distance = 105;
+		APLValueUnitMovementSpeed unit_movement_speed = 136;
 
         // GCD values
         APLValueGCDIsReady gcd_is_ready = 17;
@@ -499,6 +500,10 @@ message APLValueUnitIsMoving {
     UnitReference source_unit = 1;
 }
 message APLValueUnitDistance {
+    UnitReference source_unit = 1;
+}
+// The unit's run speed in yards per second, with its speed auras.
+message APLValueUnitMovementSpeed {
     UnitReference source_unit = 1;
 }
 message APLValueCurrentHealth {

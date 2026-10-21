@@ -397,6 +397,15 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestFeralBear-AllItems-EnchantBoots-MinorSpeed-911"
+ value: {
+  dps: 455.21488
+  tps: 768.31748
+  dtps: 375.26425
+  hps: 85.06374
+ }
+}
+dps_results: {
  key: "TestFeralBear-AllItems-EnchantChest-Absorption-8220"
  value: {
   dps: 454.58269

@@ -1655,6 +1655,10 @@
 					"label": "Distance to Unit",
 					"tooltip": "Distance to the unit"
 				},
+				"unit_movement_speed": {
+					"label": "Movement Speed",
+					"tooltip": "Run speed of the unit in yards per second, with its speed effects (7 for a player with none)"
+				},
 				"current_health": {
 					"label": "Current Health",
 					"tooltip": "Current health of the unit"

@@ -342,6 +342,15 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestEnhancement-AllItems-EnchantBoots-MinorSpeed-911"
+ value: {
+  dps: 694.67477
+  tps: 366.62296
+  dtps: 9.86713
+  hps: 18.33389
+ }
+}
+dps_results: {
  key: "TestEnhancement-AllItems-EnchantChest-Absorption-8220"
  value: {
   dps: 692.62439

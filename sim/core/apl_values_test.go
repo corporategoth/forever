@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"math"
 	"testing"
 	"time"
 
@@ -599,7 +600,26 @@ func TestValueUnitDistanceAndMoving(t *testing.T) {
 	noTarget := &APLRotation{unit: &Unit{}}
 	wantNoValue(t, map[string]APLValue{
 		"Unit Is Moving without a current target": noTarget.newValueUnitIsMoving(&proto.APLValueUnitIsMoving{SourceUnit: targetRef}, nil),
+		"Movement Speed without a current target": noTarget.newValueUnitMovementSpeed(&proto.APLValueUnitMovementSpeed{SourceUnit: targetRef}, nil),
 	})
+}
+
+func TestValueUnitMovementSpeed(t *testing.T) {
+	sim := &Simulation{}
+	player := &Unit{Type: PlayerUnit}
+	player.PseudoStats.MovementSpeedMultiplier = 1.3
+	target := &Unit{Type: EnemyUnit}
+	target.PseudoStats.MovementSpeedMultiplier = 1
+	player.CurrentTarget = target
+	rot := &APLRotation{unit: player}
+
+	if got := rot.newValueUnitMovementSpeed(&proto.APLValueUnitMovementSpeed{}, nil).GetFloat(sim); math.Abs(got-9.1) > 1e-9 {
+		t.Errorf("Movement Speed of a player at +30%% = %v, want 9.1", got)
+	}
+	targetRef := &proto.UnitReference{Type: proto.UnitReference_CurrentTarget}
+	if got := rot.newValueUnitMovementSpeed(&proto.APLValueUnitMovementSpeed{SourceUnit: targetRef}, nil).GetFloat(sim); got != 8 {
+		t.Errorf("Movement Speed of the target = %v, want 8", got)
+	}
 }
 
 func TestValueUnknownIDs(t *testing.T) {

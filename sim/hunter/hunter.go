@@ -96,7 +96,7 @@ func NewHunter(character *core.Character, options *proto.Player, hunterOptions *
 	// class flags that put the auto inside the talents that name it: Hawk Eye, Mortal Shots and
 	// Deadly Aspects.
 	rangedConfig := hunter.AutoAttacks.RangedConfig()
-	rangedConfig.MinRange = core.MinRangedRange // Forever's, not the row's 8 yd
+	rangedConfig.MinRange = core.MinRangedRange // the row's 8 yd, counted from both units' reach
 	rangedConfig.MaxRange = float64(autoShotRank.MaxRange)
 	rangedConfig.MissileSpeed = float64(autoShotRank.Speed)
 	rangedConfig.ClassFlags = autoShotRank.ClassFlags

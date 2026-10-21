@@ -33,6 +33,7 @@ func (unit *Unit) initMovement() {
 		OnExpire: func(aura *Aura, sim *Simulation) {
 			unit.Moving = false
 			unit.movementAction = nil
+			unit.AutoAttacks.resumeHeldRangedSwing(sim)
 		},
 	})
 
@@ -166,9 +167,9 @@ func (unit *Unit) MultiplyMovementSpeed(sim *Simulation, amount float64) {
 		unit.Log(sim, "[DEBUG] Movement speed changed from %.2f (%.2f%%) to %.2f (%.2f%%)", oldSpeed, (oldMultiplier-1)*100.0, unit.GetMovementSpeed(), (unit.PseudoStats.MovementSpeedMultiplier-1)*100.0)
 	}
 
-	// we have a pending movement action that depends on our movement speed
+	// A walk under way keeps its destination and covers the rest at the new speed.
 	if unit.movementAction != nil && unit.movementAction.speed != 0 {
-		dest := unit.movementAction.speed * float64(unit.movementAction.NextActionAt-unit.movementAction.startTime) / float64(time.Second)
+		dest := unit.movementAction.srcPosition + unit.movementAction.moveDistance
 		unit.MoveTo(dest, sim)
 	}
 }
@@ -201,8 +202,10 @@ func (aura *Aura) NewActiveMovementSpeedEffect(multiplier float64) *ExclusiveEff
 	return aura.newExclusiveMovementSpeedEffect("ActiveMovementSpeed", multiplier)
 }
 
+// Only the highest speed in a category applies, and the auras under it stay up: one that is outbid
+// takes over again when the higher one ends.
 func (aura *Aura) newExclusiveMovementSpeedEffect(categoryKey string, multiplier float64) *ExclusiveEffect {
-	return aura.NewExclusiveEffect(categoryKey, true, ExclusiveEffect{
+	return aura.NewExclusiveEffect(categoryKey, false, ExclusiveEffect{
 		Priority: multiplier,
 		OnGain: func(ee *ExclusiveEffect, sim *Simulation) {
 			ee.Aura.Unit.MultiplyMovementSpeed(sim, 1+multiplier)

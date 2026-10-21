@@ -150,6 +150,8 @@ func (rot *APLRotation) newAPLValueWithContext(config *proto.APLValue, groupVari
 		value = rot.newValueUnitIsMoving(config.GetUnitIsMoving(), config.Uuid)
 	case *proto.APLValue_UnitDistance:
 		value = rot.newValueUnitDistance(config.GetUnitDistance(), config.Uuid)
+	case *proto.APLValue_UnitMovementSpeed:
+		value = rot.newValueUnitMovementSpeed(config.GetUnitMovementSpeed(), config.Uuid)
 
 	// GCD
 	case *proto.APLValue_GcdIsReady:
