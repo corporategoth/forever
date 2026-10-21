@@ -311,6 +311,14 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestShadowPriest-AllItems-EnchantBoots-MinorSpeed-911"
+ value: {
+  dps: 772.32169
+  tps: 389.08275
+  dtps: 5.12976
+ }
+}
+dps_results: {
  key: "TestShadowPriest-AllItems-EnchantChest-Absorption-8220"
  value: {
   dps: 772.32169

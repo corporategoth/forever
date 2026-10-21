@@ -361,9 +361,10 @@ func (wa *WeaponAttack) swing(sim *Simulation) time.Duration {
 	isRanged := wa == &wa.unit.AutoAttacks.ranged
 
 	// A ranged auto can't fire while moving. The hidden retry timer then
-	// checks every 500ms, and the shot goes off at the first check after the
-	// move ends. Casts never hold it. A ranged auto whose cast requirement
-	// fails, such as a weapon the ranged slot does not hold, waits the same way.
+	// checks every 500ms, and the shot goes off a reaction time after the
+	// move ends (see resumeHeldRangedSwing). Casts never hold it. A ranged auto whose cast
+	// requirement fails, such as a weapon the ranged slot does not hold, waits
+	// on the retry timer alone.
 	if isRanged && (wa.unit.Moving || wa.requirementFails(sim)) {
 		wa.swingAt = sim.CurrentTime + RangedAutoRetryInterval
 		return wa.swingAt
@@ -875,6 +876,20 @@ func (aa *AutoAttacks) cancelRangedWindup(sim *Simulation) {
 	aa.ranged.windupEnd = 0
 	aa.ranged.naturalReadyAt -= RangedSwingWindup // the next windup adds it again
 	aa.ranged.swingAt = sim.CurrentTime + RangedAutoRetryInterval
+	sim.rescheduleWeaponAttack(aa.ranged.swingAt)
+}
+
+// Fires a ranged auto that came due while moving a reaction time after the move ends, instead of at
+// the retry timer's next check: the player starts Auto Shot again by hand.
+func (aa *AutoAttacks) resumeHeldRangedSwing(sim *Simulation) {
+	if !aa.AutoSwingRanged || !aa.ranged.enabled || aa.ranged.windupEnd != 0 {
+		return
+	}
+	if aa.ranged.naturalReadyAt > sim.CurrentTime {
+		return // not due yet
+	}
+	// A shot back in range only as the move ends was set to fire now; it waits the reaction too.
+	aa.ranged.swingAt = sim.CurrentTime + aa.ranged.unit.ReactionTime
 	sim.rescheduleWeaponAttack(aa.ranged.swingAt)
 }
 

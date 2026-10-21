@@ -468,6 +468,15 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestProtectionWarrior-AllItems-EnchantBoots-MinorSpeed-911"
+ value: {
+  dps: 463.24697
+  tps: 1025.52521
+  dtps: 288.11637
+  hps: 36.90278
+ }
+}
+dps_results: {
  key: "TestProtectionWarrior-AllItems-EnchantChest-Absorption-8220"
  value: {
   dps: 463.06331
