@@ -28,6 +28,12 @@ export const healingTargetsAreGrouped = (player: Player<any>): boolean => {
 export const healingRandomTargetEnabled = (player: Player<any>): boolean =>
 	player.getPlayerSpec().isHealingSpec && player.sim.raid.getHealingSettings().assignment === HealingAssignment.RaidHealing;
 
+const ownPetRefs = (player: Player<any>) =>
+	player
+		.getPetMetadatas()
+		.asList()
+		.map((_petMetadata, i) => UnitReference.create({ type: UnitType.Pet, index: i, owner: UnitReference.create({ type: UnitType.Self }) }));
+
 export const unitSets: Record<
 	UNIT_SET,
 	{
@@ -40,10 +46,7 @@ export const unitSets: Record<
 		getUnits: player => {
 			return [
 				undefined,
-				player
-					.getPetMetadatas()
-					.asList()
-					.map((petMetadata, i) => UnitReference.create({ type: UnitType.Pet, index: i, owner: UnitReference.create({ type: UnitType.Self }) })),
+				ownPetRefs(player),
 				UnitReference.create({ type: UnitType.CurrentTarget }),
 				UnitReference.create({ type: UnitType.PreviousTarget }),
 				UnitReference.create({ type: UnitType.NextTarget }),
@@ -63,24 +66,15 @@ export const unitSets: Record<
 				undefined,
 				player.sim.encounter.targetsMetadata.asList().map((targetMetadata, i) => UnitReference.create({ type: UnitType.Target, index: i })),
 				UnitReference.create({ type: UnitType.Self }),
-				player
-					.getPetMetadatas()
-					.asList()
-					.map((petMetadata, i) => UnitReference.create({ type: UnitType.Pet, index: i, owner: UnitReference.create({ type: UnitType.Self }) })),
+				ownPetRefs(player),
 				healingTargetIndices(player).map(index => UnitReference.create({ type: UnitType.Player, index })),
 			].flat();
 		},
 	},
-	// A pet without the resource the value reads gets the sim's validation warning.
+	// Lists every own pet. The sim drops a value read from a pet without that resource, so a bare action condition counts as always true and an And or Or loses that branch.
 	self_and_pets: {
 		getUnits: player => {
-			return [
-				undefined,
-				player
-					.getPetMetadatas()
-					.asList()
-					.map((_petMetadata, i) => UnitReference.create({ type: UnitType.Pet, index: i, owner: UnitReference.create({ type: UnitType.Self }) })),
-			].flat();
+			return [undefined, ownPetRefs(player)].flat();
 		},
 	},
 	targets: {

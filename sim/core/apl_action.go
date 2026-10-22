@@ -165,11 +165,21 @@ func (rot *APLRotation) newAPLAction(config *proto.APLAction) *APLAction {
 		}
 	}
 
+	return newAPLActionEntry(condition, impl)
+}
+
+// Builds a rotation entry and hands it to the actions that read their own entry's condition.
+func newAPLActionEntry(condition APLValue, impl APLActionImpl) *APLAction {
 	action := &APLAction{
 		condition: condition,
 		impl:      impl,
 	}
-
+	switch impl := impl.(type) {
+	case *APLActionStrictMultidot:
+		impl.entry = action
+	case *APLActionGroupReference:
+		impl.entry = action
+	}
 	return action
 }
 
@@ -248,6 +258,8 @@ func (rot *APLRotation) newAPLActionImpl(config *proto.APLAction) APLActionImpl 
 		return rot.newActionMoveDuration(config.GetMoveDuration())
 	case *proto.APLAction_PetAttack:
 		return rot.newActionPetAttack(config.GetPetAttack())
+	case *proto.APLAction_StartAttack:
+		return rot.newActionStartAttack(config.GetStartAttack())
 	case *proto.APLAction_CustomRotation:
 		return rot.newActionCustomRotation(config.GetCustomRotation())
 	case *proto.APLAction_GroupReference:

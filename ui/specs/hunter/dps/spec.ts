@@ -147,6 +147,7 @@ export default defineSpec<Spec.SpecHunter>({
 			Presets.SimpleRotation,
 			Presets.WeaveAPLRotation,
 			Presets.WeaveHawkAPLRotation,
+			Presets.CleanWeaveAPLRotation,
 			Presets.TurretAPLRotation,
 			Presets.TurretMultiAPLRotation,
 			Presets.TurretHawkAPLRotation,

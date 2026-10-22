@@ -359,7 +359,7 @@ func (value *APLValueSpellFullCooldown) Type() proto.APLValueType {
 }
 
 func (value *APLValueSpellFullCooldown) GetDuration(sim *Simulation) time.Duration {
-	return value.spell.CD.Duration
+	return value.spell.FullCooldown()
 }
 
 func (value *APLValueSpellFullCooldown) String() string {
@@ -396,8 +396,9 @@ func (value *APLValueSpellInFlight) String() string {
 	return fmt.Sprintf("SpellInFlight(%s)", value.spell.ActionID)
 }
 
-// The expected damage of one full cast if cast now, its hit and all its ticks, over the time the cast
-// costs the caster: the cast time or channel, or the GCD when that is longer.
+// The expected damage of one full cast if cast now, its hit and its ticks, over the time the cast
+// costs the caster: the cast time or channel, or the GCD when that is longer. Only what lands before the
+// fight ends counts, and a channel costs only the ticks it gets in.
 type APLValueSpellExpectedDpet struct {
 	DefaultAPLValueImpl
 	spell     *Spell
@@ -429,17 +430,30 @@ func (value *APLValueSpellExpectedDpet) GetFloat(sim *Simulation) float64 {
 		cast.CastTime = spell.CastTime().Round(time.Millisecond)
 	}
 
+	remaining := sim.GetRemainingDuration()
+	landsAt := cast.CastTime + spell.TravelTime()
+	if landsAt > remaining {
+		return 0
+	}
+
 	var damage float64
 	if spell.expectedInitialDamageInternal != nil {
 		damage += spell.ExpectedInitialDamage(sim, target)
 	}
 	if dot := spell.Dot(target); dot != nil {
-		ticks := dot.ExpectedTickCount()
+		channeled := spell.Flags.Matches(SpellFlagChanneled)
+		tickPeriod := dot.CalcTickPeriod()
+		// A channel ticks from the start of the cast, a DoT from when it lands.
+		firstTickFrom := landsAt
+		if channeled {
+			firstTickFrom = 0
+		}
+		ticks := int32(min(time.Duration(dot.ExpectedTickCount()), (remaining-firstTickFrom)/tickPeriod))
 		if spell.expectedTickDamageInternal != nil {
 			damage += spell.ExpectedTickDamage(sim, target) * float64(ticks)
 		}
-		if spell.Flags.Matches(SpellFlagChanneled) {
-			cast.CastTime = dot.CalcTickPeriod() * time.Duration(ticks)
+		if channeled {
+			cast.CastTime = tickPeriod * time.Duration(ticks)
 		}
 	}
 
@@ -453,4 +467,83 @@ func (value *APLValueSpellExpectedDpet) GetFloat(sim *Simulation) float64 {
 
 func (value *APLValueSpellExpectedDpet) String() string {
 	return fmt.Sprintf("Spell Expected DPET(%s)", value.spell.ActionID)
+}
+
+// The table's base chances are float sums, so a stat equal to the cap can leave a remainder of about 1e-17.
+const capTolerance = 1e-9
+
+// Whether the spell cannot miss the current target: the spell table's miss for magic, the weapon miss of a
+// special for melee and ranged, which leaves out the dual-wield penalty of auto attacks. It reads the table
+// alone, so a spell that always hits or rolls its miss through another spell reads as its table does.
+type APLValueSpellIsHitCapped struct {
+	DefaultAPLValueImpl
+	spell     *Spell
+	targetRef UnitReference
+	magic     bool
+}
+
+func (rot *APLRotation) newValueSpellIsHitCapped(config *proto.APLValueSpellIsHitCapped, _ *proto.UUID) APLValue {
+	spell := rot.GetAPLSpell(config.SpellId)
+	if spell == nil {
+		return nil
+	}
+	return &APLValueSpellIsHitCapped{
+		spell:     spell,
+		targetRef: rot.GetTargetUnit(nil),
+		magic:     spell.rolledDefenseType() == DefenseTypeMagic,
+	}
+}
+func (value *APLValueSpellIsHitCapped) Type() proto.APLValueType {
+	return proto.APLValueType_ValueTypeBool
+}
+func (value *APLValueSpellIsHitCapped) GetBool(_ *Simulation) bool {
+	spell := value.spell
+	attackTable := spell.Unit.AttackTables[value.targetRef.Get().UnitIndex]
+	if value.magic {
+		return spell.SpellChanceToMiss(attackTable) <= capTolerance
+	}
+	return spell.physicalMissChanceNoDWPenalty(attackTable) <= capTolerance
+}
+func (value *APLValueSpellIsHitCapped) String() string {
+	return fmt.Sprintf("Is Hit Capped(%s)", value.spell.ActionID)
+}
+
+// Whether the current target can neither dodge the spell nor, while the unit stands in front of it, parry it.
+// Only the melee table has dodge and parry, so anything else is capped. It reads the table alone, so a
+// special whose outcome never rolls dodge or parry still counts them.
+type APLValueSpellIsExpertiseCapped struct {
+	DefaultAPLValueImpl
+	spell     *Spell
+	targetRef UnitReference
+	melee     bool
+}
+
+func (rot *APLRotation) newValueSpellIsExpertiseCapped(config *proto.APLValueSpellIsExpertiseCapped, _ *proto.UUID) APLValue {
+	spell := rot.GetAPLSpell(config.SpellId)
+	if spell == nil {
+		return nil
+	}
+	return &APLValueSpellIsExpertiseCapped{
+		spell:     spell,
+		targetRef: rot.GetTargetUnit(nil),
+		melee:     spell.rolledDefenseType() == DefenseTypeMelee,
+	}
+}
+func (value *APLValueSpellIsExpertiseCapped) Type() proto.APLValueType {
+	return proto.APLValueType_ValueTypeBool
+}
+func (value *APLValueSpellIsExpertiseCapped) GetBool(_ *Simulation) bool {
+	if !value.melee {
+		return true
+	}
+	spell := value.spell
+	target := value.targetRef.Get()
+	attackTable := spell.Unit.AttackTables[target.UnitIndex]
+	if !spell.Flags.Matches(SpellFlagCannotBeDodged) && target.GetTotalDodgeChanceAsDefender(spell, attackTable) > capTolerance {
+		return false
+	}
+	return !spell.Unit.PseudoStats.InFrontOfTarget || target.GetTotalParryChanceAsDefender(spell, attackTable) <= capTolerance
+}
+func (value *APLValueSpellIsExpertiseCapped) String() string {
+	return fmt.Sprintf("Is Expertise Capped(%s)", value.spell.ActionID)
 }

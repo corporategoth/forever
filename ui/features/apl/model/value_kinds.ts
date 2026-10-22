@@ -46,6 +46,7 @@ import {
 	APLValueDotTickFrequency,
 	APLValueDotTimeToNextTick,
 	APLValueDruidBleedIsActive,
+	APLValueDruidExcessEnergy,
 	APLValueEncounterInArea,
 	APLValueEnergyTimeToTarget,
 	APLValueFrontOfTarget,
@@ -87,6 +88,8 @@ import {
 	APLValueSpellGCDHastedDuration,
 	APLValueSpellInFlight,
 	APLValueSpellIsChanneling,
+	APLValueSpellIsExpertiseCapped,
+	APLValueSpellIsHitCapped,
 	APLValueSpellIsKnown,
 	APLValueSpellIsReady,
 	APLValueSpellNumCharges,
@@ -98,6 +101,7 @@ import {
 	APLValueTotemRemainingTime,
 	APLValueUnitDistance,
 	APLValueUnitIsMoving,
+	APLValueUnitMovementSpeed,
 	APLValueWarlockActivePet,
 	APLValueWarlockAssignedCurseIsActive,
 	APLValueWarlockIsAssignedCurse,
@@ -345,6 +349,13 @@ export const valueKinds: { [f in ValidAPLValueKind]: ValueKindModel<APLValueImpl
 		newValue: APLValueUnitDistance.create,
 		fields: [unitFieldConfig('sourceUnit', 'aura_sources')],
 	}),
+	unitMovementSpeed: inputBuilder({
+		label: i18n.t('rotation_tab.apl.values.unit_movement_speed.label'),
+		submenu: ['unit'],
+		shortDescription: i18n.t('rotation_tab.apl.values.unit_movement_speed.tooltip'),
+		newValue: APLValueUnitMovementSpeed.create,
+		fields: [unitFieldConfig('sourceUnit', 'aura_sources')],
+	}),
 
 	// Resources
 	currentHealth: inputBuilder({
@@ -588,6 +599,24 @@ export const valueKinds: { [f in ValidAPLValueKind]: ValueKindModel<APLValueImpl
 		shortDescription: i18n.t('rotation_tab.apl.values.can_cast.tooltip'),
 		fullDescription: i18n.t('rotation_tab.apl.values.can_cast.full_description'),
 		newValue: APLValueSpellCanCast.create,
+		includeIf: (_: Player<any>, isPrepull: boolean) => !isPrepull,
+		fields: [actionIdFieldConfig('spellId', 'castable_spells', '')],
+	}),
+	spellIsHitCapped: inputBuilder({
+		label: i18n.t('rotation_tab.apl.values.is_hit_capped.label'),
+		submenu: ['spell'],
+		shortDescription: i18n.t('rotation_tab.apl.values.is_hit_capped.tooltip'),
+		fullDescription: i18n.t('rotation_tab.apl.values.is_hit_capped.full_description'),
+		newValue: APLValueSpellIsHitCapped.create,
+		includeIf: (_: Player<any>, isPrepull: boolean) => !isPrepull,
+		fields: [actionIdFieldConfig('spellId', 'castable_spells', '')],
+	}),
+	spellIsExpertiseCapped: inputBuilder({
+		label: i18n.t('rotation_tab.apl.values.is_expertise_capped.label'),
+		submenu: ['spell'],
+		shortDescription: i18n.t('rotation_tab.apl.values.is_expertise_capped.tooltip'),
+		fullDescription: i18n.t('rotation_tab.apl.values.is_expertise_capped.full_description'),
+		newValue: APLValueSpellIsExpertiseCapped.create,
 		includeIf: (_: Player<any>, isPrepull: boolean) => !isPrepull,
 		fields: [actionIdFieldConfig('spellId', 'castable_spells', '')],
 	}),
@@ -1076,6 +1105,14 @@ export const valueKinds: { [f in ValidAPLValueKind]: ValueKindModel<APLValueImpl
 			return !isPrepull && (spec === Spec.SpecFeralCatDruid || spec === Spec.SpecFeralBearDruid);
 		},
 		fields: [unitFieldConfig('targetUnit', 'targets')],
+	}),
+	druidExcessEnergy: inputBuilder({
+		label: i18n.t('rotation_tab.apl.values.druid_excess_energy.label'),
+		submenu: ['feral_druid'],
+		shortDescription: i18n.t('rotation_tab.apl.values.druid_excess_energy.tooltip'),
+		newValue: APLValueDruidExcessEnergy.create,
+		includeIf: (player: Player<any>, isPrepull: boolean) => !isPrepull && player.getSpec() === Spec.SpecFeralCatDruid,
+		fields: [],
 	}),
 	variableRef: inputBuilder({
 		label: i18n.t('rotation_tab.apl.values.variable_ref.label'),

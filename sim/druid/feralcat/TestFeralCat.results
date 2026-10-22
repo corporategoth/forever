@@ -58,13 +58,15 @@ dps_results: {
  value: {
   dps: 622.87572
   tps: 332.41774
+  hps: 47.275
  }
 }
 dps_results: {
  key: "TestFeralCat-AllItems-Admiral'sHat-10030"
  value: {
   dps: 595.91491
-  tps: 319.07293
+  tps: 319.22479
+  hps: 46.15667
  }
 }
 dps_results: {
@@ -72,6 +74,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.16067
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -79,6 +82,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -86,6 +90,7 @@ dps_results: {
  value: {
   dps: 624.44062
   tps: 333.34338
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -93,6 +98,7 @@ dps_results: {
  value: {
   dps: 600.51197
   tps: 321.41548
+  hps: 46.19056
  }
 }
 dps_results: {
@@ -100,6 +106,7 @@ dps_results: {
  value: {
   dps: 617.09351
   tps: 329.63256
+  hps: 46.15667
  }
 }
 dps_results: {
@@ -107,6 +114,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -114,6 +122,7 @@ dps_results: {
  value: {
   dps: 569.77942
   tps: 306.05092
+  hps: 46.19056
  }
 }
 dps_results: {
@@ -121,6 +130,7 @@ dps_results: {
  value: {
   dps: 610.75109
   tps: 326.53968
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -128,6 +138,7 @@ dps_results: {
  value: {
   dps: 503.24943
   tps: 272.92748
+  hps: 46.34306
  }
 }
 dps_results: {
@@ -135,6 +146,7 @@ dps_results: {
  value: {
   dps: 508.75182
   tps: 275.85134
+  hps: 46.30917
  }
 }
 dps_results: {
@@ -142,6 +154,7 @@ dps_results: {
  value: {
   dps: 611.76324
   tps: 327.02182
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -149,6 +162,7 @@ dps_results: {
  value: {
   dps: 610.75109
   tps: 326.53968
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -156,6 +170,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -163,6 +178,7 @@ dps_results: {
  value: {
   dps: 608.50341
   tps: 325.36219
+  hps: 46.5125
  }
 }
 dps_results: {
@@ -170,6 +186,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.21308
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -177,7 +194,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
-  hps: 8.74358
+  hps: 54.8833
  }
 }
 dps_results: {
@@ -185,6 +202,7 @@ dps_results: {
  value: {
   dps: 624.2473
   tps: 333.22209
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -192,6 +210,7 @@ dps_results: {
  value: {
   dps: 478.0086
   tps: 260.56429
+  hps: 46.37694
  }
 }
 dps_results: {
@@ -199,6 +218,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -206,6 +226,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -213,6 +234,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -220,6 +242,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -227,6 +250,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -234,7 +258,7 @@ dps_results: {
  value: {
   dps: 475.18408
   tps: 258.27959
-  hps: 1.26521
+  hps: 47.6591
  }
 }
 dps_results: {
@@ -242,6 +266,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.60337
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -249,6 +274,7 @@ dps_results: {
  value: {
   dps: 629.10756
   tps: 335.66284
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -256,6 +282,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -263,6 +290,7 @@ dps_results: {
  value: {
   dps: 622.00177
   tps: 332.07738
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -270,6 +298,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -277,6 +306,15 @@ dps_results: {
  value: {
   dps: 619.16472
   tps: 330.68944
+  hps: 46.13972
+ }
+}
+dps_results: {
+ key: "TestFeralCat-AllItems-EnchantBoots-MinorSpeed-911"
+ value: {
+  dps: 616.18889
+  tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -284,6 +322,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -291,6 +330,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -298,6 +338,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -305,6 +346,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 323.11735
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -312,6 +354,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 335.36718
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -319,6 +362,7 @@ dps_results: {
  value: {
   dps: 630.10581
   tps: 336.15897
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -326,13 +370,15 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
  key: "TestFeralCat-AllItems-EnchantWeapon-Insight-8216"
  value: {
   dps: 616.18889
-  tps: 329.07009
+  tps: 329.03954
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -340,7 +386,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
-  hps: 15.79592
+  hps: 61.93564
  }
 }
 dps_results: {
@@ -348,6 +394,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -355,6 +402,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -362,6 +410,7 @@ dps_results: {
  value: {
   dps: 618.75739
   tps: 330.49963
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -369,6 +418,7 @@ dps_results: {
  value: {
   dps: 619.09732
   tps: 330.66858
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -376,6 +426,7 @@ dps_results: {
  value: {
   dps: 626.75432
   tps: 334.48312
+  hps: 46.08889
  }
 }
 dps_results: {
@@ -383,6 +434,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -390,6 +442,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -397,6 +450,7 @@ dps_results: {
  value: {
   dps: 544.31295
   tps: 292.64711
+  hps: 46.30917
  }
 }
 dps_results: {
@@ -404,6 +458,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -411,6 +466,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -418,6 +474,7 @@ dps_results: {
  value: {
   dps: 503.24943
   tps: 272.79457
+  hps: 46.34306
  }
 }
 dps_results: {
@@ -425,6 +482,7 @@ dps_results: {
  value: {
   dps: 512.57671
   tps: 277.71392
+  hps: 46.29222
  }
 }
 dps_results: {
@@ -432,6 +490,7 @@ dps_results: {
  value: {
   dps: 609.58585
   tps: 325.96056
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -439,6 +498,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24301
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -446,6 +506,7 @@ dps_results: {
  value: {
   dps: 599.04476
   tps: 320.65313
+  hps: 46.15667
  }
 }
 dps_results: {
@@ -453,6 +514,7 @@ dps_results: {
  value: {
   dps: 622.00177
   tps: 332.07738
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -460,6 +522,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -467,6 +530,7 @@ dps_results: {
  value: {
   dps: 595.77104
   tps: 319.02609
+  hps: 46.15667
  }
 }
 dps_results: {
@@ -474,13 +538,15 @@ dps_results: {
  value: {
   dps: 595.91491
   tps: 319.07293
+  hps: 46.15667
  }
 }
 dps_results: {
  key: "TestFeralCat-AllItems-GoldenBanana-270226"
  value: {
   dps: 617.58663
-  tps: 330.04489
+  tps: 330.29339
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -488,6 +554,7 @@ dps_results: {
  value: {
   dps: 618.51937
   tps: 330.40051
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -495,6 +562,7 @@ dps_results: {
  value: {
   dps: 542.7878
   tps: 292.67251
+  hps: 46.2075
  }
 }
 dps_results: {
@@ -502,6 +570,7 @@ dps_results: {
  value: {
   dps: 548.54328
   tps: 295.51432
+  hps: 46.15667
  }
 }
 dps_results: {
@@ -509,6 +578,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -516,6 +586,7 @@ dps_results: {
  value: {
   dps: 565.78706
   tps: 304.07621
+  hps: 46.15667
  }
 }
 dps_results: {
@@ -523,6 +594,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.17412
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -530,6 +602,7 @@ dps_results: {
  value: {
   dps: 551.63875
   tps: 296.57051
+  hps: 46.055
  }
 }
 dps_results: {
@@ -537,6 +610,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -544,6 +618,7 @@ dps_results: {
  value: {
   dps: 606.88632
   tps: 324.53631
+  hps: 46.15667
  }
 }
 dps_results: {
@@ -551,6 +626,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -558,6 +634,7 @@ dps_results: {
  value: {
   dps: 609.6787
   tps: 324.79598
+  hps: 45.88556
  }
 }
 dps_results: {
@@ -565,6 +642,15 @@ dps_results: {
  value: {
   dps: 609.6787
   tps: 324.79598
+  hps: 45.88556
+ }
+}
+dps_results: {
+ key: "TestFeralCat-AllItems-IdoloftheDream-220606"
+ value: {
+  dps: 625.3972
+  tps: 332.52184
+  hps: 45.97028
  }
 }
 dps_results: {
@@ -572,6 +658,7 @@ dps_results: {
  value: {
   dps: 609.6787
   tps: 324.79598
+  hps: 45.88556
  }
 }
 dps_results: {
@@ -579,6 +666,7 @@ dps_results: {
  value: {
   dps: 632.02384
   tps: 337.11224
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -586,6 +674,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -593,6 +682,7 @@ dps_results: {
  value: {
   dps: 629.15013
   tps: 335.85508
+  hps: 47.25806
  }
 }
 dps_results: {
@@ -600,6 +690,7 @@ dps_results: {
  value: {
   dps: 503.24943
   tps: 272.92748
+  hps: 46.34306
  }
 }
 dps_results: {
@@ -607,6 +698,7 @@ dps_results: {
  value: {
   dps: 508.75182
   tps: 275.85134
+  hps: 46.30917
  }
 }
 dps_results: {
@@ -614,6 +706,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -621,6 +714,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -628,6 +722,7 @@ dps_results: {
  value: {
   dps: 475.18408
   tps: 258.48666
+  hps: 46.39389
  }
 }
 dps_results: {
@@ -635,6 +730,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -642,6 +738,7 @@ dps_results: {
  value: {
   dps: 645.1791
   tps: 344.24598
+  hps: 48.91861
  }
 }
 dps_results: {
@@ -649,6 +746,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -656,6 +754,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -663,6 +762,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -670,6 +770,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -677,6 +778,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -684,6 +786,7 @@ dps_results: {
  value: {
   dps: 620.88996
   tps: 331.5787
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -691,6 +794,7 @@ dps_results: {
  value: {
   dps: 609.6787
   tps: 324.73731
+  hps: 45.88556
  }
 }
 dps_results: {
@@ -698,6 +802,7 @@ dps_results: {
  value: {
   dps: 617.03913
   tps: 329.64967
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -705,6 +810,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -712,6 +818,7 @@ dps_results: {
  value: {
   dps: 608.89899
   tps: 325.48573
+  hps: 46.15667
  }
 }
 dps_results: {
@@ -719,6 +826,7 @@ dps_results: {
  value: {
   dps: 609.58585
   tps: 325.96056
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -726,6 +834,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 326.12104
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -733,6 +842,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.17585
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -740,6 +850,7 @@ dps_results: {
  value: {
   dps: 570.21287
   tps: 305.92287
+  hps: 46.54639
  }
 }
 dps_results: {
@@ -747,6 +858,7 @@ dps_results: {
  value: {
   dps: 618.81718
   tps: 330.52934
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -754,6 +866,7 @@ dps_results: {
  value: {
   dps: 640.61404
   tps: 341.38157
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -761,6 +874,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -768,6 +882,7 @@ dps_results: {
  value: {
   dps: 478.0086
   tps: 260.03162
+  hps: 46.37694
  }
 }
 dps_results: {
@@ -775,6 +890,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -782,6 +898,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -789,6 +906,7 @@ dps_results: {
  value: {
   dps: 609.6787
   tps: 324.79598
+  hps: 45.88556
  }
 }
 dps_results: {
@@ -796,6 +914,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -803,6 +922,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -810,6 +930,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -817,6 +938,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -824,6 +946,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -831,6 +954,7 @@ dps_results: {
  value: {
   dps: 609.6787
   tps: 324.79598
+  hps: 45.88556
  }
 }
 dps_results: {
@@ -838,6 +962,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -845,6 +970,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -852,6 +978,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -859,6 +986,7 @@ dps_results: {
  value: {
   dps: 618.66389
   tps: 330.4057
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -866,6 +994,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -873,6 +1002,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -880,6 +1010,7 @@ dps_results: {
  value: {
   dps: 475.18408
   tps: 258.21714
+  hps: 46.39389
  }
 }
 dps_results: {
@@ -887,6 +1018,7 @@ dps_results: {
  value: {
   dps: 478.0086
   tps: 258.93756
+  hps: 46.37694
  }
 }
 dps_results: {
@@ -894,6 +1026,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -901,6 +1034,7 @@ dps_results: {
  value: {
   dps: 503.24943
   tps: 272.79457
+  hps: 46.34306
  }
 }
 dps_results: {
@@ -908,6 +1042,7 @@ dps_results: {
  value: {
   dps: 512.57671
   tps: 277.71392
+  hps: 46.29222
  }
 }
 dps_results: {
@@ -915,6 +1050,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.32667
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -922,6 +1058,7 @@ dps_results: {
  value: {
   dps: 616.44006
   tps: 329.3671
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -929,6 +1066,7 @@ dps_results: {
  value: {
   dps: 489.87416
   tps: 265.5873
+  hps: 46.39389
  }
 }
 dps_results: {
@@ -936,6 +1074,7 @@ dps_results: {
  value: {
   dps: 609.30212
   tps: 325.83061
+  hps: 46.76667
  }
 }
 dps_results: {
@@ -943,6 +1082,7 @@ dps_results: {
  value: {
   dps: 609.58585
   tps: 325.96056
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -950,6 +1090,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -957,6 +1098,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -964,6 +1106,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -971,6 +1114,7 @@ dps_results: {
  value: {
   dps: 622.22646
   tps: 332.24294
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -978,13 +1122,15 @@ dps_results: {
  value: {
   dps: 619.87251
   tps: 331.00688
+  hps: 46.88192
  }
 }
 dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-DefaultTalents-BleedAssumed-bearweave-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 615.37346
-  tps: 777.53268
+  tps: 339.86183
+  hps: 45.37722
  }
 }
 dps_results: {
@@ -992,6 +1138,7 @@ dps_results: {
  value: {
   dps: 615.37346
   tps: 339.86183
+  hps: 45.37722
  }
 }
 dps_results: {
@@ -999,6 +1146,7 @@ dps_results: {
  value: {
   dps: 650.76774
   tps: 378.55416
+  hps: 46.15667
  }
 }
 dps_results: {
@@ -1026,7 +1174,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-DefaultTalents-BleedAssumed-default-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 617.13732
-  tps: 766.645
+  tps: 329.71363
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -1034,6 +1183,7 @@ dps_results: {
  value: {
   dps: 617.13732
   tps: 329.71363
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -1041,6 +1191,7 @@ dps_results: {
  value: {
   dps: 659.6678
   tps: 347.74538
+  hps: 47.98667
  }
 }
 dps_results: {
@@ -1068,7 +1219,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-DefaultTalents-BleedAssumed-shadowmeld-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 621.16283
-  tps: 770.79422
+  tps: 331.82174
+  hps: 46.22444
  }
 }
 dps_results: {
@@ -1076,6 +1228,7 @@ dps_results: {
  value: {
   dps: 621.16283
   tps: 331.82174
+  hps: 46.22444
  }
 }
 dps_results: {
@@ -1083,6 +1236,7 @@ dps_results: {
  value: {
   dps: 665.16902
   tps: 350.93227
+  hps: 47.83417
  }
 }
 dps_results: {
@@ -1110,7 +1264,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-DefaultTalents-PrepullClearcasting-bearweave-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 615.70067
-  tps: 771.94842
+  tps: 338.81479
+  hps: 45.47889
  }
 }
 dps_results: {
@@ -1118,6 +1273,7 @@ dps_results: {
  value: {
   dps: 615.70067
   tps: 338.81479
+  hps: 45.47889
  }
 }
 dps_results: {
@@ -1125,6 +1281,7 @@ dps_results: {
  value: {
   dps: 657.74179
   tps: 384.91128
+  hps: 46.10583
  }
 }
 dps_results: {
@@ -1152,7 +1309,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-DefaultTalents-PrepullClearcasting-default-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 617.4182
-  tps: 761.72035
+  tps: 329.60002
+  hps: 46.34306
  }
 }
 dps_results: {
@@ -1160,6 +1318,7 @@ dps_results: {
  value: {
   dps: 617.4182
   tps: 329.60002
+  hps: 46.34306
  }
 }
 dps_results: {
@@ -1167,6 +1326,7 @@ dps_results: {
  value: {
   dps: 660.13097
   tps: 347.8585
+  hps: 48.3425
  }
 }
 dps_results: {
@@ -1194,7 +1354,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-DefaultTalents-PrepullClearcasting-shadowmeld-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 623.34873
-  tps: 764.40971
+  tps: 332.53459
+  hps: 46.27528
  }
 }
 dps_results: {
@@ -1202,6 +1363,7 @@ dps_results: {
  value: {
   dps: 623.34873
   tps: 332.53459
+  hps: 46.27528
  }
 }
 dps_results: {
@@ -1209,6 +1371,7 @@ dps_results: {
  value: {
   dps: 677.46133
   tps: 356.6778
+  hps: 47.98667
  }
 }
 dps_results: {
@@ -1236,7 +1399,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-DefaultTalents-Standard-bearweave-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 614.16503
-  tps: 776.86786
+  tps: 339.197
+  hps: 45.37722
  }
 }
 dps_results: {
@@ -1244,6 +1408,7 @@ dps_results: {
  value: {
   dps: 614.16503
   tps: 339.197
+  hps: 45.37722
  }
 }
 dps_results: {
@@ -1251,6 +1416,7 @@ dps_results: {
  value: {
   dps: 648.64438
   tps: 377.49885
+  hps: 46.15667
  }
 }
 dps_results: {
@@ -1278,7 +1444,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-DefaultTalents-Standard-default-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 616.18889
-  tps: 766.17363
+  tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -1286,6 +1453,7 @@ dps_results: {
  value: {
   dps: 616.18889
   tps: 329.24226
+  hps: 46.13972
  }
 }
 dps_results: {
@@ -1293,6 +1461,7 @@ dps_results: {
  value: {
   dps: 658.14995
   tps: 346.991
+  hps: 47.98667
  }
 }
 dps_results: {
@@ -1320,7 +1489,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-DefaultTalents-Standard-shadowmeld-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 620.29747
-  tps: 770.36414
+  tps: 331.39166
+  hps: 46.22444
  }
 }
 dps_results: {
@@ -1328,6 +1498,7 @@ dps_results: {
  value: {
   dps: 620.29747
   tps: 331.39166
+  hps: 46.22444
  }
 }
 dps_results: {
@@ -1335,6 +1506,7 @@ dps_results: {
  value: {
   dps: 663.89722
   tps: 350.30019
+  hps: 47.83417
  }
 }
 dps_results: {
@@ -1362,7 +1534,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-Hybrid-BleedAssumed-bearweave-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 608.87673
-  tps: 801.36699
+  tps: 331.4329
+  hps: 45.66528
  }
 }
 dps_results: {
@@ -1370,6 +1543,7 @@ dps_results: {
  value: {
   dps: 608.87673
   tps: 331.4329
+  hps: 45.66528
  }
 }
 dps_results: {
@@ -1377,6 +1551,7 @@ dps_results: {
  value: {
   dps: 647.32363
   tps: 374.32271
+  hps: 46.25833
  }
 }
 dps_results: {
@@ -1404,7 +1579,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-Hybrid-BleedAssumed-default-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 608.71566
-  tps: 801.02253
+  tps: 327.50747
+  hps: 45.88556
  }
 }
 dps_results: {
@@ -1412,6 +1588,7 @@ dps_results: {
  value: {
   dps: 608.71566
   tps: 327.50747
+  hps: 45.88556
  }
 }
 dps_results: {
@@ -1419,6 +1596,7 @@ dps_results: {
  value: {
   dps: 652.11105
   tps: 347.11131
+  hps: 48.08833
  }
 }
 dps_results: {
@@ -1446,7 +1624,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-Hybrid-BleedAssumed-shadowmeld-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 618.21759
-  tps: 807.14335
+  tps: 332.2486
+  hps: 45.93639
  }
 }
 dps_results: {
@@ -1454,6 +1633,7 @@ dps_results: {
  value: {
   dps: 618.21759
   tps: 332.2486
+  hps: 45.93639
  }
 }
 dps_results: {
@@ -1461,6 +1641,7 @@ dps_results: {
  value: {
   dps: 660.8076
   tps: 351.50649
+  hps: 47.52917
  }
 }
 dps_results: {
@@ -1488,7 +1669,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-Hybrid-PrepullClearcasting-bearweave-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 607.85562
-  tps: 798.43033
+  tps: 330.53743
+  hps: 45.64833
  }
 }
 dps_results: {
@@ -1496,6 +1678,7 @@ dps_results: {
  value: {
   dps: 607.85562
   tps: 330.53743
+  hps: 45.64833
  }
 }
 dps_results: {
@@ -1503,6 +1686,7 @@ dps_results: {
  value: {
   dps: 651.95856
   tps: 371.30361
+  hps: 46.76667
  }
 }
 dps_results: {
@@ -1530,7 +1714,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-Hybrid-PrepullClearcasting-default-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 608.34823
-  tps: 798.6753
+  tps: 327.20142
+  hps: 46.00417
  }
 }
 dps_results: {
@@ -1538,6 +1723,7 @@ dps_results: {
  value: {
   dps: 608.34823
   tps: 327.20142
+  hps: 46.00417
  }
 }
 dps_results: {
@@ -1545,6 +1731,7 @@ dps_results: {
  value: {
   dps: 654.65472
   tps: 347.96608
+  hps: 48.13917
  }
 }
 dps_results: {
@@ -1572,7 +1759,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-Hybrid-PrepullClearcasting-shadowmeld-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 619.34251
-  tps: 804.90588
+  tps: 332.70493
+  hps: 46.00417
  }
 }
 dps_results: {
@@ -1580,6 +1768,7 @@ dps_results: {
  value: {
   dps: 619.34251
   tps: 332.70493
+  hps: 46.00417
  }
 }
 dps_results: {
@@ -1587,6 +1776,7 @@ dps_results: {
  value: {
   dps: 670.38283
   tps: 355.9929
+  hps: 47.63083
  }
 }
 dps_results: {
@@ -1614,7 +1804,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-Hybrid-Standard-bearweave-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 607.84932
-  tps: 800.85637
+  tps: 330.92228
+  hps: 45.66528
  }
 }
 dps_results: {
@@ -1622,6 +1813,7 @@ dps_results: {
  value: {
   dps: 607.84932
   tps: 330.92228
+  hps: 45.66528
  }
 }
 dps_results: {
@@ -1629,6 +1821,7 @@ dps_results: {
  value: {
   dps: 645.6591
   tps: 373.35263
+  hps: 46.25833
  }
 }
 dps_results: {
@@ -1656,7 +1849,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-Hybrid-Standard-default-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 607.87525
-  tps: 800.60484
+  tps: 327.08978
+  hps: 45.88556
  }
 }
 dps_results: {
@@ -1664,6 +1858,7 @@ dps_results: {
  value: {
   dps: 607.87525
   tps: 327.08978
+  hps: 45.88556
  }
 }
 dps_results: {
@@ -1671,6 +1866,7 @@ dps_results: {
  value: {
   dps: 649.9518
   tps: 346.03816
+  hps: 48.08833
  }
 }
 dps_results: {
@@ -1698,7 +1894,8 @@ dps_results: {
  key: "TestFeralCat-Settings-NightElf-default-Hybrid-Standard-shadowmeld-FullBuffs-0.0yards-LongMultiTarget"
  value: {
   dps: 617.12193
-  tps: 806.59881
+  tps: 331.70406
+  hps: 45.93639
  }
 }
 dps_results: {
@@ -1706,6 +1903,7 @@ dps_results: {
  value: {
   dps: 617.12193
   tps: 331.70406
+  hps: 45.93639
  }
 }
 dps_results: {
@@ -1713,6 +1911,7 @@ dps_results: {
  value: {
   dps: 659.11524
   tps: 350.66539
+  hps: 47.52917
  }
 }
 dps_results: {
@@ -1741,5 +1940,6 @@ dps_results: {
  value: {
   dps: 531.67395
   tps: 287.16937
+  hps: 39.17556
  }
 }
