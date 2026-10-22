@@ -56,9 +56,9 @@ character_stats_results: {
 dps_results: {
  key: "TestRetribution-AllItems-Admiral'sHat-10030"
  value: {
-  dps: 777.97052
-  tps: 669.80039
-  dtps: 7.16838
+  dps: 778.65466
+  tps: 670.39557
+  dtps: 7.25668
   hps: 22.43512
  }
 }
@@ -119,10 +119,10 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-Beastmaster'sCap-22013"
  value: {
-  dps: 799.22372
-  tps: 687.55939
-  dtps: 7.60189
-  hps: 22.73317
+  dps: 799.32034
+  tps: 687.65829
+  dtps: 7.51732
+  hps: 22.75164
  }
 }
 dps_results: {
@@ -209,9 +209,9 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-CloudkeeperLegplates-14554"
  value: {
-  dps: 794.68951
-  tps: 683.72064
-  dtps: 7.26008
+  dps: 795.4498
+  tps: 684.37978
+  dtps: 7.34839
   hps: 22.42902
  }
 }
@@ -533,8 +533,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-FeralheartRaiment"
  value: {
-  dps: 752.29509
-  tps: 646.52676
+  dps: 752.10287
+  tps: 646.3653
   dtps: 5.68208
   hps: 21.63128
  }
@@ -632,9 +632,9 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-GoblinConstructionHelmet-10543"
  value: {
-  dps: 777.81316
-  tps: 669.50248
-  dtps: 7.07876
+  dps: 778.49577
+  tps: 670.09638
+  dtps: 7.16707
   hps: 22.43512
  }
 }
@@ -686,8 +686,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-HelmofFire-8348"
  value: {
-  dps: 784.90913
-  tps: 675.18434
+  dps: 785.62823
+  tps: 675.80459
   dtps: 6.43684
   hps: 22.43512
  }
@@ -722,9 +722,9 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-JusticeArmor"
  value: {
-  dps: 739.52772
-  tps: 637.64357
-  dtps: 7.12581
+  dps: 740.16571
+  tps: 638.2374
+  dtps: 7.14885
   hps: 22.43512
  }
 }
@@ -740,10 +740,10 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-JusticeBattleplate"
  value: {
-  dps: 746.62658
-  tps: 643.68104
-  dtps: 7.1825
-  hps: 22.71115
+  dps: 745.66798
+  tps: 642.92705
+  dtps: 7.19974
+  hps: 22.69268
  }
 }
 dps_results: {
@@ -1262,8 +1262,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-VestmentsoftheDevout"
  value: {
-  dps: 691.67477
-  tps: 595.53628
+  dps: 691.48324
+  tps: 595.3754
   dtps: 5.31228
   hps: 21.62518
  }
@@ -1271,9 +1271,9 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-VestmentsoftheVirtuous"
  value: {
-  dps: 711.77125
-  tps: 610.86967
-  dtps: 4.43281
+  dps: 711.58004
+  tps: 610.4731
+  dtps: 4.23723
   hps: 21.62721
  }
 }
@@ -1298,8 +1298,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-WildheartRaiment"
  value: {
-  dps: 701.25958
-  tps: 603.56117
+  dps: 701.07252
+  tps: 603.40403
   dtps: 5.11568
   hps: 21.62213
  }
@@ -1352,10 +1352,10 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Average-Default"
  value: {
-  dps: 823.48711
-  tps: 708.16655
+  dps: 823.58301
+  tps: 708.2496
   dtps: 7.41473
-  hps: 23.09777
+  hps: 23.10138
  }
 }
 dps_results: {
