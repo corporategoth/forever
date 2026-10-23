@@ -180,6 +180,12 @@ export class ActionId {
 		return this.equalsIgnoringTag(other) && this.tag == other.tag;
 	}
 
+	// Every rank of a talent shares one spell id, so two ranked ids also compare their ranks. An id
+	// without a rank matches its spell at any rank.
+	equalsAtRank(other: ActionId): boolean {
+		return this.equals(other) && (!this.rank || !other.rank || this.rank == other.rank);
+	}
+
 	// Every field these read is readonly and set in the constructor, so the string cannot go stale.
 	private cachedEqualityKey?: string;
 	private cachedEqualityKeyIgnoringTag?: string;
@@ -467,10 +473,6 @@ export class ActionId {
 				if (tag == 1) {
 					name += ` (${i18n.t('common.action_tags.devastate')})`;
 				}
-				break;
-			case 'Improved Berserker Rage':
-			case 'Improved Overpower':
-				name += ` (${tag}/2)`;
 				break;
 			case 'Thunderfury':
 				if (tag == 1) {

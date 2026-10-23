@@ -100,7 +100,7 @@ message APLAction {
 }
 
 
-// NextIndex: 140
+// NextIndex: 142
 message APLValue {
 	UUID uuid = 85;
 
@@ -182,6 +182,10 @@ message APLValue {
         APLValueSpellExpectedDpet spell_expected_dpet = 109;
         APLValueSpellIsHitCapped spell_is_hit_capped = 25;
         APLValueSpellIsExpertiseCapped spell_is_expertise_capped = 29;
+
+        // Talent values
+        APLValueTalentIsKnown talent_is_known = 140;
+        APLValueTalentRank talent_rank = 141;
 
         // Aura values
         APLValueAuraIsKnown aura_is_known = 73;
@@ -579,6 +583,15 @@ message APLValueAutoTimeSinceLast {
 
 message APLValueSpellIsKnown {
     ActionID spell_id = 1;
+}
+// True when the player holds the talent at the id's rank or higher. The id is the talent's spell
+// (the talent_spell_id option on its field) with the rank in its rank field.
+message APLValueTalentIsKnown {
+    ActionID talent_id = 1;
+}
+// The rank the player holds in the talent, 0 without points. The id's rank is not read.
+message APLValueTalentRank {
+    ActionID talent_id = 1;
 }
 message APLValueSpellCanCast {
     ActionID spell_id = 1;

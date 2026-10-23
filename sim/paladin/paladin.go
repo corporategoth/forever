@@ -107,7 +107,7 @@ func NewPaladin(character *core.Character, talentsStr string, _ *proto.PaladinOp
 		holyShieldBlockValueMultiplier: 1,
 	}
 
-	core.FillTalentsProto(paladin.Talents.ProtoReflect(), talentsStr, TalentTreeSizes)
+	paladin.FillTalentsProto(paladin.Talents.ProtoReflect(), talentsStr, TalentTreeSizes)
 
 	paladin.PseudoStats.CanParry = true
 
