@@ -231,3 +231,48 @@ func TestHealthRegenDisabledPet(t *testing.T) {
 		t.Errorf("the pet away gained %v health by 2.02 s and 4.04 s, want %v", away, want)
 	}
 }
+
+// At full health a tick credits nothing and records no event; the first tick after damage credits.
+func TestHealthRegenSkipsTicksAtFullHealth(t *testing.T) {
+	sim, owner := setupHealthRegenSim()
+	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
+
+	stepTo(t, sim, 7*time.Second)
+	if metrics := healthRegenMetrics(&owner.Unit); metrics != nil {
+		t.Errorf("Health Regen metric at full health through 6.06 s: %v events, want none", metrics.Events)
+	}
+
+	owner.RemoveHealth(sim, 100)
+	gained := recordHealthGained(sim, &owner.Unit, 4*healthRegenTick-time.Millisecond, 4*healthRegenTick)
+	stepTo(t, sim, 9*time.Second)
+	if want := []float64{0, 4}; !slices.Equal(gained, want) {
+		t.Errorf("health gained by 8.079 s and 8.08 s: %v, want %v", gained, want)
+	}
+	if metrics := healthRegenMetrics(&owner.Unit); metrics == nil || metrics.Events != 1 || metrics.ActualGain != 4 {
+		t.Errorf("Health Regen metric %v, want 1 event of 4 health", metrics)
+	}
+}
+
+// Losing a Stamina buff caps current health at the lower maximum at once, so the next tick gains nothing.
+func TestHealthRegenAfterMaxHealthDrops(t *testing.T) {
+	sim, owner := setupHealthRegenSim()
+	sim.Environment.State = core.Constructed
+	aura := owner.NewTemporaryStatsAura("Test Stamina", core.ActionID{SpellID: 910702}, stats.Stats{stats.Stamina: 100}, core.NeverExpires)
+	sim.Environment.State = core.Finalized
+	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
+	baseMax := owner.MaxHealth()
+	aura.Activate(sim)
+	if owner.MaxHealth() <= baseMax {
+		t.Fatalf("maximum health %v with the Stamina buff, want above %v", owner.MaxHealth(), baseMax)
+	}
+	owner.SetCurrentHealthPercent(1)
+
+	aura.Deactivate(sim)
+	if got, want := owner.CurrentHealth(), owner.MaxHealth(); got != want {
+		t.Errorf("health %v once the buff fades, want the maximum %v", got, want)
+	}
+	stepTo(t, sim, 3*time.Second)
+	if metrics := healthRegenMetrics(&owner.Unit); metrics != nil {
+		t.Errorf("Health Regen metric %v events of %v health after the buff fades, want none", metrics.Events, metrics.ActualGain)
+	}
+}

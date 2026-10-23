@@ -425,6 +425,11 @@ func (unit *Unit) processDynamicBonus(sim *Simulation, bonus *stats.Stats) {
 	if bonus[stats.HP5] != 0 && unit.HasHealthBar() {
 		unit.wakeHealthRegen(sim)
 	}
+	if bonus[stats.Health] != 0 && unit.HasHealthBar() {
+		if unit.CurrentHealth() > unit.MaxHealth() {
+			unit.currentHealth = unit.MaxHealth()
+		}
+	}
 	if bonus[stats.Mana] != 0 && unit.HasManaBar() {
 		if unit.CurrentMana() > unit.MaxMana() {
 			unit.currentMana = unit.MaxMana()
