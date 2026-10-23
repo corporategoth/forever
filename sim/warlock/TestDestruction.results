@@ -849,7 +849,7 @@ dps_results: {
  key: "TestDestruction-AllItems-RingofSaviors-1447"
  value: {
   dps: 700.20194
-  tps: 410.82207
+  tps: 410.75226
   dtps: 8.59922
   hps: 9.05673
  }
@@ -1046,7 +1046,7 @@ dps_results: {
  key: "TestDestruction-AllItems-ToySoldier-274386"
  value: {
   dps: 701.76673
-  tps: 411.55824
+  tps: 411.46738
   dtps: 8.80921
   hps: 9.05673
  }

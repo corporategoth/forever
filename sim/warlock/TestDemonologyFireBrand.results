@@ -849,7 +849,7 @@ dps_results: {
  key: "TestDemonologyFireBrand-AllItems-RingofSaviors-1447"
  value: {
   dps: 775.03925
-  tps: 452.39788
+  tps: 452.29747
   dtps: 9.3443
   hps: 10.04926
  }
@@ -1046,7 +1046,7 @@ dps_results: {
  key: "TestDemonologyFireBrand-AllItems-ToySoldier-274386"
  value: {
   dps: 780.51296
-  tps: 454.94403
+  tps: 454.82586
   dtps: 8.84153
   hps: 10.04926
  }

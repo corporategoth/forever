@@ -849,7 +849,7 @@ dps_results: {
  key: "TestDemonologyShadowBrand-AllItems-RingofSaviors-1447"
  value: {
   dps: 769.93573
-  tps: 472.2503
+  tps: 472.23174
   dtps: 11.00482
   hps: 7.90759
  }
@@ -1046,7 +1046,7 @@ dps_results: {
  key: "TestDemonologyShadowBrand-AllItems-ToySoldier-274386"
  value: {
   dps: 771.67325
-  tps: 472.47157
+  tps: 472.44808
   dtps: 10.69249
   hps: 7.82576
  }

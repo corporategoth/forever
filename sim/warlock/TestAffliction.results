@@ -849,7 +849,7 @@ dps_results: {
  key: "TestAffliction-AllItems-RingofSaviors-1447"
  value: {
   dps: 669.75614
-  tps: 392.37406
+  tps: 392.36846
   dtps: 8.58658
   hps: 7.49483
  }
@@ -1046,7 +1046,7 @@ dps_results: {
  key: "TestAffliction-AllItems-ToySoldier-274386"
  value: {
   dps: 667.20412
-  tps: 390.6083
+  tps: 390.60083
   dtps: 8.71618
   hps: 7.49483
  }
