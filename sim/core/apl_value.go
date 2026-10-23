@@ -207,6 +207,12 @@ func (rot *APLRotation) newAPLValueWithContext(config *proto.APLValue, groupVari
 	case *proto.APLValue_SpellIsExpertiseCapped:
 		value = rot.newValueSpellIsExpertiseCapped(config.GetSpellIsExpertiseCapped(), config.Uuid)
 
+	// Talents
+	case *proto.APLValue_TalentIsKnown:
+		value = rot.newValueTalentIsKnown(config.GetTalentIsKnown(), config.Uuid)
+	case *proto.APLValue_TalentRank:
+		value = rot.newValueTalentRank(config.GetTalentRank(), config.Uuid)
+
 	// Auras
 	case *proto.APLValue_AuraIsKnown:
 		value = rot.newValueAuraIsKnown(config.GetAuraIsKnown(), config.Uuid)

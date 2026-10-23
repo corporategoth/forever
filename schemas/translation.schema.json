@@ -6275,6 +6275,32 @@
 									"additionalProperties": false,
 									"required": ["label", "tooltip"]
 								},
+								"talent_known": {
+									"type": "object",
+									"properties": {
+										"label": {
+											"type": "string"
+										},
+										"tooltip": {
+											"type": "string"
+										}
+									},
+									"additionalProperties": false,
+									"required": ["label", "tooltip"]
+								},
+								"talent_rank": {
+									"type": "object",
+									"properties": {
+										"label": {
+											"type": "string"
+										},
+										"tooltip": {
+											"type": "string"
+										}
+									},
+									"additionalProperties": false,
+									"required": ["label", "tooltip"]
+								},
 								"current_cost": {
 									"type": "object",
 									"properties": {
@@ -7319,6 +7345,8 @@
 								"time_since_last_auto",
 								"wand",
 								"spell_known",
+								"talent_known",
+								"talent_rank",
 								"current_cost",
 								"can_cast",
 								"is_hit_capped",
@@ -7748,6 +7776,12 @@
 										},
 										"spells_with_travelTime": {
 											"type": "string"
+										},
+										"talents": {
+											"type": "string"
+										},
+										"talent_ranks": {
+											"type": "string"
 										}
 									},
 									"additionalProperties": false,
@@ -7766,7 +7800,9 @@
 										"friendly_spells",
 										"expected_dot_spells",
 										"expected_damage_spells",
-										"spells_with_travelTime"
+										"spells_with_travelTime",
+										"talents",
+										"talent_ranks"
 									]
 								},
 								"field_configs": {

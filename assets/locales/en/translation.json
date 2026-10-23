@@ -1778,6 +1778,14 @@
 					"label": "Spell Known",
 					"tooltip": "<b>True</b> if the spell is currently known, otherwise <b>False</b>."
 				},
+				"talent_known": {
+					"label": "Talent Known",
+					"tooltip": "<b>True</b> if the talent has at least the chosen rank, otherwise <b>False</b>."
+				},
+				"talent_rank": {
+					"label": "Talent Rank",
+					"tooltip": "The rank the player holds in the talent, <b>0</b> without points."
+				},
 				"current_cost": {
 					"label": "Current Cost",
 					"tooltip": "Returns current resource cost of spell"
@@ -2179,7 +2187,9 @@
 					"friendly_spells": "Friendly Spell",
 					"expected_dot_spells": "DoT Spell",
 					"expected_damage_spells": "Damage Spell",
-					"spells_with_travelTime": "Spell"
+					"spells_with_travelTime": "Spell",
+					"talents": "Talent",
+					"talent_ranks": "Talent"
 				},
 				"field_configs": {
 					"type": "Type",

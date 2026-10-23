@@ -97,6 +97,8 @@ import {
 	APLValueSpellTimeToCharge,
 	APLValueSpellTimeToReady,
 	APLValueSpellTravelTime,
+	APLValueTalentIsKnown,
+	APLValueTalentRank,
 	APLValueTargetIsMobType,
 	APLValueTimeToNextEnergyTick,
 	APLValueTotemRemainingTime,
@@ -748,6 +750,22 @@ export const valueKinds: { [f in ValidAPLValueKind]: ValueKindModel<APLValueImpl
 		newValue: APLValueSpellExpectedDpet.create,
 		includeIf: (_: Player<any>, isPrepull: boolean) => !isPrepull,
 		fields: [unitFieldConfig('targetUnit', 'targets'), actionIdFieldConfig('spellId', 'expected_damage_spells', '')],
+	}),
+
+	// Talents
+	talentIsKnown: inputBuilder({
+		label: i18n.t('rotation_tab.apl.values.talent_known.label'),
+		submenu: ['talents'],
+		shortDescription: i18n.t('rotation_tab.apl.values.talent_known.tooltip'),
+		newValue: APLValueTalentIsKnown.create,
+		fields: [actionIdFieldConfig('talentId', 'talents', '')],
+	}),
+	talentRank: inputBuilder({
+		label: i18n.t('rotation_tab.apl.values.talent_rank.label'),
+		submenu: ['talents'],
+		shortDescription: i18n.t('rotation_tab.apl.values.talent_rank.tooltip'),
+		newValue: APLValueTalentRank.create,
+		fields: [actionIdFieldConfig('talentId', 'talent_ranks', '')],
 	}),
 
 	// Auras
