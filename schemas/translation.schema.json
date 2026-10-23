@@ -804,6 +804,9 @@
 						"health": {
 							"type": "string"
 						},
+						"hp5": {
+							"type": "string"
+						},
 						"mana": {
 							"type": "string"
 						},
@@ -1014,6 +1017,7 @@
 						"bonus_armor",
 						"armor_no_mods",
 						"health",
+						"hp5",
 						"mana",
 						"mp5",
 						"main_hand_dps",
