@@ -276,3 +276,39 @@ func TestHealthRegenAfterMaxHealthDrops(t *testing.T) {
 		t.Errorf("Health Regen metric %v events of %v health after the buff fades, want none", metrics.Events, metrics.ActualGain)
 	}
 }
+
+func damageTakenMetrics(unit *core.Unit) *proto.ResourceMetrics {
+	for _, metrics := range unit.Metrics.ToProto().Resources {
+		if metrics.Id.GetOtherId() == proto.OtherAction_OtherActionDamageTaken {
+			return metrics
+		}
+	}
+	return nil
+}
+
+// A raise of 3000 maximum health that fades takes 3000 from current health once, then lowers the
+// maximum: at full health the unit ends at its old maximum; hit for 2000 in between, it ends 2000 below it.
+func TestHealthRegenMaxHealthRaiseFades(t *testing.T) {
+	for _, hit := range []float64{0, 2000} {
+		sim, owner := setupHealthRegenSim()
+		metrics := owner.NewHealthMetrics(core.ActionID{SpellID: 910703})
+		baseMax := owner.MaxHealth()
+
+		owner.UpdateMaxHealth(sim, 3000, metrics)
+		if owner.MaxHealth() != baseMax+3000 || owner.CurrentHealth() != baseMax+3000 {
+			t.Fatalf("after the raise, health %v of %v, want %v of %v", owner.CurrentHealth(), owner.MaxHealth(), baseMax+3000, baseMax+3000)
+		}
+		if hit > 0 {
+			owner.RemoveHealth(sim, hit)
+		}
+
+		owner.UpdateMaxHealth(sim, -3000, metrics)
+		if got, want := owner.CurrentHealth(), baseMax-hit; got != want || owner.MaxHealth() != baseMax {
+			t.Errorf("hit for %v, health %v of %v once the raise fades, want %v of %v", hit, got, owner.MaxHealth(), want, baseMax)
+		}
+		taken := damageTakenMetrics(&owner.Unit)
+		if wantEvents := int32(1 + min(hit, 1)); taken == nil || taken.Events != wantEvents || taken.Gain != -(3000+hit) {
+			t.Errorf("hit for %v, damage taken metric %v, want %v events totalling %v", hit, taken, wantEvents, 3000+hit)
+		}
+	}
+}
