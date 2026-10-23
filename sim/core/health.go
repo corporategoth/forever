@@ -10,8 +10,8 @@ import (
 // Threat per point of health a heal restores, before the spell's and the unit's threat multipliers.
 const ThreatPerHealingDone = 0.5
 
-// The game's regen timer runs every 2.02 s from the pull, never during the prepull, and each tick
-// credits 2 s of HP5.
+// Regen ticks every 2.02 s, the game's measured timer, counted from the pull and never in the
+// prepull; each tick credits 2 s of HP5.
 const healthRegenTickDuration = time.Millisecond * 2020
 
 type healthBar struct {

@@ -190,6 +190,26 @@ func TestHealthRegenStartsWhenHP5Gained(t *testing.T) {
 	}
 }
 
+// HP5 lost at 3 s credits nothing at 4.04 s; HP5 regained at 5 s credits from the 6.06 s tick.
+func TestHealthRegenSleepsWhenHP5Lost(t *testing.T) {
+	sim, owner := setupHealthRegenSim()
+	sim.Environment.State = core.Constructed
+	aura := owner.NewTemporaryStatsAura("Test HP5", core.ActionID{SpellID: 910701}, stats.Stats{stats.HP5: 10}, core.NeverExpires)
+	sim.Environment.State = core.Finalized
+	aura.Activate(sim)
+	owner.SetCurrentHealthPercent(0.5)
+
+	gained := recordHealthGained(sim, &owner.Unit, healthRegenTick, 3*time.Second, 2*healthRegenTick, 5*time.Second, 3*healthRegenTick-time.Millisecond, 3*healthRegenTick)
+	stepTo(t, sim, 3*time.Second)
+	aura.Deactivate(sim)
+	stepTo(t, sim, 5*time.Second)
+	aura.Activate(sim)
+	stepTo(t, sim, 7*time.Second)
+	if want := []float64{4, 4, 4, 4, 4, 8}; !slices.Equal(gained, want) {
+		t.Errorf("health gained by 2.02 s, 3 s, 4.04 s, 5 s, 6.059 s and 6.06 s: %v, want %v", gained, want)
+	}
+}
+
 // A pet regenerates like a player while summoned and not while away.
 func TestHealthRegenDisabledPet(t *testing.T) {
 	sim, owner := setupHealthRegenSim()

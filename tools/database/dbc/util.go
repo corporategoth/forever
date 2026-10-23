@@ -256,7 +256,9 @@ func EquipSpellFolds(spellID int) bool {
 // it, and reports whether it named one. A FoldStats effect alone adds. A resistance to every magic
 // school is each of the five resistances, a spell whose description says "forms only" gives feral
 // attack power, flat damage done is each stat spelldata.DamageDoneStats names for its mask, and armor
-// penetration and spell piercing count as positive.
+// penetration and spell piercing count as positive. The effect's type and target are not checked: a
+// party area aura (Baron's Scepter 6323's 1292142, 4 health per 5 sec to the party) reaches the sim as
+// the wearer's own stat, and its party reach is not modelled.
 func addEquipAuraStat(out *stats.Stats, effect SpellEffect, value float64) bool {
 	if EquipEffectFold(effect) != FoldStats {
 		return false
@@ -304,8 +306,8 @@ func RangedRatingPercents(mask int, rating float64) map[proto.PseudoStat]float64
 // the two: to outStats the defense skill and flat block value - 24148 (Presence of Might) states
 // A_MOD_SKILL 7 on the Defense skill line and A_MOD_BLOCK_VALUE_FLAT 15 - and to pseudoStats, indexed by
 // proto.PseudoStat and skipped where nil, the percents for hit, crit, block, dodge, parry and attack and
-// cast speed. Only auras on the wearer count: Atiesh's 28142 is a party aura and reaches the sim as a
-// raid buff. A spell EquipSpellFolds leaves to run time adds nothing. A FoldRanged effect adds to the
+// cast speed. Atiesh's 28142 is a party aura and reaches the sim as a raid buff, but an equip aura
+// that addEquipAuraStat folds counts as the wearer's own whatever its target. A spell EquipSpellFolds leaves to run time adds nothing. A FoldRanged effect adds to the
 // ranged percents alone, as the total the character sheet shows.
 func AddEquipSpellStats(outStats *stats.Stats, pseudoStats []float64, spellID int) (addedStats bool, addedPseudoStats bool) {
 	if !EquipSpellFolds(spellID) {
