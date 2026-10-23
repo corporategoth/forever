@@ -10,8 +10,9 @@ import (
 // Threat per point of health a heal restores, before the spell's and the unit's threat multipliers.
 const ThreatPerHealingDone = 0.5
 
-// HP5 is credited every 2 s from the pull, never during the prepull.
-const healthRegenTickDuration = 2 * time.Second
+// The game's regen timer runs every 2.02 s from the pull, never during the prepull, and each tick
+// credits 2 s of HP5.
+const healthRegenTickDuration = time.Millisecond * 2020
 
 type healthBar struct {
 	unit *Unit
@@ -42,7 +43,7 @@ func (hb *healthBar) RunTask(sim *Simulation) time.Duration {
 		return hb.nextHealthTick
 	}
 	if unit.IsEnabled() && !unit.Metrics.Died {
-		hb.GainHealth(sim, hp5*healthRegenTickDuration.Seconds()/5, hb.healthRegenMetrics)
+		hb.GainHealth(sim, hp5*2/5, hb.healthRegenMetrics)
 	}
 	hb.nextHealthTick += healthRegenTickDuration
 	return hb.nextHealthTick

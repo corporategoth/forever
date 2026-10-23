@@ -67,7 +67,7 @@ dps_results: {
  key: "TestAfflictionWrack-AllItems-Admiral'sHat-10030"
  value: {
   dps: 545.27124
-  tps: 311.36164
+  tps: 311.36118
   dtps: 8.5097
   hps: 6.14014
  }
@@ -148,7 +148,7 @@ dps_results: {
  key: "TestAfflictionWrack-AllItems-BristleconeCloak-275833"
  value: {
   dps: 544.71616
-  tps: 311.29614
+  tps: 311.29567
   dtps: 8.3918
   hps: 6.39421
  }
@@ -173,7 +173,7 @@ dps_results: {
  key: "TestAfflictionWrack-AllItems-CloakofFire-14134"
  value: {
   dps: 545.65016
-  tps: 311.72195
+  tps: 311.72148
   dtps: 8.3918
   hps: 6.39421
  }
@@ -279,7 +279,7 @@ dps_results: {
  key: "TestAfflictionWrack-AllItems-Demoniac'sThreads"
  value: {
   dps: 568.76921
-  tps: 325.84478
+  tps: 325.84385
   dtps: 7.88423
   hps: 6.29868
  }
@@ -323,7 +323,7 @@ dps_results: {
  key: "TestAfflictionWrack-AllItems-EarthenSigil-20525"
  value: {
   dps: 556.16733
-  tps: 319.06138
+  tps: 319.06231
   dtps: 8.46266
   hps: 6.43256
  }
@@ -565,7 +565,7 @@ dps_results: {
  key: "TestAfflictionWrack-AllItems-FrozenHeartoftheMountain-249469"
  value: {
   dps: 560.35597
-  tps: 318.8933
+  tps: 318.89283
   dtps: 8.67881
   hps: 6.23175
  }
@@ -592,7 +592,7 @@ dps_results: {
  key: "TestAfflictionWrack-AllItems-GoblinConstructionHelmet-10543"
  value: {
   dps: 545.27124
-  tps: 311.34453
+  tps: 311.34407
   dtps: 8.5097
   hps: 6.14014
  }
@@ -691,7 +691,7 @@ dps_results: {
  key: "TestAfflictionWrack-AllItems-KissoftheSpider-22954"
  value: {
   dps: 565.60126
-  tps: 321.6977
+  tps: 321.69723
   dtps: 8.82201
   hps: 6.27456
  }
@@ -876,7 +876,7 @@ dps_results: {
  key: "TestAfflictionWrack-AllItems-ShardoftheFallenStar-21891"
  value: {
   dps: 557.86975
-  tps: 319.49231
+  tps: 319.49173
   dtps: 8.48618
   hps: 6.5146
  }
@@ -1141,8 +1141,8 @@ dps_results: {
 dps_results: {
  key: "TestAfflictionWrack-Average-Default"
  value: {
-  dps: 571.18135
-  tps: 325.68408
+  dps: 571.16496
+  tps: 325.67335
   dtps: 8.34021
   hps: 6.24272
  }
@@ -1151,7 +1151,7 @@ dps_results: {
  key: "TestAfflictionWrack-Settings-Human-preraid-Wrack-aff_wrack-FullBuffs-20.0yards-LongMultiTarget"
  value: {
   dps: 634.15185
-  tps: 361.31253
+  tps: 361.313
   dtps: 8.25984
   hps: 6.55258
  }
@@ -1202,7 +1202,7 @@ dps_results: {
  key: "TestAfflictionWrack-Settings-Orc-preraid-Wrack-aff_wrack-FullBuffs-20.0yards-LongMultiTarget"
  value: {
   dps: 636.78251
-  tps: 363.4112
+  tps: 363.41167
   dtps: 8.49498
   hps: 6.38377
  }

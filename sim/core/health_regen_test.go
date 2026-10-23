@@ -11,18 +11,26 @@ import (
 	"github.com/wowsims/forever/sim/core/stats"
 )
 
+const healthRegenTick = time.Millisecond * 2020
+
 // The hunter owner with its pets, nothing swinging until the pull; prepull holds the rotation's
 // prepull actions.
 func setupHealthRegenSim(prepull ...*proto.APLPrepullAction) (*core.Simulation, *petOwner) {
+	return setupHealthRegenSimWith(stats.Stats{}, prepull...)
+}
+
+// As setupHealthRegenSim, with bonus on the owner's sheet from the start.
+func setupHealthRegenSimWith(bonus stats.Stats, prepull ...*proto.APLPrepullAction) (*core.Simulation, *petOwner) {
 	sim := core.NewSim(&proto.RaidSimRequest{
 		SimOptions: &proto.SimOptions{RandomSeed: 100},
 		Raid: &proto.Raid{Parties: []*proto.Party{{Players: []*proto.Player{{
-			Name:      "Owner",
-			Race:      proto.Race_RaceHuman,
-			Class:     proto.Class_ClassHunter,
-			Spec:      &proto.Player_Hunter{},
-			Equipment: &proto.EquipmentSpec{},
-			Rotation:  &proto.APLRotation{PrepullActions: prepull},
+			Name:       "Owner",
+			Race:       proto.Race_RaceHuman,
+			Class:      proto.Class_ClassHunter,
+			Spec:       &proto.Player_Hunter{},
+			Equipment:  &proto.EquipmentSpec{},
+			BonusStats: &proto.UnitStats{Stats: bonus.ToProtoArray()},
+			Rotation:   &proto.APLRotation{PrepullActions: prepull},
 		}}}}},
 		Encounter: &proto.Encounter{Targets: []*proto.Target{{Name: "target", Level: 60}}, Duration: 180},
 	}, simsignals.CreateSignals())
@@ -31,6 +39,16 @@ func setupHealthRegenSim(prepull ...*proto.APLPrepullAction) (*core.Simulation, 
 		unit.AutoAttacks.CancelAutoSwing(sim)
 	}
 	return sim, sim.Raid.Parties[0].Players[0].(*petOwner)
+}
+
+// A prepull action at doAt, so the sim starts there.
+func prepullMoveAt(doAt string) *proto.APLPrepullAction {
+	return &proto.APLPrepullAction{
+		DoAtValue: &proto.APLValue{Value: &proto.APLValue_Const{Const: &proto.APLValueConst{Val: doAt}}},
+		Action: &proto.APLAction{Action: &proto.APLAction_Move{Move: &proto.APLActionMove{
+			RangeFromTarget: &proto.APLValue{Value: &proto.APLValue_Const{Const: &proto.APLValueConst{Val: "5"}}},
+		}}},
+	}
 }
 
 // The health the unit gains from now up to each time, read once everything else due then has run.
@@ -56,16 +74,16 @@ func healthRegenMetrics(unit *core.Unit) *proto.ResourceMetrics {
 	return nil
 }
 
-// 10 HP5 credits 4 health on each 2 s tick, the first at 2 s.
-func TestHealthRegenTicksEveryTwoSeconds(t *testing.T) {
+// 10 HP5 credits 4 health on each 2.02 s tick, the first at 2.02 s.
+func TestHealthRegenTicksEvery2020Milliseconds(t *testing.T) {
 	sim, owner := setupHealthRegenSim()
 	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
 	owner.SetCurrentHealthPercent(0.5)
 
-	gained := recordHealthGained(sim, &owner.Unit, 2*time.Second-time.Millisecond, 2*time.Second, 4*time.Second-time.Millisecond, 4*time.Second)
+	gained := recordHealthGained(sim, &owner.Unit, healthRegenTick-time.Millisecond, healthRegenTick, 2*healthRegenTick-time.Millisecond, 2*healthRegenTick)
 	stepTo(t, sim, 5*time.Second)
 	if want := []float64{0, 4, 4, 8}; !slices.Equal(gained, want) {
-		t.Errorf("health gained by 1.999 s, 2 s, 3.999 s and 4 s: %v, want %v", gained, want)
+		t.Errorf("health gained by 2.019 s, 2.02 s, 4.039 s and 4.04 s: %v, want %v", gained, want)
 	}
 
 	metrics := healthRegenMetrics(&owner.Unit)
@@ -77,14 +95,24 @@ func TestHealthRegenTicksEveryTwoSeconds(t *testing.T) {
 	}
 }
 
-// The prepull earns no regen: the first tick still comes at 2 s.
+// HP5 on the sheet from the start ticks from the pull's first tick.
+func TestHealthRegenFromResetHP5(t *testing.T) {
+	sim, owner := setupHealthRegenSimWith(stats.Stats{stats.HP5: 10})
+	if got := owner.GetStat(stats.HP5); got != 10 {
+		t.Fatalf("the owner starts with %v HP5, want 10", got)
+	}
+	owner.SetCurrentHealthPercent(0.5)
+
+	gained := recordHealthGained(sim, &owner.Unit, healthRegenTick-time.Millisecond, healthRegenTick)
+	stepTo(t, sim, 3*time.Second)
+	if want := []float64{0, 4}; !slices.Equal(gained, want) {
+		t.Errorf("health gained by 2.019 s and 2.02 s: %v, want %v", gained, want)
+	}
+}
+
+// The prepull earns no regen: the first tick still comes at 2.02 s.
 func TestHealthRegenNoneBeforeCombat(t *testing.T) {
-	sim, owner := setupHealthRegenSim(&proto.APLPrepullAction{
-		DoAtValue: &proto.APLValue{Value: &proto.APLValue_Const{Const: &proto.APLValueConst{Val: "-1.5s"}}},
-		Action: &proto.APLAction{Action: &proto.APLAction_Move{Move: &proto.APLActionMove{
-			RangeFromTarget: &proto.APLValue{Value: &proto.APLValue_Const{Const: &proto.APLValueConst{Val: "5"}}},
-		}}},
-	})
+	sim, owner := setupHealthRegenSim(prepullMoveAt("-1.5s"))
 	sim.PrePull()
 	if sim.CurrentTime != -1500*time.Millisecond {
 		t.Fatalf("the prepull starts at %v, want -1.5s", sim.CurrentTime)
@@ -92,10 +120,27 @@ func TestHealthRegenNoneBeforeCombat(t *testing.T) {
 	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
 	owner.RemoveHealth(sim, 100)
 
-	gained := recordHealthGained(sim, &owner.Unit, 0, time.Second, 2*time.Second)
+	gained := recordHealthGained(sim, &owner.Unit, 0, time.Second, 2*time.Second, healthRegenTick)
+	stepTo(t, sim, 3*time.Second)
+	if want := []float64{0, 0, 0, 4}; !slices.Equal(gained, want) {
+		t.Errorf("health gained by 0 s, 1 s, 2 s and 2.02 s: %v, want %v", gained, want)
+	}
+}
+
+// HP5 gained more than a tick before the pull still waits for the 2.02 s tick, with none at 0.
+func TestHealthRegenEarlyPrepullGainWaitsForThePull(t *testing.T) {
+	sim, owner := setupHealthRegenSim(prepullMoveAt("-3s"))
+	sim.PrePull()
+	if sim.CurrentTime != -3*time.Second {
+		t.Fatalf("the prepull starts at %v, want -3s", sim.CurrentTime)
+	}
+	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
+	owner.RemoveHealth(sim, 100)
+
+	gained := recordHealthGained(sim, &owner.Unit, 0, healthRegenTick-time.Millisecond, healthRegenTick)
 	stepTo(t, sim, 3*time.Second)
 	if want := []float64{0, 0, 4}; !slices.Equal(gained, want) {
-		t.Errorf("health gained by 0 s, 1 s and 2 s: %v, want %v", gained, want)
+		t.Errorf("health gained by 0 s, 2.019 s and 2.02 s: %v, want %v", gained, want)
 	}
 }
 
@@ -114,20 +159,21 @@ func TestHealthRegenCapsAtMaxHealth(t *testing.T) {
 	}
 }
 
+// A dead unit gains nothing from its HP5.
 func TestHealthRegenStopsAfterDeath(t *testing.T) {
 	sim, owner := setupHealthRegenSim()
 	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
 	owner.RemoveHealth(sim, owner.CurrentHealth())
 	owner.Died(sim)
 
-	gained := recordHealthGained(sim, &owner.Unit, 2*time.Second, 4*time.Second, 10*time.Second)
+	gained := recordHealthGained(sim, &owner.Unit, healthRegenTick, 2*healthRegenTick, 10*time.Second)
 	stepTo(t, sim, 11*time.Second)
 	if want := []float64{0, 0, 0}; !slices.Equal(gained, want) || owner.CurrentHealth() != 0 {
-		t.Errorf("dead, the unit gained %v health by 2 s, 4 s and 10 s, want %v", gained, want)
+		t.Errorf("dead, the unit gained %v health by 2.02 s, 4.04 s and 10 s, want %v", gained, want)
 	}
 }
 
-// HP5 gained at 3 s waits for the 4 s tick; the second before it earns nothing.
+// HP5 gained at 3 s waits for the 4.04 s tick; the time before it earns nothing.
 func TestHealthRegenStartsWhenHP5Gained(t *testing.T) {
 	sim, owner := setupHealthRegenSim()
 	sim.Environment.State = core.Constructed
@@ -135,12 +181,12 @@ func TestHealthRegenStartsWhenHP5Gained(t *testing.T) {
 	sim.Environment.State = core.Finalized
 	owner.SetCurrentHealthPercent(0.5)
 
-	gained := recordHealthGained(sim, &owner.Unit, 3*time.Second, 4*time.Second-time.Millisecond, 4*time.Second, 6*time.Second)
+	gained := recordHealthGained(sim, &owner.Unit, 3*time.Second, 2*healthRegenTick-time.Millisecond, 2*healthRegenTick, 3*healthRegenTick)
 	stepTo(t, sim, 3*time.Second)
 	aura.Activate(sim)
 	stepTo(t, sim, 7*time.Second)
 	if want := []float64{0, 0, 4, 8}; !slices.Equal(gained, want) {
-		t.Errorf("health gained by 3 s, 3.999 s, 4 s and 6 s: %v, want %v", gained, want)
+		t.Errorf("health gained by 3 s, 4.039 s, 4.04 s and 6.06 s: %v, want %v", gained, want)
 	}
 }
 
@@ -155,13 +201,13 @@ func TestHealthRegenDisabledPet(t *testing.T) {
 		pet.SetCurrentHealthPercent(0.5)
 	}
 
-	summoned := recordHealthGained(sim, &owner.pet.Unit, 2*time.Second, 4*time.Second)
-	away := recordHealthGained(sim, &owner.dynamic.Unit, 2*time.Second, 4*time.Second)
+	summoned := recordHealthGained(sim, &owner.pet.Unit, healthRegenTick, 2*healthRegenTick)
+	away := recordHealthGained(sim, &owner.dynamic.Unit, healthRegenTick, 2*healthRegenTick)
 	stepTo(t, sim, 5*time.Second)
 	if want := []float64{4, 8}; !slices.Equal(summoned, want) {
-		t.Errorf("the summoned pet gained %v health by 2 s and 4 s, want %v", summoned, want)
+		t.Errorf("the summoned pet gained %v health by 2.02 s and 4.04 s, want %v", summoned, want)
 	}
 	if want := []float64{0, 0}; !slices.Equal(away, want) {
-		t.Errorf("the pet away gained %v health by 2 s and 4 s, want %v", away, want)
+		t.Errorf("the pet away gained %v health by 2.02 s and 4.04 s, want %v", away, want)
 	}
 }

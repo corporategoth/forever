@@ -323,7 +323,7 @@ dps_results: {
  key: "TestAffliction-AllItems-EarthenSigil-20525"
  value: {
   dps: 682.00345
-  tps: 399.4126
+  tps: 399.41306
   dtps: 8.54974
   hps: 7.49483
  }
@@ -876,7 +876,7 @@ dps_results: {
  key: "TestAffliction-AllItems-ShardoftheFallenStar-21891"
  value: {
   dps: 689.99435
-  tps: 403.24056
+  tps: 403.24103
   dtps: 8.38619
   hps: 7.27021
  }
@@ -1088,7 +1088,7 @@ dps_results: {
  key: "TestAffliction-AllItems-WarmthofForgiveness-23027"
  value: {
   dps: 682.44792
-  tps: 398.64168
+  tps: 398.64261
   dtps: 8.45318
   hps: 7.49483
  }
@@ -1142,7 +1142,7 @@ dps_results: {
  key: "TestAffliction-Average-Default"
  value: {
   dps: 700.23689
-  tps: 408.93382
+  tps: 408.93418
   dtps: 8.51214
   hps: 7.23287
  }
@@ -1151,7 +1151,7 @@ dps_results: {
  key: "TestAffliction-Settings-Human-preraid-Affliction-sm_ruin-FullBuffs-20.0yards-LongMultiTarget"
  value: {
   dps: 892.97412
-  tps: 535.99864
+  tps: 535.99817
   dtps: 8.52929
   hps: 9.6293
  }
@@ -1169,7 +1169,7 @@ dps_results: {
  key: "TestAffliction-Settings-Human-preraid-Affliction-sm_ruin-FullBuffs-20.0yards-ShortSingleTarget"
  value: {
   dps: 699.85334
-  tps: 390.94394
+  tps: 390.94674
   dtps: 12.61199
   hps: 7.34267
  }
@@ -1202,7 +1202,7 @@ dps_results: {
  key: "TestAffliction-Settings-Orc-preraid-Affliction-sm_ruin-FullBuffs-20.0yards-LongMultiTarget"
  value: {
   dps: 882.87674
-  tps: 530.67126
+  tps: 530.67079
   dtps: 8.51685
   hps: 9.71062
  }
@@ -1220,7 +1220,7 @@ dps_results: {
  key: "TestAffliction-Settings-Orc-preraid-Affliction-sm_ruin-FullBuffs-20.0yards-ShortSingleTarget"
  value: {
   dps: 705.33335
-  tps: 394.28036
+  tps: 394.28271
   dtps: 12.61199
   hps: 7.34267
  }
