@@ -382,6 +382,7 @@
 			"mana_tick": "Mana Tick",
 			"energy_tick": "Energy Tick",
 			"focus_tick": "Focus Tick",
+			"health_regen": "Health Regen",
 			"mana_gain": "Mana Gain",
 			"rage_gain": "Rage Gain",
 			"attack": "Attack",

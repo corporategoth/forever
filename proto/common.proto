@@ -784,6 +784,7 @@ enum OtherAction {
 	OtherActionResourcePotion = 24;
 	OtherActionDefensivePotion = 25;
 	OtherActionOffensivePotion = 26;
+	OtherActionHealthRegen = 27;
 }
 
 message ActionID {

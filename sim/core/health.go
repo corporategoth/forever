@@ -10,18 +10,77 @@ import (
 // Threat per point of health a heal restores, before the spell's and the unit's threat multipliers.
 const ThreatPerHealingDone = 0.5
 
+// HP5 is credited every 2 s from the pull, never during the prepull.
+const healthRegenTickDuration = 2 * time.Second
+
 type healthBar struct {
 	unit *Unit
 
 	currentHealth float64
 
 	DamageTakenHealthMetrics *ResourceMetrics
+	healthRegenMetrics       *ResourceMetrics
+	nextHealthTick           time.Duration // NeverExpires while the unit has no HP5.
 }
 
 func (unit *Unit) EnableHealthBar() {
 	unit.healthBar = healthBar{
 		unit:                     unit,
 		DamageTakenHealthMetrics: unit.NewHealthMetrics(ActionID{OtherID: proto.OtherAction_OtherActionDamageTaken}),
+		healthRegenMetrics:       unit.NewHealthMetrics(ActionID{OtherID: proto.OtherAction_OtherActionHealthRegen}),
+	}
+}
+
+func (hb *healthBar) RunTask(sim *Simulation) time.Duration {
+	if sim.CurrentTime < hb.nextHealthTick {
+		return hb.nextHealthTick
+	}
+	unit := hb.unit
+	hp5 := unit.GetStat(stats.HP5)
+	if hp5 <= 0 {
+		hb.nextHealthTick = NeverExpires
+		return hb.nextHealthTick
+	}
+	if unit.IsEnabled() && !unit.Metrics.Died {
+		hb.GainHealth(sim, hp5*healthRegenTickDuration.Seconds()/5, hb.healthRegenMetrics)
+	}
+	hb.nextHealthTick += healthRegenTickDuration
+	return hb.nextHealthTick
+}
+
+// Starts the ticks at the pull's first tick, or leaves them asleep until the unit gains HP5.
+func (hb *healthBar) enable(sim *Simulation) {
+	hb.nextHealthTick = NeverExpires
+	if hb.unit.GetStat(stats.HP5) > 0 {
+		hb.nextHealthTick = healthRegenTickDuration
+	}
+	sim.AddTask(hb)
+	sim.RescheduleTask(hb.nextHealthTick)
+}
+
+// Wakes sleeping ticks at the next tick boundary; the part of a tick before it earns nothing.
+func (hb *healthBar) wakeHealthRegen(sim *Simulation) {
+	if hb.nextHealthTick != NeverExpires || hb.unit.GetStat(stats.HP5) <= 0 {
+		return
+	}
+	hb.nextHealthTick = max((sim.CurrentTime/healthRegenTickDuration+1)*healthRegenTickDuration, healthRegenTickDuration)
+	sim.RescheduleTask(hb.nextHealthTick)
+}
+
+func (sim *Simulation) enableHealthTicks() {
+	for _, party := range sim.Raid.Parties {
+		for _, player := range party.Players {
+			character := player.GetCharacter()
+			if character.HasHealthBar() {
+				character.healthBar.enable(sim)
+			}
+
+			for _, petAgent := range character.PetAgents {
+				if pet := petAgent.GetPet(); pet.HasHealthBar() {
+					pet.healthBar.enable(sim)
+				}
+			}
+		}
 	}
 }
 

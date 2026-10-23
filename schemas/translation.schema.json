@@ -1364,6 +1364,9 @@
 						"focus_tick": {
 							"type": "string"
 						},
+						"health_regen": {
+							"type": "string"
+						},
 						"mana_gain": {
 							"type": "string"
 						},
@@ -1402,6 +1405,7 @@
 						"mana_tick",
 						"energy_tick",
 						"focus_tick",
+						"health_regen",
 						"mana_gain",
 						"rage_gain",
 						"attack",
