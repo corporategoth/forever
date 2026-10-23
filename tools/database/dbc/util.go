@@ -421,6 +421,8 @@ func ConvertEffectAuraToStatIndex(effectAura EffectAuraType, effectMisc int) pro
 		return proto.Stat_StatBlockValue
 	case dbcenums.A_MOD_POWER_REGEN:
 		return proto.Stat_StatMP5
+	case dbcenums.A_MOD_HEALTH_REGEN_IN_COMBAT:
+		return proto.Stat_StatHP5
 	default:
 		return -1
 	}
