@@ -13,14 +13,10 @@ import (
 
 const healthRegenTick = time.Millisecond * 2020
 
-// The hunter owner with its pets, nothing swinging until the pull; prepull holds the rotation's
-// prepull actions.
-func setupHealthRegenSim(prepull ...*proto.APLPrepullAction) (*core.Simulation, *petOwner) {
-	return setupHealthRegenSimWith(stats.Stats{}, prepull...)
-}
-
-// As setupHealthRegenSim, with bonus on the owner's sheet from the start.
-func setupHealthRegenSimWith(bonus stats.Stats, prepull ...*proto.APLPrepullAction) (*core.Simulation, *petOwner) {
+// The hunter owner with its pets and hp5 HP5 on its sheet, nothing swinging until the pull; prepull
+// holds the rotation's prepull actions.
+func setupHealthRegenSim(t *testing.T, hp5 float64, prepull ...*proto.APLPrepullAction) (*core.Simulation, *petOwner) {
+	t.Helper()
 	sim := core.NewSim(&proto.RaidSimRequest{
 		SimOptions: &proto.SimOptions{RandomSeed: 100},
 		Raid: &proto.Raid{Parties: []*proto.Party{{Players: []*proto.Player{{
@@ -29,7 +25,7 @@ func setupHealthRegenSimWith(bonus stats.Stats, prepull ...*proto.APLPrepullActi
 			Class:      proto.Class_ClassHunter,
 			Spec:       &proto.Player_Hunter{},
 			Equipment:  &proto.EquipmentSpec{},
-			BonusStats: &proto.UnitStats{Stats: bonus.ToProtoArray()},
+			BonusStats: &proto.UnitStats{Stats: stats.Stats{stats.HP5: hp5}.ToProtoArray()},
 			Rotation:   &proto.APLRotation{PrepullActions: prepull},
 		}}}}},
 		Encounter: &proto.Encounter{Targets: []*proto.Target{{Name: "target", Level: 60}}, Duration: 180},
@@ -65,19 +61,26 @@ func recordHealthGained(sim *core.Simulation, unit *core.Unit, times ...time.Dur
 	return gained
 }
 
-func healthRegenMetrics(unit *core.Unit) *proto.ResourceMetrics {
+// The unit's metric for the other action, nil if it recorded none.
+func otherActionMetrics(unit *core.Unit, id proto.OtherAction) *proto.ResourceMetrics {
 	for _, metrics := range unit.Metrics.ToProto().Resources {
-		if metrics.Id.GetOtherId() == proto.OtherAction_OtherActionHealthRegen {
+		if metrics.Id.GetOtherId() == id {
 			return metrics
 		}
 	}
 	return nil
 }
 
+// A temporary stats aura on the owner; auras can only be built while the sim is being constructed.
+func newTestStatsAura(sim *core.Simulation, owner *petOwner, name string, spellID int32, bonus stats.Stats) *core.StatBuffAura {
+	defer func(state core.EnvironmentState) { sim.Environment.State = state }(sim.Environment.State)
+	sim.Environment.State = core.Constructed
+	return owner.NewTemporaryStatsAura(name, core.ActionID{SpellID: spellID}, bonus, core.NeverExpires)
+}
+
 // 10 HP5 credits 4 health on each 2.02 s tick, the first at 2.02 s.
 func TestHealthRegenTicksEvery2020Milliseconds(t *testing.T) {
-	sim, owner := setupHealthRegenSim()
-	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
+	sim, owner := setupHealthRegenSim(t, 10)
 	owner.SetCurrentHealthPercent(0.5)
 
 	gained := recordHealthGained(sim, &owner.Unit, healthRegenTick-time.Millisecond, healthRegenTick, 2*healthRegenTick-time.Millisecond, 2*healthRegenTick)
@@ -86,7 +89,7 @@ func TestHealthRegenTicksEvery2020Milliseconds(t *testing.T) {
 		t.Errorf("health gained by 2.019 s, 2.02 s, 4.039 s and 4.04 s: %v, want %v", gained, want)
 	}
 
-	metrics := healthRegenMetrics(&owner.Unit)
+	metrics := otherActionMetrics(&owner.Unit, proto.OtherAction_OtherActionHealthRegen)
 	if metrics == nil {
 		t.Fatal("no Health Regen health metric")
 	}
@@ -95,74 +98,41 @@ func TestHealthRegenTicksEvery2020Milliseconds(t *testing.T) {
 	}
 }
 
-// HP5 on the sheet from the start ticks from the pull's first tick.
-func TestHealthRegenFromResetHP5(t *testing.T) {
-	sim, owner := setupHealthRegenSimWith(stats.Stats{stats.HP5: 10})
-	if got := owner.GetStat(stats.HP5); got != 10 {
-		t.Fatalf("the owner starts with %v HP5, want 10", got)
-	}
-	owner.SetCurrentHealthPercent(0.5)
-
-	gained := recordHealthGained(sim, &owner.Unit, healthRegenTick-time.Millisecond, healthRegenTick)
-	stepTo(t, sim, 3*time.Second)
-	if want := []float64{0, 4}; !slices.Equal(gained, want) {
-		t.Errorf("health gained by 2.019 s and 2.02 s: %v, want %v", gained, want)
-	}
-}
-
-// The prepull earns no regen: the first tick still comes at 2.02 s.
+// HP5 gained in the prepull, even more than a tick before the pull, waits for the 2.02 s tick, with none at 0.
 func TestHealthRegenNoneBeforeCombat(t *testing.T) {
-	sim, owner := setupHealthRegenSim(prepullMoveAt("-1.5s"))
-	sim.PrePull()
-	if sim.CurrentTime != -1500*time.Millisecond {
-		t.Fatalf("the prepull starts at %v, want -1.5s", sim.CurrentTime)
-	}
-	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
-	owner.RemoveHealth(sim, 100)
+	for _, start := range []time.Duration{-1500 * time.Millisecond, -3 * time.Second} {
+		sim, owner := setupHealthRegenSim(t, 10, prepullMoveAt(start.String()))
+		sim.PrePull()
+		if sim.CurrentTime != start {
+			t.Fatalf("the prepull starts at %v, want %v", sim.CurrentTime, start)
+		}
+		owner.RemoveHealth(sim, 100)
 
-	gained := recordHealthGained(sim, &owner.Unit, 0, time.Second, 2*time.Second, healthRegenTick)
-	stepTo(t, sim, 3*time.Second)
-	if want := []float64{0, 0, 0, 4}; !slices.Equal(gained, want) {
-		t.Errorf("health gained by 0 s, 1 s, 2 s and 2.02 s: %v, want %v", gained, want)
-	}
-}
-
-// HP5 gained more than a tick before the pull still waits for the 2.02 s tick, with none at 0.
-func TestHealthRegenEarlyPrepullGainWaitsForThePull(t *testing.T) {
-	sim, owner := setupHealthRegenSim(prepullMoveAt("-3s"))
-	sim.PrePull()
-	if sim.CurrentTime != -3*time.Second {
-		t.Fatalf("the prepull starts at %v, want -3s", sim.CurrentTime)
-	}
-	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
-	owner.RemoveHealth(sim, 100)
-
-	gained := recordHealthGained(sim, &owner.Unit, 0, healthRegenTick-time.Millisecond, healthRegenTick)
-	stepTo(t, sim, 3*time.Second)
-	if want := []float64{0, 0, 4}; !slices.Equal(gained, want) {
-		t.Errorf("health gained by 0 s, 2.019 s and 2.02 s: %v, want %v", gained, want)
+		gained := recordHealthGained(sim, &owner.Unit, 0, time.Second, 2*time.Second, healthRegenTick-time.Millisecond, healthRegenTick)
+		stepTo(t, sim, 3*time.Second)
+		if want := []float64{0, 0, 0, 0, 4}; !slices.Equal(gained, want) {
+			t.Errorf("prepull from %v, health gained by 0 s, 1 s, 2 s, 2.019 s and 2.02 s: %v, want %v", start, gained, want)
+		}
 	}
 }
 
 // A tick credits only up to the maximum; the metric records the share that landed.
 func TestHealthRegenCapsAtMaxHealth(t *testing.T) {
-	sim, owner := setupHealthRegenSim()
-	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
+	sim, owner := setupHealthRegenSim(t, 10)
 	owner.RemoveHealth(sim, 1)
 
 	stepTo(t, sim, 3*time.Second)
 	if got, want := owner.CurrentHealth(), owner.MaxHealth(); got != want {
 		t.Errorf("health %v after the tick, want the maximum %v", got, want)
 	}
-	if metrics := healthRegenMetrics(&owner.Unit); metrics == nil || metrics.ActualGain != 1 {
+	if metrics := otherActionMetrics(&owner.Unit, proto.OtherAction_OtherActionHealthRegen); metrics == nil || metrics.ActualGain != 1 {
 		t.Errorf("Health Regen metric %v, want 1 health gained", metrics)
 	}
 }
 
 // A dead unit gains nothing from its HP5.
 func TestHealthRegenStopsAfterDeath(t *testing.T) {
-	sim, owner := setupHealthRegenSim()
-	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
+	sim, owner := setupHealthRegenSim(t, 10)
 	owner.RemoveHealth(sim, owner.CurrentHealth())
 	owner.Died(sim)
 
@@ -175,10 +145,8 @@ func TestHealthRegenStopsAfterDeath(t *testing.T) {
 
 // HP5 gained at 3 s waits for the 4.04 s tick; the time before it earns nothing.
 func TestHealthRegenStartsWhenHP5Gained(t *testing.T) {
-	sim, owner := setupHealthRegenSim()
-	sim.Environment.State = core.Constructed
-	aura := owner.NewTemporaryStatsAura("Test HP5", core.ActionID{SpellID: 910700}, stats.Stats{stats.HP5: 10}, core.NeverExpires)
-	sim.Environment.State = core.Finalized
+	sim, owner := setupHealthRegenSim(t, 0)
+	aura := newTestStatsAura(sim, owner, "Test HP5", 910700, stats.Stats{stats.HP5: 10})
 	owner.SetCurrentHealthPercent(0.5)
 
 	gained := recordHealthGained(sim, &owner.Unit, 3*time.Second, 2*healthRegenTick-time.Millisecond, 2*healthRegenTick, 3*healthRegenTick)
@@ -192,10 +160,8 @@ func TestHealthRegenStartsWhenHP5Gained(t *testing.T) {
 
 // HP5 lost at 3 s credits nothing at 4.04 s; HP5 regained at 5 s credits from the 6.06 s tick.
 func TestHealthRegenSleepsWhenHP5Lost(t *testing.T) {
-	sim, owner := setupHealthRegenSim()
-	sim.Environment.State = core.Constructed
-	aura := owner.NewTemporaryStatsAura("Test HP5", core.ActionID{SpellID: 910701}, stats.Stats{stats.HP5: 10}, core.NeverExpires)
-	sim.Environment.State = core.Finalized
+	sim, owner := setupHealthRegenSim(t, 0)
+	aura := newTestStatsAura(sim, owner, "Test HP5", 910701, stats.Stats{stats.HP5: 10})
 	aura.Activate(sim)
 	owner.SetCurrentHealthPercent(0.5)
 
@@ -212,7 +178,7 @@ func TestHealthRegenSleepsWhenHP5Lost(t *testing.T) {
 
 // A pet regenerates like a player while summoned and not while away.
 func TestHealthRegenDisabledPet(t *testing.T) {
-	sim, owner := setupHealthRegenSim()
+	sim, owner := setupHealthRegenSim(t, 0)
 	if !owner.pet.IsEnabled() || owner.dynamic.IsEnabled() {
 		t.Fatalf("the true pet is enabled %v and the dynamic pet %v, want only the true pet", owner.pet.IsEnabled(), owner.dynamic.IsEnabled())
 	}
@@ -234,11 +200,10 @@ func TestHealthRegenDisabledPet(t *testing.T) {
 
 // At full health a tick credits nothing and records no event; the first tick after damage credits.
 func TestHealthRegenSkipsTicksAtFullHealth(t *testing.T) {
-	sim, owner := setupHealthRegenSim()
-	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
+	sim, owner := setupHealthRegenSim(t, 10)
 
 	stepTo(t, sim, 7*time.Second)
-	if metrics := healthRegenMetrics(&owner.Unit); metrics != nil {
+	if metrics := otherActionMetrics(&owner.Unit, proto.OtherAction_OtherActionHealthRegen); metrics != nil {
 		t.Errorf("Health Regen metric at full health through 6.06 s: %v events, want none", metrics.Events)
 	}
 
@@ -248,18 +213,15 @@ func TestHealthRegenSkipsTicksAtFullHealth(t *testing.T) {
 	if want := []float64{0, 4}; !slices.Equal(gained, want) {
 		t.Errorf("health gained by 8.079 s and 8.08 s: %v, want %v", gained, want)
 	}
-	if metrics := healthRegenMetrics(&owner.Unit); metrics == nil || metrics.Events != 1 || metrics.ActualGain != 4 {
+	if metrics := otherActionMetrics(&owner.Unit, proto.OtherAction_OtherActionHealthRegen); metrics == nil || metrics.Events != 1 || metrics.ActualGain != 4 {
 		t.Errorf("Health Regen metric %v, want 1 event of 4 health", metrics)
 	}
 }
 
 // Losing a Stamina buff caps current health at the lower maximum at once, so the next tick gains nothing.
 func TestHealthRegenAfterMaxHealthDrops(t *testing.T) {
-	sim, owner := setupHealthRegenSim()
-	sim.Environment.State = core.Constructed
-	aura := owner.NewTemporaryStatsAura("Test Stamina", core.ActionID{SpellID: 910702}, stats.Stats{stats.Stamina: 100}, core.NeverExpires)
-	sim.Environment.State = core.Finalized
-	owner.AddStatsDynamic(sim, stats.Stats{stats.HP5: 10})
+	sim, owner := setupHealthRegenSim(t, 10)
+	aura := newTestStatsAura(sim, owner, "Test Stamina", 910702, stats.Stats{stats.Stamina: 100})
 	baseMax := owner.MaxHealth()
 	aura.Activate(sim)
 	if owner.MaxHealth() <= baseMax {
@@ -272,25 +234,19 @@ func TestHealthRegenAfterMaxHealthDrops(t *testing.T) {
 		t.Errorf("health %v once the buff fades, want the maximum %v", got, want)
 	}
 	stepTo(t, sim, 3*time.Second)
-	if metrics := healthRegenMetrics(&owner.Unit); metrics != nil {
+	if metrics := otherActionMetrics(&owner.Unit, proto.OtherAction_OtherActionHealthRegen); metrics != nil {
 		t.Errorf("Health Regen metric %v events of %v health after the buff fades, want none", metrics.Events, metrics.ActualGain)
 	}
-}
-
-func damageTakenMetrics(unit *core.Unit) *proto.ResourceMetrics {
-	for _, metrics := range unit.Metrics.ToProto().Resources {
-		if metrics.Id.GetOtherId() == proto.OtherAction_OtherActionDamageTaken {
-			return metrics
-		}
-	}
-	return nil
 }
 
 // A raise of 3000 maximum health that fades takes 3000 from current health once, then lowers the
 // maximum: at full health the unit ends at its old maximum; hit for 2000 in between, it ends 2000 below it.
 func TestHealthRegenMaxHealthRaiseFades(t *testing.T) {
-	for _, hit := range []float64{0, 2000} {
-		sim, owner := setupHealthRegenSim()
+	for _, tc := range []struct {
+		hit    float64
+		events int32
+	}{{0, 1}, {2000, 2}} {
+		sim, owner := setupHealthRegenSim(t, 0)
 		metrics := owner.NewHealthMetrics(core.ActionID{SpellID: 910703})
 		baseMax := owner.MaxHealth()
 
@@ -298,17 +254,17 @@ func TestHealthRegenMaxHealthRaiseFades(t *testing.T) {
 		if owner.MaxHealth() != baseMax+3000 || owner.CurrentHealth() != baseMax+3000 {
 			t.Fatalf("after the raise, health %v of %v, want %v of %v", owner.CurrentHealth(), owner.MaxHealth(), baseMax+3000, baseMax+3000)
 		}
-		if hit > 0 {
-			owner.RemoveHealth(sim, hit)
+		if tc.hit > 0 {
+			owner.RemoveHealth(sim, tc.hit)
 		}
 
 		owner.UpdateMaxHealth(sim, -3000, metrics)
-		if got, want := owner.CurrentHealth(), baseMax-hit; got != want || owner.MaxHealth() != baseMax {
-			t.Errorf("hit for %v, health %v of %v once the raise fades, want %v of %v", hit, got, owner.MaxHealth(), want, baseMax)
+		if got, want := owner.CurrentHealth(), baseMax-tc.hit; got != want || owner.MaxHealth() != baseMax {
+			t.Errorf("hit for %v, health %v of %v once the raise fades, want %v of %v", tc.hit, got, owner.MaxHealth(), want, baseMax)
 		}
-		taken := damageTakenMetrics(&owner.Unit)
-		if wantEvents := int32(1 + min(hit, 1)); taken == nil || taken.Events != wantEvents || taken.Gain != -(3000+hit) {
-			t.Errorf("hit for %v, damage taken metric %v, want %v events totalling %v", hit, taken, wantEvents, 3000+hit)
+		taken := otherActionMetrics(&owner.Unit, proto.OtherAction_OtherActionDamageTaken)
+		if taken == nil || taken.Events != tc.events || taken.Gain != -(3000+tc.hit) {
+			t.Errorf("hit for %v, damage taken metric %v, want %v events totalling %v", tc.hit, taken, tc.events, 3000+tc.hit)
 		}
 	}
 }

@@ -61,23 +61,14 @@ func (hb *healthBar) wakeHealthRegen(sim *Simulation) {
 	if hb.nextHealthTick != NeverExpires || hb.unit.GetStat(stats.HP5) <= 0 {
 		return
 	}
-	hb.nextHealthTick = max((sim.CurrentTime/healthRegenTickDuration+1)*healthRegenTickDuration, healthRegenTickDuration)
+	hb.nextHealthTick = (max(sim.CurrentTime, 0)/healthRegenTickDuration + 1) * healthRegenTickDuration
 	sim.RescheduleTask(hb.nextHealthTick)
 }
 
 func (sim *Simulation) enableHealthTicks() {
-	for _, party := range sim.Raid.Parties {
-		for _, player := range party.Players {
-			character := player.GetCharacter()
-			if character.HasHealthBar() {
-				character.healthBar.enable(sim)
-			}
-
-			for _, petAgent := range character.PetAgents {
-				if pet := petAgent.GetPet(); pet.HasHealthBar() {
-					pet.healthBar.enable(sim)
-				}
-			}
+	for _, unit := range sim.Raid.AllUnits {
+		if unit.HasHealthBar() {
+			unit.healthBar.enable(sim)
 		}
 	}
 }

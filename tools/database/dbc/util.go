@@ -256,9 +256,8 @@ func EquipSpellFolds(spellID int) bool {
 // it, and reports whether it named one. A FoldStats effect alone adds. A resistance to every magic
 // school is each of the five resistances, a spell whose description says "forms only" gives feral
 // attack power, flat damage done is each stat spelldata.DamageDoneStats names for its mask, and armor
-// penetration and spell piercing count as positive. The effect's type and target are not checked: a
-// party area aura (Baron's Scepter 6323's 1292142, 4 health per 5 sec to the party) reaches the sim as
-// the wearer's own stat, and its party reach is not modelled.
+// penetration and spell piercing count as positive. The effect's type and target are not checked, so a
+// party area aura counts as the wearer's own stat.
 func addEquipAuraStat(out *stats.Stats, effect SpellEffect, value float64) bool {
 	if EquipEffectFold(effect) != FoldStats {
 		return false
