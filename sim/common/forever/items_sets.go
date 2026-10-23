@@ -45,6 +45,8 @@ var ItemSetImperialPlate = core.NewItemSet(core.ItemSet{
 	},
 })
 
+var blessedPlateRegen = spelldata.MustFind(1302375) // 4pc: 20 health every 5 sec to the party
+
 // Blacksmithing - Plate
 // https://www.wowhead.com/forever/item-set=1968/blessed-plate
 //
@@ -67,7 +69,7 @@ var ItemSetBlessedPlate = core.NewItemSet(core.ItemSet{
 				AttachStatBuff(stats.Strength, 20).
 				ExposeToAPL(1252009)
 		},
-		4: shared.ParsedSetBonus(spelldata.MustFind(1302375)),
+		4: shared.ParsedSetBonus(blessedPlateRegen),
 		5: func(_ core.Agent, setBonusAura *core.Aura) {
 			// Improves your chance to hit by 2%.
 			setBonusAura.

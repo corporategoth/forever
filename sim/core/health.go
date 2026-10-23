@@ -21,7 +21,7 @@ type healthBar struct {
 
 	DamageTakenHealthMetrics *ResourceMetrics
 	healthRegenMetrics       *ResourceMetrics
-	nextHealthTick           time.Duration // NeverExpires while the unit has no HP5.
+	nextHealthTick           time.Duration // NeverExpires once a tick finds no HP5, until HP5 returns.
 }
 
 func (unit *Unit) EnableHealthBar() {
@@ -49,14 +49,11 @@ func (hb *healthBar) RunTask(sim *Simulation) time.Duration {
 	return hb.nextHealthTick
 }
 
-// Starts the ticks at the pull's first tick, or leaves them asleep until the unit gains HP5.
+// Starts the ticks asleep and wakes them at the pull's first tick if the unit has HP5.
 func (hb *healthBar) enable(sim *Simulation) {
 	hb.nextHealthTick = NeverExpires
-	if hb.unit.GetStat(stats.HP5) > 0 {
-		hb.nextHealthTick = healthRegenTickDuration
-	}
 	sim.AddTask(hb)
-	sim.RescheduleTask(hb.nextHealthTick)
+	hb.wakeHealthRegen(sim)
 }
 
 // Wakes sleeping ticks at the next tick boundary; the part of a tick before it earns nothing.
