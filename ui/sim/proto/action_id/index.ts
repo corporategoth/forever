@@ -577,6 +577,16 @@ export class ActionId {
 					name += ' (Mace)';
 				}
 				break;
+			case 'Demonic Rune':
+				if (tag) {
+					name += ' (Damage)';
+				}
+				break;
+			case 'Judgement of Fury':
+				if (this.spellId === 20232) {
+					name += ' (Taunt)';
+				}
+				break;
 			default:
 				if (tag === -1) {
 					name += ` (${i18n.t('common.action_tags.external')})`;

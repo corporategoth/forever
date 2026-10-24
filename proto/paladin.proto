@@ -69,8 +69,33 @@ message PaladinTalents {
 message PaladinOptions {
 }
 
+// The auras a paladin turns on before the pull.
+enum PaladinAura {
+	AuraUnknown          = 0; // Not a choice: the simple rotation keeps the aura its APL casts.
+	RetributionAura      = 1;
+	DevotionAura         = 2;
+	ConcentrationAura    = 3;
+	FireResistanceAura   = 4;
+	FrostResistanceAura  = 5;
+	ShadowResistanceAura = 6;
+}
+
+// The seals whose Judgement a raid assigns a paladin to keep on the target.
+enum PaladinSeal {
+	SealNone          = 0;
+	SealOfTheCrusader = 1;
+	SealOfLight       = 2;
+	SealOfWisdom      = 3;
+	SealOfJustice     = 4;
+}
+
 message RetributionPaladin {
-	message Rotation {}
+	message Rotation {
+		PaladinAura aura = 1;
+		PaladinSeal assigned_seal = 2; // Cast before the pull and judged on the way in; SealNone skips it.
+		int32 pull_range = 3;          // Where the paladin stands at the pull, in yards. 0 is 25 yd, and below 11 is 11.
+		int32 delay_major_cds = 4;     // Seconds into the fight before the other cooldowns are cast.
+	}
 
 	message Options {
 		PaladinOptions class_options = 1;

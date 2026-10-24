@@ -8295,6 +8295,75 @@
 							"additionalProperties": false,
 							"required": ["playstyle", "pull_range", "time_to_weave", "use_aimed", "use_multi", "use_arcane", "use_sniper", "use_hawk"]
 						},
+						"paladin": {
+							"type": "object",
+							"properties": {
+								"retribution": {
+									"type": "object",
+									"properties": {
+										"aura": {
+											"type": "object",
+											"properties": {
+												"label": {
+													"type": "string"
+												},
+												"tooltip": {
+													"type": "string"
+												}
+											},
+											"additionalProperties": false,
+											"required": ["label", "tooltip"]
+										},
+										"assigned_seal": {
+											"type": "object",
+											"properties": {
+												"label": {
+													"type": "string"
+												},
+												"tooltip": {
+													"type": "string"
+												},
+												"none": {
+													"type": "string"
+												}
+											},
+											"additionalProperties": false,
+											"required": ["label", "tooltip", "none"]
+										},
+										"pull_range": {
+											"type": "object",
+											"properties": {
+												"label": {
+													"type": "string"
+												},
+												"tooltip": {
+													"type": "string"
+												}
+											},
+											"additionalProperties": false,
+											"required": ["label", "tooltip"]
+										},
+										"delay_major_cds": {
+											"type": "object",
+											"properties": {
+												"label": {
+													"type": "string"
+												},
+												"tooltip": {
+													"type": "string"
+												}
+											},
+											"additionalProperties": false,
+											"required": ["label", "tooltip"]
+										}
+									},
+									"additionalProperties": false,
+									"required": ["aura", "assigned_seal", "pull_range", "delay_major_cds"]
+								}
+							},
+							"additionalProperties": false,
+							"required": ["retribution"]
+						},
 						"warrior": {
 							"type": "object",
 							"properties": {
@@ -8396,7 +8465,7 @@
 						}
 					},
 					"additionalProperties": false,
-					"required": ["rogue", "shaman", "warlock", "hunter", "warrior"]
+					"required": ["rogue", "shaman", "warlock", "hunter", "paladin", "warrior"]
 				}
 			},
 			"additionalProperties": false,
