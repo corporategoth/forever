@@ -2328,6 +2328,27 @@
 					"tooltip": "Sends hawks between Arcane Shots, the two sharing a cooldown."
 				}
 			},
+			"paladin": {
+				"retribution": {
+					"aura": {
+						"label": "Aura",
+						"tooltip": "The aura you turn on before the pull."
+					},
+					"assigned_seal": {
+						"label": "Assigned seal",
+						"tooltip": "The seal whose Judgement the raid assigned you. You cast it before the pull and judge it on your way in, then switch to your own seals. Leave it empty when no Judgement is assigned to you.",
+						"none": "No assigned seal"
+					},
+					"pull_range": {
+						"label": "Starting range (yd)",
+						"tooltip": "Where you stand when the pull starts. From there you walk into melee range, judging on the way. Never less than {{min}} yd, one yard outside Judgement's range."
+					},
+					"delay_major_cds": {
+						"label": "Delay major cooldowns (s)",
+						"tooltip": "How many seconds into the fight to wait before trinkets and other cooldowns are used automatically."
+					}
+				}
+			},
 			"warrior": {
 				"sunder_armor": {
 					"label": "Sunder Armor",
