@@ -1359,10 +1359,58 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestRetribution-Settings-Human-default-Default-default-FullBuffs-25.0yards-LongMultiTarget"
+ value: {
+  dps: 1621.94755
+  tps: 1378.79145
+  dtps: 6.79647
+  hps: 23.02699
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Human-default-Default-default-FullBuffs-25.0yards-LongSingleTarget"
+ value: {
+  dps: 836.43248
+  tps: 719.20813
+  dtps: 7.50912
+  hps: 23.00717
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Human-default-Default-default-FullBuffs-25.0yards-ShortSingleTarget"
+ value: {
+  dps: 849.00653
+  tps: 726.90835
+  dtps: 8.47037
+  hps: 23.53126
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Human-default-Default-default-NoBuffs-25.0yards-LongMultiTarget"
+ value: {
+  dps: 394.86403
+  tps: 473.83684
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Human-default-Default-default-NoBuffs-25.0yards-LongSingleTarget"
+ value: {
+  dps: 299.69034
+  tps: 359.6284
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Human-default-Default-default-NoBuffs-25.0yards-ShortSingleTarget"
+ value: {
+  dps: 358.97275
+  tps: 430.76731
+ }
+}
+dps_results: {
  key: "TestRetribution-Settings-Human-holy_shock-HolyShock-holy_shock-FullBuffs-25.0yards-LongMultiTarget"
  value: {
   dps: 1892.27645
-  tps: 1344.57198
+  tps: 1344.57369
   dtps: 7.44811
   hps: 26.22881
  }
@@ -1371,7 +1419,7 @@ dps_results: {
  key: "TestRetribution-Settings-Human-holy_shock-HolyShock-holy_shock-FullBuffs-25.0yards-LongSingleTarget"
  value: {
   dps: 814.12126
-  tps: 590.22804
+  tps: 590.22918
   dtps: 7.57583
   hps: 26.19018
  }
@@ -1380,7 +1428,7 @@ dps_results: {
  key: "TestRetribution-Settings-Human-holy_shock-HolyShock-holy_shock-FullBuffs-25.0yards-ShortSingleTarget"
  value: {
   dps: 831.78163
-  tps: 601.14119
+  tps: 601.14633
   dtps: 9.15547
   hps: 29.20172
  }
@@ -1388,15 +1436,15 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Settings-Human-holy_shock-HolyShock-holy_shock-NoBuffs-25.0yards-LongMultiTarget"
  value: {
-  dps: 443.71138
-  tps: 443.71138
+  dps: 453.12716
+  tps: 453.12716
  }
 }
 dps_results: {
  key: "TestRetribution-Settings-Human-holy_shock-HolyShock-holy_shock-NoBuffs-25.0yards-LongSingleTarget"
  value: {
-  dps: 276.40762
-  tps: 276.40762
+  dps: 268.68252
+  tps: 268.68252
  }
 }
 dps_results: {
@@ -1407,103 +1455,7 @@ dps_results: {
  }
 }
 dps_results: {
- key: "TestRetribution-Settings-Human-twist_of_light-Default-twist_of_light-FullBuffs-25.0yards-LongMultiTarget"
- value: {
-  dps: 1621.94755
-  tps: 1378.79145
-  dtps: 6.79647
-  hps: 23.02699
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Human-twist_of_light-Default-twist_of_light-FullBuffs-25.0yards-LongSingleTarget"
- value: {
-  dps: 836.43248
-  tps: 719.20813
-  dtps: 7.50912
-  hps: 23.00717
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Human-twist_of_light-Default-twist_of_light-FullBuffs-25.0yards-ShortSingleTarget"
- value: {
-  dps: 849.00653
-  tps: 726.90835
-  dtps: 8.47037
-  hps: 23.53126
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Human-twist_of_light-Default-twist_of_light-NoBuffs-25.0yards-LongMultiTarget"
- value: {
-  dps: 388.22219
-  tps: 465.86663
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Human-twist_of_light-Default-twist_of_light-NoBuffs-25.0yards-LongSingleTarget"
- value: {
-  dps: 292.2442
-  tps: 350.69304
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Human-twist_of_light-Default-twist_of_light-NoBuffs-25.0yards-ShortSingleTarget"
- value: {
-  dps: 358.97275
-  tps: 430.76731
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-FullBuffs-25.0yards-LongMultiTarget"
- value: {
-  dps: 1874.09991
-  tps: 1331.58591
-  dtps: 7.82901
-  hps: 26.22576
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-FullBuffs-25.0yards-LongSingleTarget"
- value: {
-  dps: 807.24581
-  tps: 584.66465
-  dtps: 7.50192
-  hps: 26.17951
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-FullBuffs-25.0yards-ShortSingleTarget"
- value: {
-  dps: 824.72228
-  tps: 594.82075
-  dtps: 9.05048
-  hps: 29.16969
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-NoBuffs-25.0yards-LongMultiTarget"
- value: {
-  dps: 453.95642
-  tps: 453.95642
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-NoBuffs-25.0yards-LongSingleTarget"
- value: {
-  dps: 272.85582
-  tps: 272.85582
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-NoBuffs-25.0yards-ShortSingleTarget"
- value: {
-  dps: 393.04522
-  tps: 393.04522
- }
-}
-dps_results: {
- key: "TestRetribution-Settings-Undead-twist_of_light-Default-twist_of_light-FullBuffs-25.0yards-LongMultiTarget"
+ key: "TestRetribution-Settings-Undead-default-Default-default-FullBuffs-25.0yards-LongMultiTarget"
  value: {
   dps: 1612.71155
   tps: 1371.0044
@@ -1512,7 +1464,7 @@ dps_results: {
  }
 }
 dps_results: {
- key: "TestRetribution-Settings-Undead-twist_of_light-Default-twist_of_light-FullBuffs-25.0yards-LongSingleTarget"
+ key: "TestRetribution-Settings-Undead-default-Default-default-FullBuffs-25.0yards-LongSingleTarget"
  value: {
   dps: 831.81507
   tps: 714.59236
@@ -1521,7 +1473,7 @@ dps_results: {
  }
 }
 dps_results: {
- key: "TestRetribution-Settings-Undead-twist_of_light-Default-twist_of_light-FullBuffs-25.0yards-ShortSingleTarget"
+ key: "TestRetribution-Settings-Undead-default-Default-default-FullBuffs-25.0yards-ShortSingleTarget"
  value: {
   dps: 845.90205
   tps: 723.31246
@@ -1530,24 +1482,72 @@ dps_results: {
  }
 }
 dps_results: {
- key: "TestRetribution-Settings-Undead-twist_of_light-Default-twist_of_light-NoBuffs-25.0yards-LongMultiTarget"
+ key: "TestRetribution-Settings-Undead-default-Default-default-NoBuffs-25.0yards-LongMultiTarget"
  value: {
-  dps: 391.77329
-  tps: 470.12794
+  dps: 386.38391
+  tps: 463.66069
  }
 }
 dps_results: {
- key: "TestRetribution-Settings-Undead-twist_of_light-Default-twist_of_light-NoBuffs-25.0yards-LongSingleTarget"
+ key: "TestRetribution-Settings-Undead-default-Default-default-NoBuffs-25.0yards-LongSingleTarget"
  value: {
-  dps: 297.15859
-  tps: 356.59031
+  dps: 293.2099
+  tps: 351.85188
  }
 }
 dps_results: {
- key: "TestRetribution-Settings-Undead-twist_of_light-Default-twist_of_light-NoBuffs-25.0yards-ShortSingleTarget"
+ key: "TestRetribution-Settings-Undead-default-Default-default-NoBuffs-25.0yards-ShortSingleTarget"
  value: {
-  dps: 357.34271
-  tps: 428.81125
+  dps: 355.69058
+  tps: 426.8287
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-FullBuffs-25.0yards-LongMultiTarget"
+ value: {
+  dps: 1874.09991
+  tps: 1331.58754
+  dtps: 7.82901
+  hps: 26.22576
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-FullBuffs-25.0yards-LongSingleTarget"
+ value: {
+  dps: 807.24581
+  tps: 584.66692
+  dtps: 7.50192
+  hps: 26.17951
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-FullBuffs-25.0yards-ShortSingleTarget"
+ value: {
+  dps: 824.72228
+  tps: 594.82688
+  dtps: 9.05048
+  hps: 29.16969
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-NoBuffs-25.0yards-LongMultiTarget"
+ value: {
+  dps: 447.08888
+  tps: 447.08888
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-NoBuffs-25.0yards-LongSingleTarget"
+ value: {
+  dps: 265.59547
+  tps: 265.59547
+ }
+}
+dps_results: {
+ key: "TestRetribution-Settings-Undead-holy_shock-HolyShock-holy_shock-NoBuffs-25.0yards-ShortSingleTarget"
+ value: {
+  dps: 393.04522
+  tps: 393.04522
  }
 }
 dps_results: {
