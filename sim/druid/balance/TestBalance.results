@@ -1192,8 +1192,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-NightElf-p1-Standard-default-FullBuffs-20.0yards-LongMultiTarget"
  value: {
-  dps: 3614.26953
-  tps: 2552.71162
+  dps: 4813.24438
+  tps: 3393.10986
  }
 }
 dps_results: {
@@ -1214,8 +1214,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-NightElf-p1-Standard-default-NoBuffs-20.0yards-LongMultiTarget"
  value: {
-  dps: 2843.57822
-  tps: 2843.57822
+  dps: 3603.01177
+  tps: 3603.01177
  }
 }
 dps_results: {
@@ -1235,8 +1235,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-NightElf-prebis-Standard-default-FullBuffs-20.0yards-LongMultiTarget"
  value: {
-  dps: 3409.57504
-  tps: 2410.61216
+  dps: 4438.85985
+  tps: 3132.03448
  }
 }
 dps_results: {
@@ -1257,8 +1257,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-NightElf-prebis-Standard-default-NoBuffs-20.0yards-LongMultiTarget"
  value: {
-  dps: 2033.52166
-  tps: 2033.52166
+  dps: 2345.87574
+  tps: 2345.87574
  }
 }
 dps_results: {
@@ -1278,8 +1278,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p1-Standard-default-FullBuffs-20.0yards-LongMultiTarget"
  value: {
-  dps: 3614.11013
-  tps: 2552.59002
+  dps: 4833.35555
+  tps: 3407.17833
  }
 }
 dps_results: {
@@ -1300,8 +1300,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p1-Standard-default-NoBuffs-20.0yards-LongMultiTarget"
  value: {
-  dps: 2837.562
-  tps: 2837.562
+  dps: 3634.5147
+  tps: 3634.5147
  }
 }
 dps_results: {
@@ -1321,8 +1321,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-prebis-Standard-default-FullBuffs-20.0yards-LongMultiTarget"
  value: {
-  dps: 3409.03355
-  tps: 2410.21856
+  dps: 4455.97651
+  tps: 3143.96085
  }
 }
 dps_results: {
@@ -1343,8 +1343,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-prebis-Standard-default-NoBuffs-20.0yards-LongMultiTarget"
  value: {
-  dps: 2013.628
-  tps: 2013.628
+  dps: 2284.91601
+  tps: 2284.91601
  }
 }
 dps_results: {
