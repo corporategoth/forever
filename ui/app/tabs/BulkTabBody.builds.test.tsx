@@ -386,7 +386,7 @@ describe('BulkTabBody in Builds mode', () => {
 		mount({ presets: { gear: [], encounters: [], settings: [], talents: [], rotations: [] }, saved: {}, enchantPresets: [] });
 
 		expect(listRows('bulk-gear-sets', 'bulk-gear-set')).toEqual(['Current gear']);
-		expect(within(column('gear')).getByText('No saved gear sets yet. Save one in Gear → Saved Gear Sets to run it too.')).toBeTruthy();
+		expect(within(column('gear')).getByText('No saved gear sets yet. Save one in Gear → Gear sets to run it too.')).toBeTruthy();
 		expect(within(column('gear')).getByText('No enchant presets yet. Make one under Enchants in Batch · Gear.')).toBeTruthy();
 	});
 });

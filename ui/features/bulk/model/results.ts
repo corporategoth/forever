@@ -20,7 +20,7 @@ export interface BulkFinishedRequest {
 	result: CoreBulkSimResult;
 }
 
-export type BulkEquipped = 'gear' | 'gear_talents' | 'build';
+export type BulkEquipped = 'gear' | 'build';
 
 /** The ranked rows per encounter besides the current gear with the current talents. */
 export const BULK_RANKED_SETS = 5;
