@@ -84,6 +84,7 @@ export const BulkResultRowView = ({
 				{talents && (
 					<div className="basis-full text-sm wrap-break-word" data-testid="bulk-result-talents">
 						<Pill
+							rounded="xs"
 							tabIndex={0}
 							className="cursor-default focus-visible:focus-ring"
 							testId="bulk-result-talents-anchor"
