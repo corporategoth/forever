@@ -26,7 +26,7 @@ func (rogue *Rogue) registerGarrote() {
 
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		rogue.BreakStealth(sim)
-		result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMeleeSpecialNoBlockDodgeParryNoHitCounter)
+		result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMeleeSpecialNoBlockDodgeParryNoCritNoHitCounter)
 		if result.Landed() {
 			spell.Dot(target).Apply(sim)
 			rogue.AddComboPoints(sim, int32(comboPointGen), spell.ComboPointMetrics())

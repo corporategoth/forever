@@ -27,8 +27,7 @@ func (value *APLValueDotIsActive) Type() proto.APLValueType {
 	return proto.APLValueType_ValueTypeBool
 }
 func (value *APLValueDotIsActive) GetBool(sim *Simulation) bool {
-	resolvedDot := value.dot.Get()
-	return resolvedDot != nil && resolvedDot.IsActive()
+	return readDot(sim, value.dot.Get()).active
 }
 func (value *APLValueDotIsActive) String() string {
 	return fmt.Sprintf("Dot Is Active(%s)", value.dot.Get().Spell.ActionID)
@@ -76,7 +75,7 @@ func (value *APLValueDotIsActiveOnAllTargets) Type() proto.APLValueType {
 }
 func (value *APLValueDotIsActiveOnAllTargets) GetBool(sim *Simulation) bool {
 	for _, dot := range value.dots {
-		if !dot.IsActive() && dot.Unit.IsEnabled() {
+		if !readDot(sim, dot).active && dot.Unit.IsEnabled() {
 			return false
 		}
 	}
@@ -104,8 +103,7 @@ func (value *APLValueDotRemainingTime) Type() proto.APLValueType {
 	return proto.APLValueType_ValueTypeDuration
 }
 func (value *APLValueDotRemainingTime) GetDuration(sim *Simulation) time.Duration {
-	resolvedDot := value.dot.Get()
-	return TernaryDuration(resolvedDot.IsActive(), resolvedDot.RemainingDuration(sim), 0)
+	return readDot(sim, value.dot.Get()).remaining
 }
 func (value *APLValueDotRemainingTime) String() string {
 	return fmt.Sprintf("Dot Remaining Time(%s)", value.dot.Get().Spell.ActionID)
@@ -158,8 +156,8 @@ func (value *APLValueDotLowestRemainingTime) GetDuration(sim *Simulation) time.D
 		if !dot.Unit.IsEnabled() {
 			continue
 		}
-		if dot.IsActive() {
-			duration = min(duration, dot.RemainingDuration(sim))
+		if reading := readDot(sim, dot); reading.active {
+			duration = min(duration, reading.remaining)
 		} else {
 			return 0
 		}
@@ -190,7 +188,8 @@ func (value *APLValueDotTickFrequency) Type() proto.APLValueType {
 }
 func (value *APLValueDotTickFrequency) GetDuration(sim *Simulation) time.Duration {
 	dot := value.dot.Get()
-	return TernaryDuration(dot.IsActive(), dot.tickPeriod, dot.CalcTickPeriod())
+	reading := readDot(sim, dot)
+	return TernaryDuration(reading.active && !reading.landing, dot.tickPeriod, dot.CalcTickPeriod())
 }
 func (value *APLValueDotTickFrequency) String() string {
 	return fmt.Sprintf("Dot Tick Frequency(%s)", value.dot.Get().Spell.ActionID)
@@ -215,7 +214,11 @@ func (value *APLValueDotTimeToNextTick) Type() proto.APLValueType {
 	return proto.APLValueType_ValueTypeDuration
 }
 func (value *APLValueDotTimeToNextTick) GetDuration(sim *Simulation) time.Duration {
-	return value.dot.Get().TimeUntilNextTick(sim)
+	dot := value.dot.Get()
+	if reading := readDot(sim, dot); reading.landing {
+		return dot.Spell.Unit.Hardcast.Expires + dot.CalcTickPeriod() - sim.CurrentTime
+	}
+	return dot.TimeUntilNextTick(sim)
 }
 func (value *APLValueDotTimeToNextTick) String() string {
 	return fmt.Sprintf("Time To Next Tick(%s)", value.dot.Get().Spell.ActionID)
@@ -365,39 +368,4 @@ func (value *APLValueDotTickRatePercentIncrease) getTickRate(useSnapshot bool) f
 		return TernaryFloat64(value.useBaseValue, value.baseValue, TernaryFloat64(dot.IsActive(), dot.TickPeriod().Seconds(), 0))
 	}
 	return dot.CalcTickPeriod().Round(time.Millisecond).Seconds()
-}
-
-// The expected tick of a cast now over its tick period, so DoTs and channels that tick at different
-// rates compare per second of their duration.
-type APLValueDotExpectedDps struct {
-	DefaultAPLValueImpl
-	spell     *Spell
-	targetRef UnitReference
-}
-
-func (rot *APLRotation) newValueDotExpectedDps(config *proto.APLValueDotExpectedDps, _ *proto.UUID) APLValue {
-	spell := rot.GetAPLSpell(config.SpellId)
-	if spell == nil || spell.expectedTickDamageInternal == nil {
-		return nil
-	}
-	targetRef := rot.GetTargetUnit(config.TargetUnit)
-	if spell.Dot(targetRef.Get()) == nil {
-		return nil
-	}
-
-	return &APLValueDotExpectedDps{
-		spell:     spell,
-		targetRef: targetRef,
-	}
-}
-
-func (value *APLValueDotExpectedDps) Type() proto.APLValueType {
-	return proto.APLValueType_ValueTypeFloat
-}
-func (value *APLValueDotExpectedDps) GetFloat(sim *Simulation) float64 {
-	target := value.targetRef.Get()
-	return value.spell.ExpectedTickDamage(sim, target) / value.spell.Dot(target).CalcTickPeriod().Seconds()
-}
-func (value *APLValueDotExpectedDps) String() string {
-	return fmt.Sprintf("Dot Expected DPS(%s)", value.spell.ActionID)
 }

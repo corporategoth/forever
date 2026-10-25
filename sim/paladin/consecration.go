@@ -63,9 +63,6 @@ func (paladin *Paladin) registerConsecration(n int32, rank *spelldata.Spell) {
 
 	config := spelldata.SpellConfig(&paladin.Unit, rank, spelldata.Magic(core.ProcMaskSpellDamage))
 	config.ClassSpellMask = SpellMaskConsecration
-	// The row states no range: the area is the dummy's 8 yd radius around the paladin, so the target
-	// has to stand inside it.
-	config.MaxRange = float64(rank.EffectN(1).RadiusMax)
 
 	config.Dot = core.DotConfig{
 		IsAOE: true,
@@ -94,8 +91,8 @@ func (paladin *Paladin) registerConsecration(n int32, rank *spelldata.Spell) {
 
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		// The cast rolls its own hit only so that procs on a resist can fire; the ground is laid whether
-		// it lands or not.
-		spell.CalcAndDealOutcome(sim, target, spell.OutcomeMagicHit)
+		// it lands or not. The roll counts nothing, so the row's Miss % is the ticks' own.
+		spell.CalcAndDealOutcome(sim, target, spell.OutcomeTickMagicHitNoHitCounter)
 
 		spell.AOEDot().Apply(sim)
 		markTargets(sim, rank.Duration())

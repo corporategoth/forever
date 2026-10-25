@@ -21,6 +21,7 @@ type WarlockPet struct {
 	ownerAuras        []*core.Aura // the warlock's effects that last while this demon, and no other, is out
 	partyAuras        []*core.Aura // the effects on the warlock's party that last while this demon is out
 	summonStun        *core.Aura   // Summoning Disorientation, from the start of the warlock's summon until it runs out or the summon dismisses this demon
+	reach             float64      // how far from the target the demon fights: melee, or the Imp's Firebolt range
 }
 
 // A demon's level 60 stats and what its own stats convert into, from the team's pet model sheet where no
@@ -116,7 +117,7 @@ var petModels = map[proto.WarlockOptions_Summon]petModel{
 		healthPerStamina:     9.5,
 		manaPerIntellect:     11.55,
 		apPerStrength:        2,
-		mp5PerOwnerIntellect: 0.10,
+		mp5PerOwnerIntellect: 0.10, // The Voidwalker's and Sayaad's share, until the Felhunter's is read in game.
 		meleeMin:             70,
 		meleeMax:             97,
 		swingSpeed:           2,
@@ -144,9 +145,9 @@ func meleeDemonStats(baseHealth float64) stats.Stats {
 // attack power, spell damage, resistances, armor, hit, crit, haste, mana regen - but states no amounts,
 // which the server supplies, so the shares are hand-kept. The pet model sheet gives Stamina and Intellect
 // a share of 0, yet its totals give every demon more health and ~10,870 more mana than its own stats, all
-// from the warlock. Health is 7.5 a point of the warlock's Stamina. Regen is each demon's share of the
-// warlock's Intellect as MP5: at level 30 with 110 Intellect, the pet panes read 33 for the Imp and 11 for
-// the Voidwalker and Sayaad.
+// from the warlock. Health is 7.5 a point of the warlock's Stamina, on top of the demon's own. Regen is each
+// demon's share of the warlock's Intellect as MP5: at level 30 with 110 Intellect, the pet panes read 33 for
+// the Imp and 11 for the Voidwalker and Sayaad.
 // TODO: The regen shares are read at level 30 only, and the Felhunter's not at all. The warlock's share of
 // mana; resistances and haste.
 func (warlock *Warlock) petStatInheritance(mp5PerOwnerIntellect float64) core.PetStatInheritance {
@@ -168,8 +169,10 @@ func (warlock *Warlock) petStatInheritance(mp5PerOwnerIntellect float64) core.Pe
 			// TODO: Measured on the Sayaad only.
 			stats.SpellDamage: spellDamage * 0.10,
 
-			// TODO: Assumed 1:1, not yet measured.
-			stats.PhysicalHitPercent: ownerStats[stats.SpellHitPercent],
+			// The warlock's spell hit whole, and 8/17 of it as melee hit:
+			// https://github.com/ClassicWoWCommunity/forever-bugs/issues/394#issuecomment-6302980919
+			// TODO: Not yet read on a pet sheet in game.
+			stats.PhysicalHitPercent: ownerStats[stats.SpellHitPercent] * 8 / 17,
 			stats.SpellHitPercent:    ownerStats[stats.SpellHitPercent],
 
 			// A demon takes the warlock's spell crit as its melee and spell crit, with no crit of its own:
@@ -213,6 +216,7 @@ func (warlock *Warlock) registerPet(summon proto.WarlockOptions_Summon, name str
 	pet := &WarlockPet{
 		owner:  warlock,
 		summon: summon,
+		reach:  core.MaxMeleeRange,
 		Pet: core.NewPet(core.PetConfig{
 			Name:            name,
 			Owner:           &warlock.Character,
@@ -241,6 +245,7 @@ func (warlock *Warlock) registerPet(summon proto.WarlockOptions_Summon, name str
 				BaseDamageMin: model.meleeMin,
 				BaseDamageMax: model.meleeMax,
 				SwingSpeed:    model.swingSpeed,
+				MaxRange:      core.MaxMeleeRange,
 			},
 			AutoSwingMelee: true,
 		})
@@ -322,6 +327,14 @@ func (pet *WarlockPet) OnEncounterStart(_ *core.Simulation) {
 // Casts the first ability that is ready once the pet has its MinMana; otherwise waits until it has
 // the mana for the cheapest one, or until the GCD and the cooldown of an ability it has the mana for end.
 func (pet *WarlockPet) ExecuteCustomRotation(sim *core.Simulation) {
+	// The demon appears beside the warlock and walks in to its reach before it acts.
+	if pet.DistanceFromTarget > pet.reach {
+		if !pet.Moving {
+			pet.MoveTo(pet.reach-1, sim)
+		}
+		return
+	}
+
 	// A demon with nothing to cast only swings, which its auto attacks do on their own.
 	if len(pet.AutoCastAbilities) == 0 {
 		pet.WaitUntil(sim, core.NeverExpires)
@@ -386,6 +399,7 @@ func (pet *WarlockPet) registerFirebolt() {
 
 	config := spelldata.SpellConfig(&pet.Unit, rankedSpell, spelldata.Magic(core.ProcMaskSpellDamage))
 	config.ClassSpellMask = WarlockSpellImpFireBolt
+	pet.reach = config.MaxRange
 
 	// Roll the damage and to hit, then land it after the bolt's travel time
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {

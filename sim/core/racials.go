@@ -22,7 +22,7 @@ func applyRaceEffects(agent Agent) {
 			earthFuryActive = level > 0
 			character.PseudoStats.CritDamageMultiplier *= Ternary(earthFuryActive, 1.02, 1/1.02)
 		}).SetLevel(nil, 1)
-		applyCreatureTypeSlaying(character, proto.MobType_MobTypeBeast)
+		applyDamageVersus(character, proto.MobType_MobTypeBeast)
 
 		actionID := ActionID{SpellID: 20594}
 
@@ -167,7 +167,7 @@ func applyRaceEffects(agent Agent) {
 		character.MultiplyStat(stats.Health, 1.05)
 		character.PseudoStats.CritDamageMultiplier *= 1.02 // Endurance 20550
 	case proto.Race_RaceTroll:
-		applyCreatureTypeSlaying(character, proto.MobType_MobTypeBeast)
+		applyDamageVersus(character, proto.MobType_MobTypeBeast)
 
 		actionID := ActionID{SpellID: 20554}
 
@@ -277,16 +277,18 @@ func applyRaceEffects(agent Agent) {
 }
 
 func applySkyborneSharedRacials(character *Character) {
-	applyCreatureTypeSlaying(character, proto.MobType_MobTypeElemental)
+	applyDamageVersus(character, proto.MobType_MobTypeElemental)
 
 	character.PseudoStats.AttackSpeedMultiplier *= 1.03 // Wind Blessed 1259710
 	character.PseudoStats.CastSpeedMultiplier *= 1.03
 }
 
-func applyCreatureTypeSlaying(character *Character, mobType proto.MobType) {
+// Beast Slaying 20557, Big Game Hunter 1259721 and Elemental Insight 1259707 state one effect, aura 168:
+// 5% damage against the creature type. Their rows carry no aura 547, the critical damage half that
+// Humanoid Slaying 19151 and Monster Slaying 24294 state.
+func applyDamageVersus(character *Character, mobType proto.MobType) {
 	character.Env.RegisterPostFinalizeEffect(func() {
 		character.MultiplyDamageVersus(1.05, mobType)
-		character.MultiplyCritDamageVersus(1.05, mobType)
 	})
 }
 
@@ -401,6 +403,8 @@ func applyEureka(character *Character) {
 	})
 }
 
+// The drain takes no downrank scaling from a low-level trigger and no Shadow modifiers. Its amount (5%
+// of max health), 25 s ICD and chance are the row's values, typed in here.
 func applyTouchOfTheGrave(character *Character) {
 	auraID, procChance := int32(1260201), 0.3
 	switch character.Class {

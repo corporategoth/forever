@@ -60,10 +60,7 @@ export interface EncounterSlice {
 	duration: number;
 	durationVariation: number;
 	executeProportion20: number;
-	executeProportion25: number;
 	executeProportion35: number;
-	executeProportion45: number;
-	executeProportion90: number;
 	useHealth: boolean;
 	areaTypes: Array<AreaType>;
 	zoneId: number;
@@ -264,6 +261,8 @@ export interface BulkSlice {
 	mode: BulkMode;
 	combinations: number;
 	iterations: number;
+	// Why the selection gives no combination (the engine's reason), or null when it gives some.
+	combinationsError: string | null;
 	combinationsPending: boolean;
 	isRunning: boolean;
 	started: boolean;

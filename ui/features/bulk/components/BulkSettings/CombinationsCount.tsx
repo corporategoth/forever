@@ -23,9 +23,11 @@ export interface CombinationsCountViewProps {
 	iterationsLimit: number;
 	encounters: number;
 	talentSetups: number;
+	// Why the selection gives no combination, shown under the numbers.
+	error?: string | null;
 }
 
-export const CombinationsCountView = ({ pending, combinations, iterations, iterationsLimit, encounters, talentSetups }: CombinationsCountViewProps) => {
+export const CombinationsCountView = ({ pending, combinations, iterations, iterationsLimit, encounters, talentSetups, error }: CombinationsCountViewProps) => {
 	const tooltipId = useId();
 	const runs = encounters * talentSetups;
 	const overLimit = !pending && iterations > iterationsLimit;
@@ -74,6 +76,11 @@ export const CombinationsCountView = ({ pending, combinations, iterations, itera
 				)}
 				{pending ? <Spinner size="sm" /> : formatToNumber(iterations * runs)}
 			</dd>
+			{!pending && error && (
+				<dd className="col-span-2 mb-0 text-danger" role="alert" data-testid="bulk-combinations-error">
+					{error}
+				</dd>
+			)}
 		</dl>
 	);
 };
@@ -83,6 +90,7 @@ export const CombinationsCount = () => {
 	const pending = useBulkState(slice => slice.combinationsPending);
 	const combinations = useBulkState(slice => slice.combinations);
 	const iterations = useBulkState(slice => slice.iterations);
+	const error = useBulkState(slice => slice.combinationsError);
 	const { current, entries, checked, builds } = useBulkEncounters();
 	const encounters = useMemo(() => bulkEncounterRuns(current, entries, checked, builds).length, [current, entries, checked, builds]);
 	const { playerSpec, current: currentTalents, entries: talentEntries, checked: checkedTalents } = useBulkTalents();
@@ -99,6 +107,7 @@ export const CombinationsCount = () => {
 			iterationsLimit={bulkIterationsLimit(sim.isNative)}
 			encounters={encounters}
 			talentSetups={talentSetups}
+			error={error}
 		/>
 	);
 };

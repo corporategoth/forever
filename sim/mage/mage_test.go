@@ -25,14 +25,19 @@ func TestFire(t *testing.T) {
 	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator([]core.CharacterSuiteConfig{fireSuite()}))
 }
 
+func TestFrost(t *testing.T) {
+	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator([]core.CharacterSuiteConfig{frostSuite()}))
+}
+
 func BenchmarkMage(b *testing.B) {
 	b.Run("Arcane", func(b *testing.B) { core.CharacterBenchmark(b, arcaneSuite()) })
 	b.Run("FFB", func(b *testing.B) { core.CharacterBenchmark(b, ffbSuite()) })
 	b.Run("Fire", func(b *testing.B) { core.CharacterBenchmark(b, fireSuite()) })
+	b.Run("Frost", func(b *testing.B) { core.CharacterBenchmark(b, frostSuite()) })
 }
 
 func arcaneSuite() core.CharacterSuiteConfig {
-	return mageSuite(ArcaneTalents, "arcane")
+	return mageSuite(ArcaneTalents, "arcaneFrostFill")
 }
 
 func ffbSuite() core.CharacterSuiteConfig {
@@ -41,6 +46,10 @@ func ffbSuite() core.CharacterSuiteConfig {
 
 func fireSuite() core.CharacterSuiteConfig {
 	return mageSuite(FireTalents, "deepFire")
+}
+
+func frostSuite() core.CharacterSuiteConfig {
+	return mageSuite(FrostTalents, "frost")
 }
 
 func mageSuite(talents string, apl string) core.CharacterSuiteConfig {
@@ -57,12 +66,12 @@ func mageSuite(talents string, apl string) core.CharacterSuiteConfig {
 				},
 			},
 		}},
-		Consumables:     DefaultConsumables,
-		Profession1:     proto.Profession_Engineering,
-		Profession2:     proto.Profession_Tailoring,
-		GearSet:         core.GetGearSet("../../ui/specs/mage/dps/gear_sets", "p1Arcane"),
-		Talents:         talents,
-		Rotation:        core.GetAplRotation("../../ui/specs/mage/dps/apls", apl),
+		Consumables: DefaultConsumables,
+		Profession1: proto.Profession_Engineering,
+		Profession2: proto.Profession_Tailoring,
+		GearSet:     core.GetGearSet("../../ui/specs/mage/dps/gear_sets", "p1Arcane"),
+		Talents:     talents,
+		Rotation:    core.GetAplRotation("../../ui/specs/mage/dps/apls", apl),
 		ItemFilter: core.ItemFilter{
 			WeaponTypes: []proto.WeaponType{
 				proto.WeaponType_WeaponTypeDagger,
@@ -79,9 +88,10 @@ func mageSuite(talents string, apl string) core.CharacterSuiteConfig {
 	}
 }
 
-var ArcaneTalents = "0552205003100311531-03-0515"
-var FFBTalents = "-2355000013011503-00550003310003002"
-var FireTalents = "0502205-23550000130135031-005"
+var ArcaneTalents = "0552205003100311531-03-0533"
+var FFBTalents = "-2355000013011503-2035010311013002"
+var FireTalents = "05022050001001-23550000130135031-003"
+var FrostTalents = "05022050011003--053500030100331251"
 
 var DefaultConsumables = &proto.ConsumesSpec{
 	FlaskId: 13512, // Flask of Supreme Power

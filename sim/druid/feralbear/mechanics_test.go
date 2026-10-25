@@ -351,9 +351,13 @@ func TestBearFormsRaiseThreatByHalf(t *testing.T) {
 	}
 }
 
+// Natural Reaction 5/5, which the Bear preset leaves out.
+const naturalReactionTalents = "0500220000000000-55200322120132012551-0000000000000000"
+
 // Natural Reaction 5/5 (417051): every dodge in a bear form grants 417053's 5 rage.
 func TestNaturalReactionGivesRageOnDodges(t *testing.T) {
 	req := bearRequest(bearAPL(bestBearAPL), 20)
+	req.Raid.Parties[0].Players[0].TalentsString = naturalReactionTalents
 	result := core.RunSim(req, nil, simsignals.CreateSignals())
 	if result.Error != nil {
 		t.Fatal(result.Error.Message)

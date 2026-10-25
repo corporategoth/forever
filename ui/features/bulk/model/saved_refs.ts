@@ -1,4 +1,5 @@
 import type { IMessageType, JsonReadOptions } from '@protobuf-ts/runtime';
+import { fromJsonLenient } from '@sim/proto/lenient_json';
 import type { IndividualSimHost } from '@sim/sim_host';
 import { savedDataEntries } from '@ui-kit/hooks/useSavedData';
 
@@ -35,7 +36,8 @@ export const checkedRefList = <E extends { ref: SavedRef }>(
 export const checkedRefsAfter = <R extends SavedRef>(stored: readonly R[], ref: R, checked: boolean, pickable: readonly R[]): R[] =>
 	pickable.filter(item => (sameRef(item, ref) ? checked : isRefChecked(stored, item)));
 
-// The record a Saved panel writes under `key`, read as that panel reads it, with the read options it passes.
+// The record a Saved panel writes under `key`, read leniently so an entry with fields the protos no longer list still
+// loads, as the Saved Encounters and Saved Rotations panels read theirs.
 export const storedSavedData = <T extends object>(
 	host: IndividualSimHost<any>,
 	key: string,
@@ -48,5 +50,5 @@ export const storedSavedData = <T extends object>(
 	} catch {
 		return [];
 	}
-	return savedDataEntries(record, { toJson: data => type.toJson(data), fromJson: json => type.fromJson(json, readOptions) });
+	return savedDataEntries(record, { toJson: data => type.toJson(data), fromJson: json => fromJsonLenient(type, json, readOptions) });
 };

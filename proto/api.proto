@@ -197,6 +197,10 @@ message TargetedActionMetrics {
 	// # of times this action was a Miss.
 	int32 misses = 7;
 
+	// # of times a tick of this action rolled a Miss. Only ticks that roll their own hit count here; a DoT whose
+	// hit rolls once on its cast keeps that miss in misses.
+	int32 tick_misses = 39;
+
 	// # of times this action was a Dodge.
 	int32 dodges = 8;
 
@@ -629,6 +633,7 @@ message SpellStats {
 	bool has_cast_time = 9; // Whether this spell has a cast time or not.
 	bool is_friendly = 10; // Whether this spell should be cast on player units
 	bool has_expected_tick = 11; // Whether this spell supports expected damage calculations
+	bool has_expected_initial = 17; // Whether this spell supports expected initial damage calculations
 	bool has_missile_speed = 12; // Whether this spell has a missile speed
 	bool has_ranks = 13; // Whether this spell has a rank
 	bool is_potion = 14; // Whether this spell is a potion
@@ -659,6 +664,8 @@ message UnitMetadata {
 	string name = 3;
 	repeated SpellStats spells = 1;
 	repeated AuraStats auras = 2;
+	// The talents the unit has points in, each at the rank it holds.
+	repeated ActionID talents = 4;
 }
 message PetStats {
 	UnitMetadata metadata = 1;
