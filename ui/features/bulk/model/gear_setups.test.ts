@@ -81,9 +81,9 @@ const gearOf = (items: Array<[ItemSlot, Partial<UIItem>, UIEnchant?]>) =>
 
 const enchantIn = (gear: Gear, slot: ItemSlot) => gear.getEquippedItem(slot)?.enchant?.effectId ?? null;
 
-const currentSet = (gear: Gear, bonusStats = new Stats()): BulkGearSetPick => ({ name: '', isCurrent: true, gear, bonusStats });
+const currentSet = (gear: Gear, bonusStats = new Stats()): BulkGearSetPick => ({ name: '', gear, bonusStats });
 
-const savedSet = (name: string, gear: Gear, bonusStats = new Stats()): BulkGearSetPick => ({ name, isCurrent: false, gear, bonusStats });
+const savedSet = (name: string, gear: Gear, bonusStats = new Stats()): BulkGearSetPick => ({ name, gear, bonusStats });
 
 const presetPick = (name: string, slots: Array<[ItemSlot, number[]]>): BulkEnchantPick => ({
 	name,

@@ -1,19 +1,40 @@
 import { saveEnchantPreset, setEnchantPresetChecked } from '@features/enchant-presets/model/enchant_presets';
 import { BulkEnchantSlotOptions, BulkSettings } from '@generated/proto/api';
-import { APLRotation } from '@generated/proto/apl';
-import { Encounter, ItemSlot, Target } from '@generated/proto/common';
-import { BulkEncounterRef, BulkTalentRef, SavedEncounter, SavedTalents, UIEnchant } from '@generated/proto/ui';
+import { APLListItem, APLRotation, APLRotation_Type as APLRotationType } from '@generated/proto/apl';
+import { Encounter, type EquipmentSpec, ItemSlot, ItemSpec, ItemType, Profession, Race, Stat, Target } from '@generated/proto/common';
+import {
+	BulkEnchantPreset,
+	BulkEncounterPair,
+	BulkEncounterRef,
+	BulkGearSetRef,
+	BulkRotationRef,
+	BulkSettingsRef,
+	BulkTalentPair,
+	BulkTalentRef,
+	SavedEncounter,
+	SavedGearSet,
+	SavedRotation,
+	SavedSettings,
+	SavedTalents,
+	UIEnchant,
+} from '@generated/proto/ui';
+import type { BulkSimOverrides } from '@sim/bulk/types';
+import { Gear } from '@sim/proto/gear';
+import { getGearIdentityKey } from '@sim/proto/items';
 import { Stats } from '@sim/proto/stats';
 import { bulkState, patchBulkState } from '@sim/settings/bulk_settings';
 import type { IndividualSimHost } from '@sim/sim_host';
-import { patchSlice } from '@sim/state/sim_store';
+import { type BulkMode, patchSlice } from '@sim/state/sim_store';
 import { makeBulkPlayer } from '@testing/sim/bulk_player';
+import { makeEquippedItem } from '@testing/storybook/fixtures/gear';
+import { makeUIEnchant } from '@testing/storybook/fixtures/protos';
 import { beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 
 import { runCoreBulkSim } from './core_sim';
 import { setBulkMode } from './mode';
 import { bulkProgress, cancelBulkBatch, refreshBulkCombinations, runBulkBatch } from './run';
 
+// i18n is not mocked: the test loader has no resources, so every label reads as its key.
 vi.mock('./core_sim', () => ({ runCoreBulkSim: vi.fn() }));
 vi.mock('../../../tracking/utils', () => ({ trackEvent: () => {} }));
 
@@ -57,10 +78,12 @@ describe('bulk requests', () => {
 	});
 });
 
-const GEAR = { asSpec: () => ({ items: [] }) };
 const CORE_RESULT = { referenceDpsMetrics: { avg: 1000, stdev: 1 }, topGearResults: [], iterations: 100, metrics: {} };
 const SAVED_KEY = 'saved-encounters';
 const SAVED_TALENTS_KEY = 'saved-talents';
+const SAVED_GEAR_KEY = 'saved-gear';
+const SAVED_SETTINGS_KEY = 'saved-settings';
+const SAVED_ROTATIONS_KEY = 'saved-rotations';
 const LIVE = '30305001302';
 const ARMS = '3030500130';
 const FURY = '-0505000540501';
@@ -70,42 +93,104 @@ const CURRENT = Encounter.create({ duration: 180, durationVariation: 5, targets:
 const PATCHWERK = Encounter.create({ duration: 300, durationVariation: 30, useHealth: true, targets: [Target.create()] });
 const COUNCIL = Encounter.create({ duration: 90, durationVariation: 10, targets: [Target.create()] });
 
-const ref = (name: string, preset = false) => BulkEncounterRef.create({ name, preset });
+const HEALER = SavedSettings.create({ race: Race.RaceTroll, professions: [Profession.Alchemy, Profession.Herbalism] });
 
-const tref = (name: string, preset = false) => BulkTalentRef.create({ name, preset });
+const CLOAK_AGILITY = makeUIEnchant({ effectId: 849, name: 'Cloak agility', type: ItemType.ItemTypeBack });
+const CLOAK_ARMOR = makeUIEnchant({ effectId: 884, name: 'Cloak armor', type: ItemType.ItemTypeBack });
+const BACK_ENCHANTS = (slot: ItemSlot) => (slot === ItemSlot.ItemSlotBack ? [CLOAK_AGILITY, CLOAK_ARMOR] : []);
+
+const cloak = (enchant?: UIEnchant) => makeEquippedItem({ item: { id: 101, type: ItemType.ItemTypeBack, unique: false }, enchant });
+const chest = () => makeEquippedItem({ item: { id: 102, type: ItemType.ItemTypeChest, unique: false } });
+
+// The current gear already wears the Agility preset's cloak enchant; the Raid set does not.
+const CURRENT_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(CLOAK_AGILITY) });
+const ARMOR_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(CLOAK_ARMOR) });
+const RAID_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(), [ItemSlot.ItemSlotChest]: chest() });
+const RAID_WITH_AGILITY = new Gear({ [ItemSlot.ItemSlotBack]: cloak(CLOAK_AGILITY), [ItemSlot.ItemSlotChest]: chest() });
+const KNOWN_GEAR = [CURRENT_GEAR, ARMOR_GEAR, RAID_GEAR];
+
+const STRENGTH_BONUS = new Stats().withStat(Stat.StatStrength, 10);
+
+const AGILITY_PRESET = BulkEnchantPreset.create({
+	name: 'Agility',
+	slots: [BulkEnchantSlotOptions.create({ slot: ItemSlot.ItemSlotBack, effectIds: [CLOAK_AGILITY.effectId] })],
+});
+
+const LIVE_ROTATION = APLRotation.create({ type: APLRotationType.TypeAPL, priorityList: [APLListItem.create({ notes: 'live' })] });
+const OPENER = APLRotation.create({ type: APLRotationType.TypeAPL, priorityList: [APLListItem.create({ notes: 'opener' })] });
+
+const resolvedFor = (notes: string) => APLRotation.create({ priorityList: [APLListItem.create({ notes })] });
+
+const eref = (name: string, preset = false) => BulkEncounterRef.create({ name, preset });
+
+const encounterPair = (encounter: BulkEncounterRef, settings = BulkSettingsRef.create()) => BulkEncounterPair.create({ encounter, settings, checked: true });
+
+const talentPair = (talents: BulkTalentRef, rotation = BulkRotationRef.create()) => BulkTalentPair.create({ talents, rotation, checked: true });
+
+const ARMS_PAIR = talentPair(BulkTalentRef.create({ name: 'Arms', preset: true }));
+const COUNCIL_PAIR = encounterPair(eref('Council'));
+const COUNCIL_HEALER_PAIR = encounterPair(eref('Council'), BulkSettingsRef.create({ name: 'Healer' }));
+
+const writeSaved = <T extends object>(host: IndividualSimHost<any>, key: string, type: { toJson: (message: T) => unknown }, record: Record<string, T>) =>
+	host.sim.env.storage.setItem(key, JSON.stringify(Object.fromEntries(Object.entries(record).map(([name, data]) => [name, type.toJson(data)]))));
 
 const writeSavedTalents = (host: IndividualSimHost<any>, record: Record<string, string>) =>
-	host.sim.env.storage.setItem(
+	writeSaved(
+		host,
 		SAVED_TALENTS_KEY,
-		JSON.stringify(
-			Object.fromEntries(Object.entries(record).map(([name, talentsString]) => [name, SavedTalents.toJson(SavedTalents.create({ talentsString }))])),
-		),
+		SavedTalents,
+		Object.fromEntries(Object.entries(record).map(([name, talentsString]) => [name, SavedTalents.create({ talentsString })])),
 	);
 
-const batchHost = (
-	checked: BulkEncounterRef[] = [ref('Patchwerk', true), ref('Same as current'), ref('Gone'), ref('Council')],
+interface BatchOptions {
+	mode?: BulkMode;
+	powerTools?: boolean;
+	gear?: Gear;
+	encounterPairs?: BulkEncounterPair[];
+	talentPairs?: BulkTalentPair[];
+	gearSets?: BulkGearSetRef[];
+	buildEnchantPresets?: string[];
+}
+
+// A non-enchanter with live bonus stats of zero. The resolver gives a rotation by the talents alone.
+const batchHost = ({
+	mode = 'builds',
 	powerTools = true,
-	checkedTalents: BulkTalentRef[] = [],
-) => {
+	gear = CURRENT_GEAR,
+	encounterPairs = [],
+	talentPairs = [],
+	gearSets = [BulkGearSetRef.create({ name: 'Raid', preset: true })],
+	buildEnchantPresets = ['Agility'],
+}: BatchOptions = {}) => {
+	const party = { setBuffs: vi.fn() };
 	const player = makeBulkPlayer({
-		getGear: () => GEAR,
+		getGear: () => gear,
 		getTalentsString: () => LIVE,
-		aplRotation: APLRotation.create(),
+		aplRotation: LIVE_ROTATION,
 		getBonusStats: () => new Stats(),
-		getResolvedAplRotationForBuild: vi.fn(({ talentsString }: { talentsString: string }) =>
-			APLRotation.create({ simple: { specRotationJson: talentsString } }),
-		),
+		hasProfession: () => false,
+		getEnchants: BACK_ENCHANTS,
+		getResolvedAplRotationForBuild: vi.fn(({ talentsString }: { talentsString: string }) => resolvedFor(talentsString)),
+		getParty: () => party,
 		setGearAsync: vi.fn(async () => {}),
+		setGear: vi.fn(),
+		setTalentsString: vi.fn(),
+		setAplRotation: vi.fn(),
+		setBonusStats: vi.fn(),
+		setRace: vi.fn(),
+		setProfessions: vi.fn(),
+		setConsumes: vi.fn(),
+		setBuffs: vi.fn(),
+		sim: {
+			db: {
+				getEnchants: BACK_ENCHANTS,
+				lookupEquipmentSpec: (spec: EquipmentSpec) =>
+					KNOWN_GEAR.find(known => getGearIdentityKey(known.asSpec()) === getGearIdentityKey(spec)) ?? new Gear({}),
+			},
+		},
 	});
 	patchSlice(player.sim.store, 'ui', { showPowerTools: powerTools });
-	const saved = { 'Same as current': CURRENT, Council: COUNCIL };
-	player.sim.env.storage.setItem(
-		SAVED_KEY,
-		JSON.stringify(
-			Object.fromEntries(Object.entries(saved).map(([name, encounter]) => [name, SavedEncounter.toJson(SavedEncounter.create({ encounter }))])),
-		),
-	);
-	patchBulkState(player, { encounters: checked, talents: checkedTalents, mode: 'builds' });
+	patchBulkState(player, { mode, encounterPairs, talentPairs, gearSets, enchantPresets: [AGILITY_PRESET], buildEnchantPresets });
 	const host = {
 		player,
 		sim: {
@@ -114,28 +199,49 @@ const batchHost = (
 			encounter: { toProto: () => Encounter.clone(CURRENT) },
 			waitForInit: async () => {},
 			signalManager: { abortType: vi.fn(async () => {}) },
-			getBulkCombinationCount: async () => ({ combinations: 1, iterations: 1 }),
+			getBulkCombinationCount: vi.fn(async () => ({ combinations: 1, iterations: 1 })),
 			getShowPowerTools: () => player.sim.store.getState().ui.showPowerTools,
+			raid: { setBuffs: vi.fn() },
 		},
 		individualConfig: {
 			presets: {
 				encounters: [{ name: 'Patchwerk', encounter: PATCHWERK }],
 				talents: [{ name: 'Arms', data: SavedTalents.create({ talentsString: ARMS }) }],
+				gear: [{ name: 'Raid', gear: RAID_GEAR.asSpec() }],
+				rotations: [{ name: 'Opener', rotation: SavedRotation.create({ rotation: OPENER }) }],
 			},
 		},
 		getSavedEncounterStorageKey: () => SAVED_KEY,
 		getSavedTalentsStorageKey: () => SAVED_TALENTS_KEY,
+		getSavedGearStorageKey: () => SAVED_GEAR_KEY,
+		getSavedSettingsStorageKey: () => SAVED_SETTINGS_KEY,
+		getSavedRotationStorageKey: () => SAVED_ROTATIONS_KEY,
 		handleCrash: (e: unknown) => Promise.reject(e),
 	} as unknown as IndividualSimHost<any>;
+	writeSaved(host, SAVED_KEY, SavedEncounter, { Council: SavedEncounter.create({ encounter: COUNCIL }) });
 	writeSavedTalents(host, { Fury: FURY });
+	writeSaved(host, SAVED_GEAR_KEY, SavedGearSet, { Buffed: SavedGearSet.create({ gear: RAID_GEAR.asSpec(), bonusStatsStats: STRENGTH_BONUS.toProto() }) });
+	writeSaved(host, SAVED_SETTINGS_KEY, SavedSettings, { Healer: HEALER });
 	return host;
 };
 
-const overrides = () => vi.mocked(runCoreBulkSim).mock.calls.map(call => call[3].encounter);
+const calls = () => vi.mocked(runCoreBulkSim).mock.calls;
 
-const talentOverrides = () => vi.mocked(runCoreBulkSim).mock.calls.map(call => call[3].build?.talentsString);
+const sentEncounters = () => calls().map(call => call[3].encounter);
+
+const sentTalents = () => calls().map(call => call[3].build?.talentsString);
+
+const specsOf = (gears: readonly Gear[] | undefined) => (gears ?? []).map(gear => gear.asSpec());
 
 const steps = (host: IndividualSimHost<any>) => bulkProgress(host.player)!.steps;
+
+const rowsOf = (host: IndividualSimHost<any>) => bulkState(host.player).results![0].results.chains.flat();
+
+// The sim's rows are the candidates it was sent, each below the reference.
+const echoCandidates = async (_context: unknown, _signal: unknown, _settings: unknown, overrides: BulkSimOverrides) => ({
+	...CORE_RESULT,
+	topGearResults: (overrides.candidates ?? []).map((gear, index) => ({ gear, dpsMetrics: { avg: 900 - index, stdev: 1 } })),
+});
 
 describe('runBulkBatch', () => {
 	let consoleError: MockInstance;
@@ -145,116 +251,130 @@ describe('runBulkBatch', () => {
 		consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 	});
 
-	it('runs the current encounter, then each checked one, skipping duplicates and deleted refs', async () => {
-		const host = batchHost();
+	it('runs Gear mode as one request with the stored settings and no build or settings override', async () => {
+		const host = batchHost({ mode: 'gear', encounterPairs: [COUNCIL_PAIR], talentPairs: [ARMS_PAIR] });
+		patchBulkState(host.player, { items: [ItemSpec.create({ id: 5 })] });
+		setEnchantPresetChecked(host.player, 'Agility', true);
 		vi.mocked(runCoreBulkSim).mockResolvedValue(CORE_RESULT as never);
 
 		await runBulkBatch(host);
 
-		expect(overrides()).toEqual([CURRENT, PATCHWERK, COUNCIL]);
+		expect(calls()).toHaveLength(1);
+		expect(calls()[0][3]).toEqual({ encounter: CURRENT });
+		expect(calls()[0][2].items).toEqual([ItemSpec.create({ id: 5 })]);
+		expect(calls()[0][2].enchants).toEqual([BulkEnchantSlotOptions.create({ slot: ItemSlot.ItemSlotBack, effectIds: [CLOAK_AGILITY.effectId] })]);
+		expect(host.sim.getBulkCombinationCount).toHaveBeenCalled();
+		expect(steps(host).labels).toHaveLength(1);
+		const [entry] = bulkState(host.player).results!;
+		expect([entry.isCurrent, entry.settings, entry.results.talentPairs]).toEqual([true, null, 1]);
+		expect(entry.results.originalGearResults.rotation.rotation).toEqual(LIVE_ROTATION);
+		expect(entry.results.originalGearResults.rotation.rotation).not.toBe(LIVE_ROTATION);
+		expect(bulkState(host.player).encounterPairs).toEqual([COUNCIL_PAIR]);
+		expect(bulkState(host.player).talentPairs).toEqual([ARMS_PAIR]);
+	});
+
+	it('sends every gear setup as a candidate with empty settings in Builds mode', async () => {
+		const host = batchHost();
+		vi.mocked(runCoreBulkSim).mockImplementation(echoCandidates as never);
+
+		await runBulkBatch(host);
+
+		expect(calls()).toHaveLength(1);
+		const [call] = calls();
+		expect(call[2]).toEqual(BulkSettings.create());
+		expect(specsOf(call[3].candidates)).toEqual(specsOf([RAID_WITH_AGILITY]));
+		expect(rowsOf(host).map(row => [row.gearSetup?.gearSet ?? null, row.gearSetup?.enchantPreset ?? null])).toEqual([
+			[null, null],
+			['Raid', 'Agility'],
+		]);
+	});
+
+	it('runs each encounter pair × talent pair, current first, with the pair’s settings and the build override', async () => {
+		const host = batchHost({ encounterPairs: [COUNCIL_HEALER_PAIR], talentPairs: [ARMS_PAIR] });
+		vi.mocked(runCoreBulkSim).mockResolvedValue(CORE_RESULT as never);
+
+		await runBulkBatch(host);
+
+		expect(calls().map(call => [call[3].encounter?.duration, call[3].settings?.race, call[3].build?.talentsString])).toEqual([
+			[180, undefined, LIVE],
+			[180, undefined, ARMS],
+			[90, Race.RaceTroll, LIVE],
+			[90, Race.RaceTroll, ARMS],
+		]);
+		expect(calls()[2][3].settings).toEqual(HEALER);
+		expect(calls()[1][3].build).toEqual({ talentsString: ARMS, rotation: resolvedFor(ARMS), bonusStats: new Stats().toProto() });
 		const results = bulkState(host.player).results!;
-		expect(results.map(entry => [entry.name, entry.isCurrent])).toEqual([
-			['', true],
-			['Patchwerk', false],
-			['Council', false],
+		expect(results.map(entry => [entry.name, entry.isCurrent, entry.settings?.name ?? null, entry.results.talentPairs])).toEqual([
+			['', true, '', 2],
+			['Council', false, 'Healer', 2],
 		]);
 		expect(results.map(entry => [entry.duration, entry.durationVariation])).toEqual([
 			[180, 5],
-			[null, null],
 			[90, 10],
 		]);
 	});
 
-	it('runs once when nothing is checked', async () => {
-		const host = batchHost([]);
+	it('sends no settings for the current settings', async () => {
+		const host = batchHost({ encounterPairs: [COUNCIL_PAIR] });
 		vi.mocked(runCoreBulkSim).mockResolvedValue(CORE_RESULT as never);
 
 		await runBulkBatch(host);
 
-		expect(overrides()).toEqual([CURRENT]);
-		expect(bulkState(host.player).results).toHaveLength(1);
+		expect(sentEncounters()).toEqual([CURRENT, COUNCIL]);
+		expect(calls().map(call => call[3].settings)).toEqual([undefined, undefined]);
+		expect(bulkState(host.player).results!.map(entry => entry.settings?.isCurrent)).toEqual([true, true]);
 	});
 
-	it('runs only the current encounter with power tools off, keeping the checked ones for when they are back on', async () => {
-		const checked = [ref('Patchwerk', true), ref('Council')];
-		const host = batchHost(checked, false);
+	it('runs a saved talents entry with the talents it holds when the batch starts', async () => {
+		const host = batchHost({ talentPairs: [talentPair(BulkTalentRef.create({ name: 'Fury' }))] });
+		writeSavedTalents(host, { Fury: FURY_EDITED });
 		vi.mocked(runCoreBulkSim).mockResolvedValue(CORE_RESULT as never);
 
 		await runBulkBatch(host);
 
-		expect(overrides()).toEqual([CURRENT]);
-		expect(steps(host).labels).toHaveLength(1);
-		expect(bulkState(host.player).results!.map(entry => entry.isCurrent)).toEqual([true]);
-		expect(bulkState(host.player).encounters).toEqual(checked);
-
-		vi.mocked(runCoreBulkSim).mockClear();
-		patchSlice(host.player.sim.store, 'ui', { showPowerTools: true });
-		await runBulkBatch(host);
-
-		expect(overrides()).toEqual([CURRENT, PATCHWERK, COUNCIL]);
+		expect(sentTalents()).toEqual([LIVE, FURY_EDITED]);
 	});
 
-	it('runs only the current encounter and talents in Gear mode with power tools on, keeping the checked ones for Builds', async () => {
-		const checked = [ref('Patchwerk', true), ref('Council')];
-		const checkedTalents = [tref('Arms', true)];
-		const host = batchHost(checked, true, checkedTalents);
-		setBulkMode(host.player, 'gear');
-		vi.mocked(runCoreBulkSim).mockResolvedValue(CORE_RESULT as never);
-
-		await runBulkBatch(host);
-
-		expect(overrides()).toEqual([CURRENT]);
-		expect(talentOverrides()).toEqual([undefined]);
-		expect(steps(host).labels).toHaveLength(1);
-		expect(bulkState(host.player).encounters).toEqual(checked);
-		expect(bulkState(host.player).talents).toEqual(checkedTalents);
-
-		vi.mocked(runCoreBulkSim).mockClear();
-		setBulkMode(host.player, 'builds');
-		await runBulkBatch(host);
-
-		expect(overrides()).toEqual([CURRENT, CURRENT, PATCHWERK, PATCHWERK, COUNCIL, COUNCIL]);
-	});
-
-	it('keeps the finished encounters when cancelled', async () => {
-		const host = batchHost();
+	it('runs the reference request first even when no setup shares the live bonus stats and the rotation the current gear resolves to', async () => {
+		const host = batchHost({ gear: ARMOR_GEAR });
+		vi.mocked(host.player.getResolvedAplRotationForBuild).mockImplementation(({ talentsString, gear }) =>
+			resolvedFor(`${talentsString} ${gear.getEquippedItem(ItemSlot.ItemSlotBack)?.enchant?.effectId}`),
+		);
 		vi.mocked(runCoreBulkSim)
 			.mockResolvedValueOnce(CORE_RESULT as never)
-			.mockImplementationOnce(async () => {
-				await cancelBulkBatch(host);
-				throw new Error('Bulk Sim Aborted');
-			});
+			.mockResolvedValueOnce({ ...CORE_RESULT, referenceDpsMetrics: { avg: 1100, stdev: 1 } } as never);
 
 		await runBulkBatch(host);
 
-		expect(bulkState(host.player).results!.map(entry => entry.isCurrent)).toEqual([true]);
-		expect(bulkState(host.player).isRunning).toBe(false);
+		expect(calls()).toHaveLength(2);
+		expect(calls()[0][3].candidates).toEqual([]);
+		expect(calls()[0][3].build).toEqual({ talentsString: LIVE, rotation: resolvedFor(`${LIVE} 884`), bonusStats: new Stats().toProto() });
+		expect(specsOf(calls()[1][3].candidates)).toEqual(specsOf([CURRENT_GEAR, RAID_WITH_AGILITY]));
+		expect(calls()[1][3].build!.rotation).toEqual(resolvedFor(`${LIVE} 849`));
+		expect(steps(host).labels).toHaveLength(1);
+		expect(bulkState(host.player).results![0].results.originalGearResults.dpsMetrics.avg).toBe(1000);
 	});
 
-	it('keeps the finished encounters when a later one fails', async () => {
-		const host = batchHost();
-		vi.mocked(runCoreBulkSim)
-			.mockResolvedValueOnce(CORE_RESULT as never)
-			.mockRejectedValueOnce(new Error('worker crashed'));
+	it('runs one request per split inside a run’s single step', async () => {
+		const host = batchHost({ gearSets: [BulkGearSetRef.create({ name: 'Raid', preset: true }), BulkGearSetRef.create({ name: 'Buffed' })] });
+		const running: number[] = [];
+		vi.mocked(runCoreBulkSim).mockImplementation(async (...args) => {
+			running.push(steps(host).running);
+			return echoCandidates(...args) as never;
+		});
 
 		await runBulkBatch(host);
 
-		expect(consoleError).toHaveBeenCalled();
-		expect(bulkState(host.player).results!.map(entry => entry.isCurrent)).toEqual([true]);
+		expect(calls().map(call => call[3].build?.bonusStats)).toEqual([new Stats().toProto(), STRENGTH_BONUS.toProto()]);
+		expect(specsOf(calls()[1][3].candidates)).toEqual(specsOf([RAID_WITH_AGILITY]));
+		expect(running).toEqual([0, 0]);
+		expect(steps(host).labels).toHaveLength(1);
+		// The reference row once and with no gear setup; the split's rows named by their setups.
+		expect(rowsOf(host).map(row => row.gearSetup?.gearSet ?? null)).toEqual([null, 'Raid', 'Buffed']);
 	});
 
-	it('leaves no results when the first encounter fails', async () => {
-		const host = batchHost();
-		vi.mocked(runCoreBulkSim).mockRejectedValueOnce(new Error('worker crashed'));
-
-		await runBulkBatch(host);
-
-		expect(consoleError).toHaveBeenCalled();
-		expect(bulkState(host.player).results).toBeNull();
-	});
-
-	it('lists every encounter as a step from the start and moves the running one along', async () => {
-		const host = batchHost();
+	it('lists one step per encounter pair and talent pair from the start, encounter pair outer', async () => {
+		const host = batchHost({ encounterPairs: [COUNCIL_PAIR], talentPairs: [ARMS_PAIR] });
 		const seen: Array<[number, number]> = [];
 		const record = () => {
 			const { labels, running } = steps(host);
@@ -270,54 +390,167 @@ describe('runBulkBatch', () => {
 		await runBulkBatch(host);
 
 		expect(seen).toEqual([
+			[4, 0],
+			[4, 0],
+			[4, 1],
+			[4, 2],
+			[4, 3],
+		]);
+		expect(steps(host).labels).toEqual([
+			'bulk_tab.builds.pairs.current_encounter · bulk_tab.builds.pairs.current_settings · bulk_tab.results.current_talents · bulk_tab.results.current_rotation',
+			'bulk_tab.builds.pairs.current_encounter · bulk_tab.builds.pairs.current_settings · Arms · bulk_tab.results.current_rotation',
+			'Council · bulk_tab.builds.pairs.current_settings · bulk_tab.results.current_talents · bulk_tab.results.current_rotation',
+			'Council · bulk_tab.builds.pairs.current_settings · Arms · bulk_tab.results.current_rotation',
+		]);
+	});
+
+	it('lists every encounter pair as a step from the start, skipping a deleted entry, and moves the running one along', async () => {
+		const host = batchHost({ encounterPairs: [encounterPair(eref('Patchwerk', true)), encounterPair(eref('Gone')), COUNCIL_PAIR] });
+		const seen: Array<[number, number]> = [];
+		const record = () => {
+			const { labels, running } = steps(host);
+			seen.push([labels.length, running]);
+		};
+		host.sim.waitForInit = async () => record();
+		vi.mocked(runCoreBulkSim).mockImplementation(async () => {
+			record();
+			return CORE_RESULT as never;
+		});
+
+		await runBulkBatch(host);
+
+		expect(sentEncounters()).toEqual([CURRENT, PATCHWERK, COUNCIL]);
+		expect(seen).toEqual([
 			[3, 0],
 			[3, 0],
 			[3, 1],
 			[3, 2],
 		]);
-		const { labels } = steps(host);
-		expect(labels[1]).toBe('Patchwerk · bulk_tab.settings.encounters.health_summary · bulk_tab.settings.encounters.targets');
+		expect(steps(host).labels[1]).toBe(
+			'Patchwerk · bulk_tab.builds.pairs.current_settings · bulk_tab.settings.encounters.health_summary · bulk_tab.settings.encounters.targets',
+		);
 	});
 
-	it('runs every talent setup inside each encounter, the current talents first and without an override', async () => {
-		const host = batchHost([ref('Council')], true, [tref('Arms', true)]);
+	it('never writes the player, party or raid while running', async () => {
+		const host = batchHost({
+			encounterPairs: [COUNCIL_HEALER_PAIR],
+			talentPairs: [talentPair(BulkTalentRef.create({ name: 'Arms', preset: true }), BulkRotationRef.create({ name: 'Opener', preset: true }))],
+			gearSets: [BulkGearSetRef.create({ name: 'Raid', preset: true }), BulkGearSetRef.create({ name: 'Buffed' })],
+		});
+		vi.mocked(runCoreBulkSim).mockImplementation(echoCandidates as never);
+
+		await runBulkBatch(host);
+
+		expect(calls()).toHaveLength(8);
+		const { player } = host;
+		for (const write of [
+			player.setGear,
+			player.setTalentsString,
+			player.setAplRotation,
+			player.setBonusStats,
+			player.setRace,
+			player.setProfessions,
+			player.setConsumes,
+			player.setBuffs,
+			player.getParty()!.setBuffs,
+			host.sim.raid.setBuffs,
+		]) {
+			expect(write).not.toHaveBeenCalled();
+		}
+		expect(player.setGearAsync).toHaveBeenCalledExactlyOnceWith(CURRENT_GEAR);
+	});
+
+	it('does not count Gear-mode combinations in Builds mode', async () => {
+		const host = batchHost();
 		vi.mocked(runCoreBulkSim).mockResolvedValue(CORE_RESULT as never);
 
 		await runBulkBatch(host);
 
-		expect(vi.mocked(runCoreBulkSim).mock.calls.map(call => [call[3].encounter?.duration, call[3].build?.talentsString])).toEqual([
-			[180, undefined],
-			[180, ARMS],
-			[90, undefined],
-			[90, ARMS],
-		]);
-		expect(vi.mocked(runCoreBulkSim).mock.calls[1][3].build!.rotation).toEqual(APLRotation.create({ simple: { specRotationJson: ARMS } }));
-		expect(bulkState(host.player).results!.map(entry => entry.results.talentPairs)).toEqual([2, 2]);
+		expect(host.sim.getBulkCombinationCount).not.toHaveBeenCalled();
+		expect(bulkState(host.player).combinationsPending).toBe(false);
 	});
 
-	it('runs a saved setup with the talents it holds when the batch starts', async () => {
-		const host = batchHost([], true, [tref('Fury')]);
-		writeSavedTalents(host, { Fury: FURY_EDITED });
+	it('runs nothing in Builds mode without a gear setup', async () => {
+		const host = batchHost({ buildEnchantPresets: [] });
+
+		await runBulkBatch(host);
+
+		expect(runCoreBulkSim).not.toHaveBeenCalled();
+		expect(bulkState(host.player)).toMatchObject({ isRunning: false, started: false, results: null });
+	});
+
+	it('runs only the current encounter with power tools off, keeping the stored pairs for when they are back on', async () => {
+		const host = batchHost({ powerTools: false, encounterPairs: [encounterPair(eref('Patchwerk', true)), COUNCIL_PAIR], talentPairs: [ARMS_PAIR] });
 		vi.mocked(runCoreBulkSim).mockResolvedValue(CORE_RESULT as never);
 
 		await runBulkBatch(host);
 
-		expect(talentOverrides()).toEqual([undefined, FURY_EDITED]);
+		expect(calls().map(call => call[3])).toEqual([{ encounter: CURRENT }]);
+		expect(steps(host).labels).toHaveLength(1);
+		expect(bulkState(host.player).encounterPairs).toHaveLength(2);
+		expect(bulkState(host.player).talentPairs).toEqual([ARMS_PAIR]);
+
+		vi.mocked(runCoreBulkSim).mockClear();
+		patchSlice(host.player.sim.store, 'ui', { showPowerTools: true });
+		await runBulkBatch(host);
+
+		expect(sentEncounters()).toEqual([CURRENT, CURRENT, PATCHWERK, PATCHWERK, COUNCIL, COUNCIL]);
+		expect(sentTalents()).toEqual([LIVE, ARMS, LIVE, ARMS, LIVE, ARMS]);
 	});
 
-	it('runs the current talents alone with power tools off, keeping the checked setups', async () => {
-		const checkedTalents = [tref('Arms', true), tref('Fury')];
-		const host = batchHost([], false, checkedTalents);
+	it('runs the stored pairs once Gear mode turns to Builds', async () => {
+		const host = batchHost({ mode: 'gear', encounterPairs: [COUNCIL_PAIR], talentPairs: [ARMS_PAIR] });
 		vi.mocked(runCoreBulkSim).mockResolvedValue(CORE_RESULT as never);
 
 		await runBulkBatch(host);
+		expect(sentEncounters()).toEqual([CURRENT]);
 
-		expect(talentOverrides()).toEqual([undefined]);
-		expect(bulkState(host.player).talents).toEqual(checkedTalents);
+		vi.mocked(runCoreBulkSim).mockClear();
+		setBulkMode(host.player, 'builds');
+		await runBulkBatch(host);
+
+		expect(sentEncounters()).toEqual([CURRENT, CURRENT, COUNCIL, COUNCIL]);
 	});
 
-	it('drops an encounter whose talent runs did not all finish', async () => {
-		const host = batchHost([ref('Council')], true, [tref('Arms', true)]);
+	it('keeps the finished encounter pairs when cancelled', async () => {
+		const host = batchHost({ encounterPairs: [COUNCIL_PAIR] });
+		vi.mocked(runCoreBulkSim)
+			.mockResolvedValueOnce(CORE_RESULT as never)
+			.mockImplementationOnce(async () => {
+				await cancelBulkBatch(host);
+				throw new Error('Bulk Sim Aborted');
+			});
+
+		await runBulkBatch(host);
+
+		expect(bulkState(host.player).results!.map(entry => entry.isCurrent)).toEqual([true]);
+		expect(bulkState(host.player).isRunning).toBe(false);
+	});
+
+	it('keeps the finished encounter pairs when a later one fails', async () => {
+		const host = batchHost({ encounterPairs: [COUNCIL_PAIR] });
+		vi.mocked(runCoreBulkSim)
+			.mockResolvedValueOnce(CORE_RESULT as never)
+			.mockRejectedValueOnce(new Error('worker crashed'));
+
+		await runBulkBatch(host);
+
+		expect(consoleError).toHaveBeenCalled();
+		expect(bulkState(host.player).results!.map(entry => entry.isCurrent)).toEqual([true]);
+	});
+
+	it('leaves no results when the first encounter pair fails', async () => {
+		const host = batchHost({ encounterPairs: [COUNCIL_PAIR] });
+		vi.mocked(runCoreBulkSim).mockRejectedValueOnce(new Error('worker crashed'));
+
+		await runBulkBatch(host);
+
+		expect(consoleError).toHaveBeenCalled();
+		expect(bulkState(host.player).results).toBeNull();
+	});
+
+	it('drops an encounter pair whose requests did not all finish', async () => {
+		const host = batchHost({ encounterPairs: [COUNCIL_PAIR], talentPairs: [ARMS_PAIR] });
 		vi.mocked(runCoreBulkSim)
 			.mockResolvedValueOnce(CORE_RESULT as never)
 			.mockResolvedValueOnce(CORE_RESULT as never)
@@ -329,27 +562,7 @@ describe('runBulkBatch', () => {
 
 		await runBulkBatch(host);
 
+		expect(calls()).toHaveLength(4);
 		expect(bulkState(host.player).results!.map(entry => entry.isCurrent)).toEqual([true]);
-	});
-
-	it('labels one step per encounter and talent setup, encounter outer', async () => {
-		const host = batchHost([ref('Council')], true, [tref('Arms', true)]);
-		const seen: number[] = [];
-		const record = () => seen.push(steps(host).running);
-		host.sim.waitForInit = async () => {
-			record();
-		};
-		vi.mocked(runCoreBulkSim).mockImplementation(async () => {
-			record();
-			return CORE_RESULT as never;
-		});
-
-		await runBulkBatch(host);
-
-		expect(seen).toEqual([0, 0, 1, 2, 3]);
-		const { labels } = steps(host);
-		expect(labels).toHaveLength(4);
-		expect(labels[1]).toBe('bulk_tab.results.current · Arms');
-		expect(labels[2]).toBe('Council · bulk_tab.results.current_talents');
 	});
 });

@@ -25,15 +25,21 @@ export const ENCHANT_PRESET_SLOTS: readonly ItemSlot[] = [
 
 export const enchantPresetPoolSlot = (slot: ItemSlot): ItemSlot => (slot === ItemSlot.ItemSlotFinger2 ? ItemSlot.ItemSlotFinger1 : slot);
 
-// The effect ids the presets hold for an item slot that the player can use there, each once and sorted. The Off Hand
-// also takes the Main Hand's, which go to both hands.
-export const enchantPresetSlotIds = (player: Player<any>, presets: readonly BulkEnchantPreset[], slot: ItemSlot): number[] => {
+// The effect ids the presets hold for an item slot, each once and sorted. The Off Hand also takes the Main Hand's, which
+// go to both hands.
+export const presetSlotEffectIds = (presets: readonly BulkEnchantPreset[], slot: ItemSlot): number[] => {
 	const poolSlot = enchantPresetPoolSlot(slot);
 	const sources = poolSlot === ItemSlot.ItemSlotOffHand ? [ItemSlot.ItemSlotMainHand, ItemSlot.ItemSlotOffHand] : [poolSlot];
-	const wanted = new Set(presets.flatMap(preset => preset.slots.filter(options => sources.includes(options.slot)).flatMap(options => options.effectIds)));
-	if (!wanted.size) return [];
+	const effectIds = presets.flatMap(preset => preset.slots.filter(options => sources.includes(options.slot)).flatMap(options => options.effectIds));
+	return [...new Set(effectIds)].sort((a, b) => a - b);
+};
+
+// The ones of them the player can use there.
+export const enchantPresetSlotIds = (player: Player<any>, presets: readonly BulkEnchantPreset[], slot: ItemSlot): number[] => {
+	const wanted = presetSlotEffectIds(presets, slot);
+	if (!wanted.length) return [];
 	const usable = new Set(player.getEnchants(slot).map(enchant => enchant.effectId));
-	return [...wanted].filter(id => usable.has(id)).sort((a, b) => a - b);
+	return wanted.filter(id => usable.has(id));
 };
 
 // Sorted, so the request that seeds the batch's RNG does not depend on preset order or the order enchants were picked in.

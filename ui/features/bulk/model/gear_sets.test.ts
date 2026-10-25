@@ -127,9 +127,9 @@ describe('bulkGearSetRuns', () => {
 		const runs = bulkGearSetRuns(current, entries, [ref('Buffed'), ref('Raid', true)]);
 
 		expect(runs).toEqual([
-			{ name: '', isCurrent: true, gear: current.gear, bonusStats: current.bonusStats },
-			{ name: 'Raid', isCurrent: false, gear: entries[0].gear, bonusStats: entries[0].bonusStats },
-			{ name: 'Buffed', isCurrent: false, gear: entries[1].gear, bonusStats: entries[1].bonusStats },
+			{ name: '', gear: current.gear, bonusStats: current.bonusStats },
+			{ name: 'Raid', gear: entries[0].gear, bonusStats: entries[0].bonusStats },
+			{ name: 'Buffed', gear: entries[1].gear, bonusStats: entries[1].bonusStats },
 		]);
 	});
 });

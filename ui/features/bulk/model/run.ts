@@ -1,22 +1,31 @@
 import { enchantPresetPool } from '@features/enchant-presets/model/enchant_presets';
 import { BulkSettings, ProgressMetrics } from '@generated/proto/api';
 import { APLRotation } from '@generated/proto/apl';
+import { Profession } from '@generated/proto/common';
 import i18n from '@i18n/config';
-import { BulkEncounterResults, BulkRotationSetup, BulkSimOverrides, BulkSimProgressConfig } from '@sim/bulk/types';
+import { BulkEncounterResults, BulkEncounterSetup, BulkPlayerSettingsSetup, BulkSimOverrides, BulkSimProgressConfig } from '@sim/bulk/types';
 import type { Player } from '@sim/player/player';
+import { getGearIdentityKey } from '@sim/proto/items';
 import { bulkState, patchBulkState } from '@sim/settings/bulk_settings';
 import type { IndividualSimHost } from '@sim/sim_host';
 import { RequestTypes } from '@sim/sim_signal_manager';
 import { toastManager } from '@ui-kit/Toast';
 
 import { trackEvent } from '../../../tracking/utils';
+import { bulkBuildRuns, bulkBuildStepLabel } from './builds';
 import { type CoreBulkSimResult, runCoreBulkSim as runCoreBulkSimImpl } from './core_sim';
-import { bulkEncounterRuns, encounterLabel, encounterLength, formatEncounterSummary, pickableBulkEncounters } from './encounters';
+import { bulkEnchantPickEntries, bulkEnchantPickRuns } from './enchant_picks';
+import { bulkEncounterPairRuns, pickableBulkSettings } from './encounter_pairs';
+import { encounterLabel, encounterLength, formatEncounterSummary, pickableBulkEncounters } from './encounters';
+import { bulkGearSetRuns, pickableBulkGearSets } from './gear_sets';
+import { bulkGearSetups } from './gear_setups';
 import { bulkRunsBuilds } from './mode';
 import { BulkProgress, candidateGearProgress, simProgress } from './progress';
 import { type BulkFinishedRequest, rankEncounterResults } from './results';
+import { pickableBulkRotations } from './rotations';
 import { createBulkSettingsProto } from './settings';
-import { bulkTalentRuns, pickableBulkTalents, talentsLabel } from './talents';
+import { bulkTalentPairRuns } from './talent_pairs';
+import { pickableBulkTalents } from './talents';
 
 // The stored settings plus the enchant pool, which is derived from the presets and never stored.
 const bulkRequestSettings = (player: Player<any>): BulkSettings => ({ ...createBulkSettingsProto(player), enchants: enchantPresetPool(player) });
@@ -38,7 +47,7 @@ interface BulkRun {
 }
 
 interface BulkEncounterSteps {
-	/** One per encounter and talent setup the batch runs, encounter outer, one array for the whole run. */
+	/** One per encounter pair and talent pair the batch runs, encounter pair outer, one array for the whole run. */
 	labels: readonly string[];
 	/** 0-based index into `labels` of the run in progress. */
 	running: number;
@@ -213,10 +222,88 @@ export const cancelBulkBatch = async (host: IndividualSimHost<any>) => {
 	await abortBulkSimWork(host);
 };
 
+interface BulkRequestPlan {
+	request: Omit<BulkFinishedRequest, 'result'>;
+	overrides: BulkSimOverrides;
+}
+
+// An encounter pair and its steps, in run order. A step's requests are one run's splits.
+interface BulkEncounterPlan {
+	encounter: BulkEncounterSetup;
+	settings: BulkPlayerSettingsSetup | null;
+	steps: Array<{ label: string; requests: BulkRequestPlan[] }>;
+}
+
+interface CurrentTalentPair {
+	talentsString: string;
+	rotation: APLRotation;
+}
+
+const gearModePlan = (host: IndividualSimHost<any>, current: CurrentTalentPair): BulkEncounterPlan[] => {
+	const encounter: BulkEncounterSetup = { name: '', isCurrent: true, encounter: host.sim.encounter.toProto() };
+	const [talentPair] = bulkTalentPairRuns(current, [], [], []);
+	return [
+		{
+			encounter,
+			settings: null,
+			steps: [
+				{
+					label: `${encounterLabel(encounter)} · ${formatEncounterSummary(encounter.encounter)}`,
+					requests: [{ request: { ...talentPair, setups: null }, overrides: { encounter: encounter.encounter } }],
+				},
+			],
+		},
+	];
+};
+
+// Empty with no gear setups. A request's setups are keyed by the gear as sent, which is the gear the sim's rows carry.
+const buildsModePlan = (host: IndividualSimHost<any>, current: CurrentTalentPair): BulkEncounterPlan[] => {
+	const { sim, player } = host;
+	const slice = bulkState(player);
+	const reference = { gear: player.getGear(), bonusStats: player.getBonusStats(), isEnchanter: player.hasProfession(Profession.Enchanting) };
+	const setups = bulkGearSetups(
+		player,
+		bulkGearSetRuns({ gear: reference.gear, bonusStats: reference.bonusStats }, pickableBulkGearSets(host), slice.gearSets),
+		bulkEnchantPickRuns(bulkEnchantPickEntries(slice.enchantPresets), slice.buildEnchantPresets),
+	);
+	const encounterPairs = bulkEncounterPairRuns(sim.encounter.toProto(), pickableBulkEncounters(host), pickableBulkSettings(host), slice.encounterPairs);
+	const talentPairs = bulkTalentPairRuns(current, pickableBulkTalents(host), pickableBulkRotations(host), slice.talentPairs);
+	const runs = bulkBuildRuns(setups, reference, encounterPairs, talentPairs, build => player.getResolvedAplRotationForBuild(build));
+	return encounterPairs.flatMap(encounterPair => {
+		const steps = runs
+			.filter(run => run.encounterPair === encounterPair)
+			.map(run => ({
+				label: bulkBuildStepLabel(run, talentPairs.length),
+				requests: run.requests.map((request): BulkRequestPlan => ({
+					request: {
+						talents: run.talentPair.talents,
+						rotation: run.talentPair.rotation,
+						setups: {
+							byGearKey: new Map(request.candidates.map(setup => [getGearIdentityKey(setup.gear.asSpec()), setup])),
+							baseline: request.baselineSetup,
+						},
+					},
+					overrides: {
+						encounter: encounterPair.encounter.encounter,
+						settings: encounterPair.settings.settings ?? undefined,
+						build: request.override,
+						candidates: request.candidates.map(setup => setup.gear),
+					},
+				})),
+			}));
+		return steps.length ? [{ encounter: encounterPair.encounter, settings: encounterPair.settings, steps }] : [];
+	});
+};
+
 export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 	const { sim, player } = host;
 	const run = runOf(player);
 	if (bulkState(player).isRunning) return;
+
+	const builds = bulkRunsBuilds(sim.getShowPowerTools(), bulkState(player).mode);
+	const current = { talentsString: player.getTalentsString(), rotation: APLRotation.clone(player.aplRotation) };
+	const plan = builds ? buildsModePlan(host, current) : gearModePlan(host, current);
+	if (!plan.length) return;
 
 	trackEvent({
 		action: 'sim',
@@ -226,35 +313,7 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 	});
 
 	run.isCancelling = false;
-	const builds = bulkRunsBuilds(sim.getShowPowerTools(), bulkState(player).mode);
-	const encounterRuns = bulkEncounterRuns(sim.encounter.toProto(), pickableBulkEncounters(host), bulkState(player).encounters, builds);
-	const currentRotation: BulkRotationSetup = { name: '', isCurrent: true, rotation: APLRotation.clone(player.aplRotation) };
-	const talentRuns = bulkTalentRuns(player.getPlayerSpec(), player.getTalentsString(), pickableBulkTalents(host), bulkState(player).talents, builds).map(
-		talents => ({
-			talents,
-			override: talents.isCurrent
-				? undefined
-				: {
-						talentsString: talents.talentsString,
-						rotation: player.getResolvedAplRotationForBuild({
-							talentsString: talents.talentsString,
-							gear: player.getGear(),
-							rotation: player.aplRotation,
-						}),
-						bonusStats: player.getBonusStats().toProto(),
-					},
-		}),
-	);
-	run.steps = {
-		labels: encounterRuns.flatMap(encounterRun =>
-			talentRuns.map(({ talents }) =>
-				talentRuns.length === 1
-					? `${encounterLabel(encounterRun)} · ${formatEncounterSummary(encounterRun.encounter)}`
-					: `${encounterLabel(encounterRun)} · ${talentsLabel(talents)}`,
-			),
-		),
-		running: 0,
-	};
+	run.steps = { labels: plan.flatMap(encounterPlan => encounterPlan.steps.map(step => step.label)), running: 0 };
 	// The progress dialog mounts on `isRunning` and takes the steps from the progress there, before the first stage reports.
 	setCandidateGearProgress(player);
 	patchBulkState(player, { isRunning: true, started: true });
@@ -263,7 +322,9 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 	const abortSignal = run.abortController.signal;
 
 	await sim.waitForInit();
-	const bulkSettings = bulkRequestSettings(player);
+	// Empty in Builds: given the Gear-mode settings, a request whose candidates all repeat the baseline would have the sim
+	// generate Gear-mode combinations.
+	const bulkSettings = builds ? BulkSettings.create() : bulkRequestSettings(player);
 	const entries: BulkEncounterResults[] = [];
 	let runError: unknown = null;
 
@@ -275,28 +336,27 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 		const baseGear = player.getGear();
 		patchBulkState(player, { runGear: baseGear, results: null });
 
-		await refreshBulkCombinations(host);
+		if (!builds) await refreshBulkCombinations(host);
 
-		for (const [encounterIndex, encounterRun] of encounterRuns.entries()) {
+		let stepIndex = 0;
+		for (const encounterPlan of plan) {
 			const finished: BulkFinishedRequest[] = [];
-			for (const [setupIndex, { talents, override }] of talentRuns.entries()) {
-				throwIfBulkAborted(player, abortSignal);
-				run.steps = { ...run.steps, running: encounterIndex * talentRuns.length + setupIndex };
-				setCandidateGearProgress(player);
-				run.simStart = new Date().getTime();
-				finished.push({
-					talents,
-					rotation: currentRotation,
-					setups: null,
-					result: await runCoreBulkSim(host, abortSignal, bulkSettings, { encounter: encounterRun.encounter, build: override }),
-				});
+			for (const { requests } of encounterPlan.steps) {
+				for (const { request, overrides } of requests) {
+					throwIfBulkAborted(player, abortSignal);
+					run.steps = { ...run.steps, running: stepIndex };
+					setCandidateGearProgress(player);
+					run.simStart = new Date().getTime();
+					finished.push({ ...request, result: await runCoreBulkSim(host, abortSignal, bulkSettings, overrides) });
+				}
+				stepIndex++;
 			}
-			// Pushed only once every setup finished, so a cancel or error mid-encounter drops the encounter.
+			// Pushed only once every request finished, so a cancel or error mid-pair drops the encounter pair.
 			entries.push({
-				name: encounterRun.name,
-				isCurrent: encounterRun.isCurrent,
-				...encounterLength(encounterRun.encounter),
-				settings: null,
+				name: encounterPlan.encounter.name,
+				isCurrent: encounterPlan.encounter.isCurrent,
+				...encounterLength(encounterPlan.encounter.encounter),
+				settings: encounterPlan.settings,
 				results: rankEncounterResults(finished, baseGear),
 			});
 		}

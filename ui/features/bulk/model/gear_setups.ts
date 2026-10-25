@@ -1,4 +1,4 @@
-import { enchantPresetPoolSlot } from '@features/enchant-presets/model/enchant_presets';
+import { presetSlotEffectIds } from '@features/enchant-presets/model/enchant_presets';
 import { ItemSlot, UnitStats } from '@generated/proto/common';
 import type { BulkEnchantPreset, UIEnchant } from '@generated/proto/ui';
 import i18n from '@i18n/config';
@@ -22,14 +22,6 @@ export const gearSetupKey = (setup: Pick<BulkGearSetup, 'gear' | 'bonusStats'>):
 const slotEnchants = (player: Player<any>, slot: ItemSlot): UIEnchant[] =>
 	player.sim.db.getEnchants(slot).filter(enchant => canEquipEnchant(enchant, player.getPlayerSpec(), true));
 
-// Each once and sorted. The Off Hand also takes the Main Hand's, which go to both hands.
-const presetEffectIds = (preset: BulkEnchantPreset, slot: ItemSlot): number[] => {
-	const poolSlot = enchantPresetPoolSlot(slot);
-	const sources = poolSlot === ItemSlot.ItemSlotOffHand ? [ItemSlot.ItemSlotMainHand, ItemSlot.ItemSlotOffHand] : [poolSlot];
-	const effectIds = preset.slots.filter(options => sources.includes(options.slot)).flatMap(options => options.effectIds);
-	return [...new Set(effectIds)].sort((a, b) => a - b);
-};
-
 // Every slot the preset holds a fitting enchant for takes one of them, in every combination; the other slots keep the
 // set's own enchant.
 const enchantVariants = (player: Player<any>, gear: Gear, preset: BulkEnchantPreset): Gear[] => {
@@ -37,7 +29,7 @@ const enchantVariants = (player: Player<any>, gear: Gear, preset: BulkEnchantPre
 		const equipped = gear.getEquippedItem(slot);
 		if (!equipped) return [];
 		const rows = slotEnchants(player, slot);
-		const items = presetEffectIds(preset, slot).flatMap((effectId): EquippedItem[] => {
+		const items = presetSlotEffectIds([preset], slot).flatMap((effectId): EquippedItem[] => {
 			const enchant = rows.find(row => row.effectId === effectId && enchantAppliesToItem(row, equipped.item));
 			return enchant ? [equipped.withEnchant(enchant)] : [];
 		});

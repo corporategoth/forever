@@ -20,7 +20,6 @@ export interface BulkGearSetEntry {
 
 export interface BulkGearSetPick {
 	name: string;
-	isCurrent: boolean;
 	gear: Gear;
 	bonusStats: Stats;
 }
@@ -68,10 +67,10 @@ export const bulkGearSetList = (current: GearAndBonusStats, entries: readonly Bu
 
 // The current gear runs first, unnamed, then every checked row the list neither leaves out nor flags.
 export const bulkGearSetRuns = (current: GearAndBonusStats, entries: readonly BulkGearSetEntry[], checked: readonly BulkGearSetRef[]): BulkGearSetPick[] => [
-	{ name: '', isCurrent: true, gear: current.gear, bonusStats: current.bonusStats },
+	{ name: '', gear: current.gear, bonusStats: current.bonusStats },
 	...bulkGearSetList(current, entries, checked)
 		.filter(item => item.checked && !item.duplicate)
-		.map(({ name, gear, bonusStats }) => ({ name, isCurrent: false, gear, bonusStats })),
+		.map(({ name, gear, bonusStats }) => ({ name, gear, bonusStats })),
 ];
 
 // No `settings` bump: the gear sets change neither the Gear mode's combination count nor the stored BulkSettings.
