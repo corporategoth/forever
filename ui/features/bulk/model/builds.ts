@@ -1,8 +1,9 @@
-import { APLRotation } from '@generated/proto/apl';
+import { APLRotation, APLRotation_Type as APLRotationType } from '@generated/proto/apl';
 import type { Encounter } from '@generated/proto/common';
 import type { BulkBuildOverride, BulkEncounterResults, BulkGearSetup, BulkRotationSetup, BulkTalentSetup } from '@sim/bulk/types';
 import type { Gear } from '@sim/proto/gear';
 import { getGearIdentityKey } from '@sim/proto/items';
+import { omitDeep } from '@sim/utils/collections';
 import { estimateBulkSimIterations } from '@sim/wasm/bulk_sim/estimate';
 
 import { encounterLabel, formatEncounterSummary } from './encounters';
@@ -40,6 +41,11 @@ export interface BulkBuildsCount {
 
 const gearIdentity = (gear: Gear): string => getGearIdentityKey(gear.asSpec());
 
+// What the sim reads of a resolved rotation: the type and Simple settings a resolved rotation keeps from its pick and
+// the editor's uuids are left out, so an Auto and a Simple pick that generate the same list compare equal.
+const simmedRotationKey = (rotation: APLRotation): string =>
+	APLRotation.toJsonString({ ...omitDeep(rotation, ['uuid']), type: APLRotationType.TypeUnknown, simple: undefined });
+
 // One request per bonus stats and rotation the setups resolve to, in the order of each group's first setup. A setup
 // that an earlier rotation of the same talents resolved alike is in `simmed` and left out.
 const buildRequests = (
@@ -53,7 +59,7 @@ const buildRequests = (
 	const groups = new Map<string, { setups: BulkGearSetup[]; resolved: APLRotation }>();
 	for (const setup of setups) {
 		const resolved = resolve({ talentsString: talents.talentsString, gear: setup.gear, rotation: rotation.rotation });
-		const key = `${bonusStatsKey(setup.bonusStats)}|${APLRotation.toJsonString(resolved)}`;
+		const key = `${bonusStatsKey(setup.bonusStats)}|${simmedRotationKey(resolved)}`;
 		const simKey = `${gearIdentity(setup.gear)}|${key}`;
 		if (simmed.has(simKey)) continue;
 		simmed.add(simKey);
@@ -77,8 +83,9 @@ export const bulkBuildRuns = (
 	rotationRuns: readonly BulkRotationSetup[],
 	resolve: ResolveBuildRotation,
 ): BulkBuildRun[] => {
+	if (!setups.length) return [];
 	// The current setup is the batch's reference and the gear every request sims as its baseline.
-	if (!setups[0]?.isCurrent) throw new Error('A Builds batch needs the current gear setup first');
+	if (!setups[0].isCurrent) throw new Error('A Builds batch needs the current gear setup first');
 	const currentGear = gearIdentity(setups[0].gear);
 	return talentRuns.flatMap(talents => {
 		const simmed = new Set<string>();

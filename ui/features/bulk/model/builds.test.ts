@@ -1,5 +1,5 @@
-import { APLListItem, APLRotation, APLRotation_Type as APLRotationType, SimpleRotation } from '@generated/proto/apl';
-import { Encounter, ItemSlot, Stat, Target } from '@generated/proto/common';
+import { APLAction, APLListItem, APLRotation, APLRotation_Type as APLRotationType, APLValue, SimpleRotation } from '@generated/proto/apl';
+import { Encounter, ItemSlot, Stat, Target, UUID } from '@generated/proto/common';
 import type { BulkGearSetup, BulkRotationSetup, BulkTalentSetup } from '@sim/bulk/types';
 import { Gear } from '@sim/proto/gear';
 import { Stats } from '@sim/proto/stats';
@@ -30,13 +30,24 @@ const currentSetup = (bonusStats = NO_BONUS): BulkGearSetup => ({ gearSet: '', e
 
 const savedSetup = (gearSet: string, gear: Gear, bonusStats = NO_BONUS): BulkGearSetup => ({ gearSet, enchantPreset: '', isCurrent: false, gear, bonusStats });
 
-const rotationOf = (type: APLRotationType, notes = '') => APLRotation.create({ type, priorityList: notes ? [APLListItem.create({ notes })] : [] });
+const rotationOf = (type: APLRotationType, notes = '', uuid = '') =>
+	APLRotation.create({
+		type,
+		priorityList: notes
+			? [
+					APLListItem.create({
+						notes,
+						action: uuid ? APLAction.create({ condition: APLValue.create({ uuid: UUID.create({ value: uuid }) }) }) : undefined,
+					}),
+				]
+			: [],
+	});
 
 const CURRENT_TALENTS: BulkTalentSetup = { name: '', talentsString: '111', isCurrent: true };
 const ARMS_TALENTS: BulkTalentSetup = { name: 'Arms', talentsString: '222', isCurrent: false };
 
 const CURRENT_ROTATION: BulkRotationSetup = { name: '', isCurrent: true, rotation: rotationOf(APLRotationType.TypeAuto) };
-const CUSTOM_ROTATION: BulkRotationSetup = { name: 'Custom', isCurrent: false, rotation: rotationOf(APLRotationType.TypeAPL, 'custom') };
+const CUSTOM_ROTATION: BulkRotationSetup = { name: 'Custom', isCurrent: false, rotation: rotationOf(APLRotationType.TypeAPL, 'custom', 'original') };
 
 const simpleRotation = (name: string, specRotationJson: string): BulkRotationSetup => ({
 	name,
@@ -44,11 +55,12 @@ const simpleRotation = (name: string, specRotationJson: string): BulkRotationSet
 	rotation: APLRotation.create({ type: APLRotationType.TypeSimple, simple: SimpleRotation.create({ specRotationJson }) }),
 });
 
-// A custom APL goes as it is; an Auto or Simple rotation resolves by its type and the hands the gear fills, each time
-// to a new object, whatever its settings.
+// As the player's resolver: a custom APL goes as it is; an Auto or Simple pick generates a new list each time, here by
+// the hands the gear fills alone, and the result keeps the pick's type and Simple settings.
 const resolve: ResolveBuildRotation = ({ gear, rotation }) => {
 	if (rotation.type === APLRotationType.TypeAPL) return rotation;
-	return rotationOf(rotation.type, gear.getEquippedItem(ItemSlot.ItemSlotOffHand) ? 'dual wield' : 'two-hand');
+	const generated = rotationOf(APLRotationType.TypeUnknown, gear.getEquippedItem(ItemSlot.ItemSlotOffHand) ? 'dual wield' : 'two-hand');
+	return { ...generated, type: rotation.type, simple: rotation.simple };
 };
 
 const DUAL_WIELD_RESOLVED = rotationOf(APLRotationType.TypeAuto, 'dual wield');
@@ -109,22 +121,19 @@ describe('bulkBuildRuns', () => {
 		expect(run.requests.map(request => request.candidates)).toEqual([[], [setups[1], setups[2]]]);
 	});
 
-	it('runs picked rotations that resolve alike once, under the first of them', () => {
+	it('runs picked rotations the sim reads alike once, under the first of them', () => {
 		const setups = [currentSetup(), savedSetup('Two-hand', TWO_HAND_GEAR)];
-		const pickedAuto: BulkRotationSetup = { name: 'Auto', isCurrent: false, rotation: rotationOf(APLRotationType.TypeAuto, 'picked') };
+		const customCopy: BulkRotationSetup = { name: 'Custom copy', isCurrent: false, rotation: rotationOf(APLRotationType.TypeAPL, 'custom', 'copy') };
 
 		const runs = bulkBuildRuns(
 			setups,
 			[CURRENT_TALENTS],
-			[CURRENT_ROTATION, simpleRotation('Simple A', '{"a":1}'), pickedAuto, simpleRotation('Simple B', '{"b":2}')],
+			[CURRENT_ROTATION, simpleRotation('Simple A', '{"a":1}'), CUSTOM_ROTATION, customCopy, simpleRotation('Simple B', '{"b":2}')],
 			resolve,
 		);
 
-		expect(runs.map(run => run.rotation.name)).toEqual(['', 'Simple A']);
-		expect(runs[1].requests.map(({ candidates, baselineSetup }) => ({ candidates, baselineSetup }))).toEqual([
-			{ candidates: [], baselineSetup: setups[0] },
-			{ candidates: [setups[1]], baselineSetup: null },
-		]);
+		expect(runs.map(run => run.rotation.name)).toEqual(['', 'Custom']);
+		expect(runs[1].requests).toEqual([expect.objectContaining({ candidates: [setups[1]], baselineSetup: setups[0] })]);
 	});
 
 	it('splits a run by bonus stats, each request carrying its group’s bonus stats', () => {
@@ -158,8 +167,11 @@ describe('bulkBuildRuns', () => {
 		expect(runs[1].requests).toEqual([expect.objectContaining({ candidates: [], baselineSetup: setups[0] })]);
 	});
 
+	it('plans nothing before there are setups', () => {
+		expect(bulkBuildRuns([], [CURRENT_TALENTS], [CURRENT_ROTATION], resolve)).toEqual([]);
+	});
+
 	it('refuses setups that do not start with the current one', () => {
-		expect(() => bulkBuildRuns([], [CURRENT_TALENTS], [CURRENT_ROTATION], resolve)).toThrow();
 		expect(() => bulkBuildRuns([savedSetup('Raid', OTHER_DUAL_WIELD_GEAR), currentSetup()], [CURRENT_TALENTS], [CURRENT_ROTATION], resolve)).toThrow();
 	});
 });
