@@ -1236,9 +1236,7 @@
 				"frozen_slots": "Frozen slots"
 			},
 			"encounters": {
-				"health_summary": "Health",
-				"targets_one": "{{count}} target",
-				"targets_other": "{{count}} targets"
+				"health_summary": "Health"
 			},
 			"talents": {
 				"no_points": "No talent points"
@@ -1323,7 +1321,8 @@
 			"seconds_remaining": "{{seconds}} seconds remaining",
 			"time_remaining": "{{time}} remaining",
 			"finalist_iteration_rounds": "Running finalist tie-breaker rounds",
-			"title": "Bulk Sim"
+			"title": "Bulk Sim",
+			"status": "Status"
 		},
 		"notifications": {
 			"bulk_sim_cancelled": "Bulk sim cancelled.",

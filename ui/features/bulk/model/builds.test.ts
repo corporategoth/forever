@@ -9,7 +9,7 @@ import { makeEquippedItem } from '@testing/storybook/fixtures/gear';
 import { makeUIEnchant } from '@testing/storybook/fixtures/protos';
 import { describe, expect, it, vi } from 'vitest';
 
-import { type BulkBuildReference, type BulkBuildRun, bulkBuildRuns, bulkBuildsCount, bulkBuildStepLabel, type ResolveBuildRotation } from './builds';
+import { type BulkBuildReference, bulkBuildRuns, bulkBuildsCount, bulkBuildStep, type ResolveBuildRotation } from './builds';
 
 vi.mock('@i18n/config', () => ({
 	default: { t: (key: string, options?: { count?: number }) => (options?.count === undefined ? key : `${key}:${options.count}`) },
@@ -262,20 +262,19 @@ describe('bulkBuildsCount', () => {
 	});
 });
 
-describe('bulkBuildStepLabel', () => {
-	it('names a step by encounter pair and talent pair, leaving the talent pair out when only one ran', () => {
-		const run = (encounter: BulkEncounterPairSetup, talents: BulkTalentPairSetup): BulkBuildRun => ({
-			encounterPair: encounter,
-			talentPair: talents,
-			requests: [],
+describe('bulkBuildStep', () => {
+	it('names a step by its encounter, settings, talents and rotation, calling each current one current', () => {
+		expect(bulkBuildStep({ encounterPair: RAID_PAIR, talentPair: ARMS_CUSTOM })).toEqual({
+			encounter: 'Raid boss',
+			settings: 'Tank',
+			talents: 'Arms',
+			rotation: 'Custom',
 		});
-
-		expect(bulkBuildStepLabel(run(CURRENT_PAIR, ARMS_CUSTOM), 1)).toBe(
-			'bulk_tab.builds.pairs.current_encounter · bulk_tab.builds.pairs.current_settings · 3:00 ±5s · bulk_tab.settings.encounters.targets:1',
-		);
-		expect(bulkBuildStepLabel(run(RAID_PAIR, ARMS_CUSTOM), 2)).toBe('Raid boss · Tank · Arms · Custom');
-		expect(bulkBuildStepLabel(run(RAID_PAIR, CURRENT_TALENT_PAIR), 2)).toBe(
-			'Raid boss · Tank · bulk_tab.results.current_talents · bulk_tab.results.current_rotation',
-		);
+		expect(bulkBuildStep({ encounterPair: CURRENT_PAIR, talentPair: CURRENT_TALENT_PAIR })).toEqual({
+			encounter: 'bulk_tab.builds.pairs.current_encounter',
+			settings: 'bulk_tab.builds.pairs.current_settings',
+			talents: 'bulk_tab.results.current_talents',
+			rotation: 'bulk_tab.results.current_rotation',
+		});
 	});
 });

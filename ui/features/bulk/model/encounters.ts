@@ -16,9 +16,7 @@ export interface BulkEncounterEntry {
 
 type EncounterLength = Pick<BulkEncounterResults, 'duration' | 'durationVariation'>;
 
-type EncounterSummaryFields = Pick<Encounter, 'duration' | 'durationVariation' | 'useHealth' | 'targets'>;
-
-const t = (key: string, options?: Record<string, unknown>) => i18n.t(`bulk_tab.settings.encounters.${key}`, options);
+const t = (key: string) => i18n.t(`bulk_tab.settings.encounters.${key}`);
 
 // As the results store it: null for both on a health-based encounter, which has no set length.
 export const encounterLength = ({
@@ -34,9 +32,6 @@ export const formatEncounterDuration = ({ duration, durationVariation }: Encount
 	const length = formatDurationSeconds(duration, { separatorStyle: 'colon', minimumUnit: 'minutes' });
 	return durationVariation === null ? length : `${length} ±${durationVariation}s`;
 };
-
-export const formatEncounterSummary = (encounter: EncounterSummaryFields): string =>
-	`${formatEncounterDuration(encounterLength(encounter))} · ${t('targets', { count: Math.max(1, encounter.targets.length) })}`;
 
 // The current encounter runs unnamed; every view calls it "Current".
 export const encounterLabel = ({ isCurrent, name }: Pick<BulkEncounterResults, 'isCurrent' | 'name'>): string =>

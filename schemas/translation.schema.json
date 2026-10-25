@@ -4425,16 +4425,10 @@
 							"properties": {
 								"health_summary": {
 									"type": "string"
-								},
-								"targets_one": {
-									"type": "string"
-								},
-								"targets_other": {
-									"type": "string"
 								}
 							},
 							"additionalProperties": false,
-							"required": ["health_summary", "targets_one", "targets_other"]
+							"required": ["health_summary"]
 						},
 						"talents": {
 							"type": "object",
@@ -4742,6 +4736,9 @@
 						},
 						"title": {
 							"type": "string"
+						},
+						"status": {
+							"type": "string"
 						}
 					},
 					"additionalProperties": false,
@@ -4757,7 +4754,8 @@
 						"iterations_complete",
 						"seconds_remaining",
 						"time_remaining",
-						"title"
+						"title",
+						"status"
 					]
 				},
 				"notifications": {

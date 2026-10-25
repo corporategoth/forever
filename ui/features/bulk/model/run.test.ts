@@ -235,6 +235,13 @@ const specsOf = (gears: readonly Gear[] | undefined) => (gears ?? []).map(gear =
 
 const steps = (host: IndividualSimHost<any>) => bulkProgress(host.player)!.steps;
 
+const step = (
+	encounter = 'bulk_tab.builds.pairs.current_encounter',
+	settings = 'bulk_tab.builds.pairs.current_settings',
+	talents = 'bulk_tab.results.current_talents',
+	rotation = 'bulk_tab.results.current_rotation',
+) => ({ encounter, settings, talents, rotation });
+
 const rowsOf = (host: IndividualSimHost<any>) => bulkState(host.player).results![0].results.chains.flat();
 
 // The sim's rows are the candidates it was sent, each below the reference.
@@ -264,7 +271,7 @@ describe('runBulkBatch', () => {
 		expect(calls()[0][2].items).toEqual([ItemSpec.create({ id: 5 })]);
 		expect(calls()[0][2].enchants).toEqual([BulkEnchantSlotOptions.create({ slot: ItemSlot.ItemSlotBack, effectIds: [CLOAK_AGILITY.effectId] })]);
 		expect(host.sim.getBulkCombinationCount).toHaveBeenCalled();
-		expect(steps(host).labels).toHaveLength(1);
+		expect(steps(host).rows).toEqual([step()]);
 		const [entry] = bulkState(host.player).results!;
 		expect([entry.isCurrent, entry.settings, entry.results.talentPairs]).toEqual([true, null, 1]);
 		expect(entry.results.originalGearResults.rotation.rotation).toEqual(LIVE_ROTATION);
@@ -351,7 +358,7 @@ describe('runBulkBatch', () => {
 		expect(calls()[0][3].build).toEqual({ talentsString: LIVE, rotation: resolvedFor(`${LIVE} 884`), bonusStats: new Stats().toProto() });
 		expect(specsOf(calls()[1][3].candidates)).toEqual(specsOf([CURRENT_GEAR, RAID_WITH_AGILITY]));
 		expect(calls()[1][3].build!.rotation).toEqual(resolvedFor(`${LIVE} 849`));
-		expect(steps(host).labels).toHaveLength(1);
+		expect(steps(host).rows).toHaveLength(1);
 		expect(bulkState(host.player).results![0].results.originalGearResults.dpsMetrics.avg).toBe(1000);
 	});
 
@@ -368,7 +375,7 @@ describe('runBulkBatch', () => {
 		expect(calls().map(call => call[3].build?.bonusStats)).toEqual([new Stats().toProto(), STRENGTH_BONUS.toProto()]);
 		expect(specsOf(calls()[1][3].candidates)).toEqual(specsOf([RAID_WITH_AGILITY]));
 		expect(running).toEqual([0, 0]);
-		expect(steps(host).labels).toHaveLength(1);
+		expect(steps(host).rows).toHaveLength(1);
 		// The reference row once and with no gear setup; the split's rows named by their setups.
 		expect(rowsOf(host).map(row => row.gearSetup?.gearSet ?? null)).toEqual([null, 'Raid', 'Buffed']);
 	});
@@ -377,8 +384,8 @@ describe('runBulkBatch', () => {
 		const host = batchHost({ encounterPairs: [COUNCIL_PAIR], talentPairs: [ARMS_PAIR] });
 		const seen: Array<[number, number]> = [];
 		const record = () => {
-			const { labels, running } = steps(host);
-			seen.push([labels.length, running]);
+			const { rows, running } = steps(host);
+			seen.push([rows.length, running]);
 		};
 		// The batch is marked running before it waits for the sim, so this is what the progress dialog finds as it mounts.
 		host.sim.waitForInit = async () => record();
@@ -396,20 +403,15 @@ describe('runBulkBatch', () => {
 			[4, 2],
 			[4, 3],
 		]);
-		expect(steps(host).labels).toEqual([
-			'bulk_tab.builds.pairs.current_encounter · bulk_tab.builds.pairs.current_settings · bulk_tab.results.current_talents · bulk_tab.results.current_rotation',
-			'bulk_tab.builds.pairs.current_encounter · bulk_tab.builds.pairs.current_settings · Arms · bulk_tab.results.current_rotation',
-			'Council · bulk_tab.builds.pairs.current_settings · bulk_tab.results.current_talents · bulk_tab.results.current_rotation',
-			'Council · bulk_tab.builds.pairs.current_settings · Arms · bulk_tab.results.current_rotation',
-		]);
+		expect(steps(host).rows).toEqual([step(), step(undefined, undefined, 'Arms'), step('Council'), step('Council', undefined, 'Arms')]);
 	});
 
 	it('lists every encounter pair as a step from the start, skipping a deleted entry, and moves the running one along', async () => {
 		const host = batchHost({ encounterPairs: [encounterPair(eref('Patchwerk', true)), encounterPair(eref('Gone')), COUNCIL_PAIR] });
 		const seen: Array<[number, number]> = [];
 		const record = () => {
-			const { labels, running } = steps(host);
-			seen.push([labels.length, running]);
+			const { rows, running } = steps(host);
+			seen.push([rows.length, running]);
 		};
 		host.sim.waitForInit = async () => record();
 		vi.mocked(runCoreBulkSim).mockImplementation(async () => {
@@ -426,9 +428,7 @@ describe('runBulkBatch', () => {
 			[3, 1],
 			[3, 2],
 		]);
-		expect(steps(host).labels[1]).toBe(
-			'Patchwerk · bulk_tab.builds.pairs.current_settings · bulk_tab.settings.encounters.health_summary · bulk_tab.settings.encounters.targets',
-		);
+		expect(steps(host).rows[1]).toEqual(step('Patchwerk'));
 	});
 
 	it('never writes the player, party or raid while running', async () => {
@@ -486,7 +486,7 @@ describe('runBulkBatch', () => {
 		await runBulkBatch(host);
 
 		expect(calls().map(call => call[3])).toEqual([{ encounter: CURRENT }]);
-		expect(steps(host).labels).toHaveLength(1);
+		expect(steps(host).rows).toHaveLength(1);
 		expect(bulkState(host.player).encounterPairs).toHaveLength(2);
 		expect(bulkState(host.player).talentPairs).toEqual([ARMS_PAIR]);
 

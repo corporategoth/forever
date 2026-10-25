@@ -12,11 +12,11 @@ import { RequestTypes } from '@sim/sim_signal_manager';
 import { toastManager } from '@ui-kit/Toast';
 
 import { trackEvent } from '../../../tracking/utils';
-import { bulkBuildRuns, bulkBuildStepLabel } from './builds';
+import { bulkBuildRuns, type BulkBuildStep, bulkBuildStep } from './builds';
 import { type CoreBulkSimResult, runCoreBulkSim as runCoreBulkSimImpl } from './core_sim';
 import { bulkEnchantPickEntries, bulkEnchantPickRuns } from './enchant_picks';
 import { bulkEncounterPairRuns, pickableBulkSettings } from './encounter_pairs';
-import { encounterLabel, encounterLength, formatEncounterSummary, pickableBulkEncounters } from './encounters';
+import { encounterLength, pickableBulkEncounters } from './encounters';
 import { bulkGearSetRuns, pickableBulkGearSets } from './gear_sets';
 import { bulkGearSetups } from './gear_setups';
 import { bulkRunsBuilds } from './mode';
@@ -48,8 +48,8 @@ interface BulkRun {
 
 interface BulkEncounterSteps {
 	/** One per encounter pair and talent pair the batch runs, encounter pair outer, one array for the whole run. */
-	labels: readonly string[];
-	/** 0-based index into `labels` of the run in progress. */
+	rows: readonly BulkBuildStep[];
+	/** 0-based index into `rows` of the run in progress. */
 	running: number;
 }
 
@@ -71,7 +71,7 @@ const runOf = (player: Player<any>): BulkRun => {
 			combinationsRequestVersion: 0,
 			progress: null,
 			listeners: new Set(),
-			steps: { labels: [], running: 0 },
+			steps: { rows: [], running: 0 },
 		};
 		runs.set(player, run);
 	}
@@ -231,7 +231,7 @@ interface BulkRequestPlan {
 interface BulkEncounterPlan {
 	encounter: BulkEncounterSetup;
 	settings: BulkPlayerSettingsSetup | null;
-	steps: Array<{ label: string; requests: BulkRequestPlan[] }>;
+	steps: Array<{ row: BulkBuildStep; requests: BulkRequestPlan[] }>;
 }
 
 interface CurrentTalentPair {
@@ -248,7 +248,7 @@ const gearModePlan = (host: IndividualSimHost<any>, current: CurrentTalentPair):
 			settings: null,
 			steps: [
 				{
-					label: `${encounterLabel(encounter)} · ${formatEncounterSummary(encounter.encounter)}`,
+					row: bulkBuildStep({ encounterPair: { encounter, settings: { isCurrent: true, name: '' } }, talentPair }),
 					requests: [{ request: { ...talentPair, setups: null }, overrides: { encounter: encounter.encounter } }],
 				},
 			],
@@ -273,7 +273,7 @@ const buildsModePlan = (host: IndividualSimHost<any>, current: CurrentTalentPair
 		const steps = runs
 			.filter(run => run.encounterPair === encounterPair)
 			.map(run => ({
-				label: bulkBuildStepLabel(run, talentPairs.length),
+				row: bulkBuildStep(run),
 				requests: run.requests.map((request): BulkRequestPlan => ({
 					request: {
 						talents: run.talentPair.talents,
@@ -313,7 +313,7 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 	});
 
 	run.isCancelling = false;
-	run.steps = { labels: plan.flatMap(encounterPlan => encounterPlan.steps.map(step => step.label)), running: 0 };
+	run.steps = { rows: plan.flatMap(encounterPlan => encounterPlan.steps.map(step => step.row)), running: 0 };
 	// The progress dialog mounts on `isRunning` and takes the steps from the progress there, before the first stage reports.
 	setCandidateGearProgress(player);
 	patchBulkState(player, { isRunning: true, started: true });

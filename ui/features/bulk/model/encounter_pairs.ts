@@ -56,7 +56,7 @@ export const pickableBulkSettings = (host: IndividualSimHost<any>): BulkSettings
 		host,
 	);
 
-const encounterSideLabel = ({ isCurrent, name }: PairSide): string => (isCurrent ? i18n.t('bulk_tab.builds.pairs.current_encounter') : name);
+export const encounterSideLabel = ({ isCurrent, name }: PairSide): string => (isCurrent ? i18n.t('bulk_tab.builds.pairs.current_encounter') : name);
 
 export const settingsSideLabel = ({ isCurrent, name }: PairSide): string => (isCurrent ? i18n.t('bulk_tab.builds.pairs.current_settings') : name);
 
