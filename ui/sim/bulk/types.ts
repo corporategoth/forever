@@ -4,6 +4,7 @@ import type { Encounter, UnitStats } from '@generated/proto/common';
 
 import type { EquippedItem } from '../proto/equipped_item';
 import { Gear } from '../proto/gear';
+import type { Stats } from '../proto/stats';
 
 export const WEB_ITERATIONS_LIMIT = 1_000_000;
 export const NATIVE_ITERATIONS_LIMIT = 10_000_000;
@@ -46,6 +47,17 @@ export interface BulkTalentSetup {
 	name: string;
 	talentsString: string;
 	isCurrent: boolean;
+}
+
+export interface BulkGearSetup {
+	/** Empty for the current gear, which the views label themselves. */
+	gearSet: string;
+	/** Empty for the gear set's own enchants. */
+	enchantPreset: string;
+	/** The current gear with its own enchants. */
+	isCurrent: boolean;
+	gear: Gear;
+	bonusStats: Stats;
 }
 
 export interface BulkRotationSetup {

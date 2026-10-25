@@ -1219,7 +1219,7 @@
 				"items_other": "{{count}} items"
 			},
 			"enchant_picks": {
-				"current": "Current enchants",
+				"current": "Own enchants",
 				"slots": "{{count}} slots",
 				"slots_one": "{{count}} slot",
 				"slots_other": "{{count}} slots"

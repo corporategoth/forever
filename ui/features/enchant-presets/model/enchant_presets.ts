@@ -23,24 +23,28 @@ export const ENCHANT_PRESET_SLOTS: readonly ItemSlot[] = [
 	ItemSlot.ItemSlotRanged,
 ];
 
+export const enchantPresetPoolSlot = (slot: ItemSlot): ItemSlot => (slot === ItemSlot.ItemSlotFinger2 ? ItemSlot.ItemSlotFinger1 : slot);
+
+// The effect ids the presets hold for an item slot that the player can use there, each once and sorted. The Off Hand
+// also takes the Main Hand's, which go to both hands.
+export const enchantPresetSlotIds = (player: Player<any>, presets: readonly BulkEnchantPreset[], slot: ItemSlot): number[] => {
+	const poolSlot = enchantPresetPoolSlot(slot);
+	const sources = poolSlot === ItemSlot.ItemSlotOffHand ? [ItemSlot.ItemSlotMainHand, ItemSlot.ItemSlotOffHand] : [poolSlot];
+	const wanted = new Set(presets.flatMap(preset => preset.slots.filter(options => sources.includes(options.slot)).flatMap(options => options.effectIds)));
+	if (!wanted.size) return [];
+	const usable = new Set(player.getEnchants(slot).map(enchant => enchant.effectId));
+	return [...wanted].filter(id => usable.has(id)).sort((a, b) => a - b);
+};
+
 // Sorted, so the request that seeds the batch's RNG does not depend on preset order or the order enchants were picked in.
 export const enchantPresetPool = (player: Player<any>): BulkEnchantSlotOptions[] => {
 	const checked = bulkState(player).enchantPresets.filter(preset => preset.checked);
 
-	const sources = (slot: ItemSlot) => (slot === ItemSlot.ItemSlotOffHand ? [ItemSlot.ItemSlotMainHand, ItemSlot.ItemSlotOffHand] : [slot]);
-
 	return ENCHANT_PRESET_SLOTS.flatMap(slot => {
-		const wanted = new Set(
-			checked.flatMap(preset => preset.slots.filter(options => sources(slot).includes(options.slot)).flatMap(options => options.effectIds)),
-		);
-		if (!wanted.size) return [];
-		const usable = new Set(player.getEnchants(slot).map(enchant => enchant.effectId));
-		const effectIds = [...wanted].filter(id => usable.has(id)).sort((a, b) => a - b);
+		const effectIds = enchantPresetSlotIds(player, checked, slot);
 		return effectIds.length ? [BulkEnchantSlotOptions.create({ slot, effectIds })] : [];
 	});
 };
-
-export const enchantPresetPoolSlot = (slot: ItemSlot): ItemSlot => (slot === ItemSlot.ItemSlotFinger2 ? ItemSlot.ItemSlotFinger1 : slot);
 
 export const validateEnchantPresetName = (presets: readonly BulkEnchantPreset[], name: string, previousName?: string): EnchantPresetNameProblem | null => {
 	const trimmed = name.trim();
