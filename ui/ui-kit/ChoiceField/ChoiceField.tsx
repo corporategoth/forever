@@ -25,6 +25,7 @@ export const ChoiceField = <V,>({
 	disabled,
 	equals = Object.is,
 	variant = 'select',
+	invalid,
 	placeholder,
 	renderValue,
 	ariaLabel,
@@ -53,6 +54,7 @@ export const ChoiceField = <V,>({
 		'data-variant': variant,
 		'data-testid': rooted ? undefined : testId,
 		'aria-label': ariaLabel,
+		'aria-invalid': invalid || undefined,
 		disabled,
 	};
 

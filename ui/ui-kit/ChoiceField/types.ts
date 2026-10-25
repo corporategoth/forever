@@ -43,6 +43,8 @@ export interface ChoiceFieldProps<V> extends FieldFrameProps, ControlledProps<V>
 	/** Two values are the same selection. Defaults to `Object.is`; a caller whose values are messages passes its own. */
 	equals?(a: V, b: V): boolean;
 	variant?: ChoiceVariant;
+	/** Marks the trigger `aria-invalid`; the `select` look draws a danger border. */
+	invalid?: boolean;
 	/** The trigger's content while no option matches `value`. */
 	placeholder?: ReactNode;
 	/** The trigger's content for the selected option, in place of its icon and label. */

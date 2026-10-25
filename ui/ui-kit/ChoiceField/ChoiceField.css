@@ -15,6 +15,11 @@
 			&:disabled {
 				@apply bg-input-disabled opacity-100;
 			}
+
+			&[aria-invalid='true'],
+			&[aria-invalid='true']:focus {
+				@apply border-danger;
+			}
 		}
 
 		&[data-variant='link'] {
