@@ -11,6 +11,7 @@ import {
 	addBulkEncounterPair,
 	bulkEncounterPairList,
 	bulkEncounterPairRuns,
+	bulkEntryLabel,
 	encounterPairLabel,
 	encounterPairOptions,
 	encounterPairSides,
@@ -172,6 +173,18 @@ describe('encounter pairs', () => {
 			'Council · Healer',
 			'Raid · Current settings',
 		]);
+	});
+
+	it('names a finished entry by its encounter in Gear mode and by its encounter pair in Builds', () => {
+		const healer = { name: 'Healer', isCurrent: false, settings: HEALER };
+		const currentSettings = { name: '', isCurrent: true, settings: null };
+
+		expect([
+			bulkEntryLabel({ name: '', isCurrent: true, settings: null }),
+			bulkEntryLabel({ name: 'Raid', isCurrent: false, settings: null }),
+			bulkEntryLabel({ name: 'Raid', isCurrent: false, settings: healer }),
+			bulkEntryLabel({ name: '', isCurrent: true, settings: currentSettings }),
+		]).toEqual(['Current', 'Raid', 'Raid · Healer', 'Current encounter · Current settings']);
 	});
 
 	it('reads a saved settings entry holding fields the protos no longer list', () => {

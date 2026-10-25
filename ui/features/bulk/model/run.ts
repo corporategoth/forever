@@ -1,7 +1,8 @@
 import { enchantPresetPool } from '@features/enchant-presets/model/enchant_presets';
 import { BulkSettings, ProgressMetrics } from '@generated/proto/api';
+import { APLRotation } from '@generated/proto/apl';
 import i18n from '@i18n/config';
-import { BulkEncounterResults, BulkSimOverrides, BulkSimProgressConfig } from '@sim/bulk/types';
+import { BulkEncounterResults, BulkRotationSetup, BulkSimOverrides, BulkSimProgressConfig } from '@sim/bulk/types';
 import type { Player } from '@sim/player/player';
 import { bulkState, patchBulkState } from '@sim/settings/bulk_settings';
 import type { IndividualSimHost } from '@sim/sim_host';
@@ -13,7 +14,7 @@ import { type CoreBulkSimResult, runCoreBulkSim as runCoreBulkSimImpl } from './
 import { bulkEncounterRuns, encounterLabel, encounterLength, formatEncounterSummary, pickableBulkEncounters } from './encounters';
 import { bulkRunsBuilds } from './mode';
 import { BulkProgress, candidateGearProgress, simProgress } from './progress';
-import { type BulkTalentRun, rankEncounterResults } from './results';
+import { type BulkFinishedRequest, rankEncounterResults } from './results';
 import { createBulkSettingsProto } from './settings';
 import { bulkTalentRuns, pickableBulkTalents, talentsLabel } from './talents';
 
@@ -216,6 +217,7 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 	run.isCancelling = false;
 	const builds = bulkRunsBuilds(sim.getShowPowerTools(), bulkState(player).mode);
 	const encounterRuns = bulkEncounterRuns(sim.encounter.toProto(), pickableBulkEncounters(host), bulkState(player).encounters, builds);
+	const currentRotation: BulkRotationSetup = { name: '', isCurrent: true, rotation: APLRotation.clone(player.aplRotation) };
 	const talentRuns = bulkTalentRuns(player.getPlayerSpec(), player.getTalentsString(), pickableBulkTalents(host), bulkState(player).talents, builds).map(
 		talents => ({
 			talents,
@@ -265,7 +267,7 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 		await refreshBulkCombinations(host);
 
 		for (const [encounterIndex, encounterRun] of encounterRuns.entries()) {
-			const finished: BulkTalentRun[] = [];
+			const finished: BulkFinishedRequest[] = [];
 			for (const [setupIndex, { talents, override }] of talentRuns.entries()) {
 				throwIfBulkAborted(player, abortSignal);
 				run.steps = { ...run.steps, running: encounterIndex * talentRuns.length + setupIndex };
@@ -273,6 +275,8 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 				run.simStart = new Date().getTime();
 				finished.push({
 					talents,
+					rotation: currentRotation,
+					setups: null,
 					result: await runCoreBulkSim(host, abortSignal, bulkSettings, { encounter: encounterRun.encounter, build: override }),
 				});
 			}
@@ -281,6 +285,7 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 				name: encounterRun.name,
 				isCurrent: encounterRun.isCurrent,
 				...encounterLength(encounterRun.encounter),
+				settings: null,
 				results: rankEncounterResults(finished, baseGear),
 			});
 		}

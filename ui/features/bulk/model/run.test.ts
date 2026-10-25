@@ -276,7 +276,7 @@ describe('runBulkBatch', () => {
 			[90, ARMS],
 		]);
 		expect(vi.mocked(runCoreBulkSim).mock.calls[1][3].build!.rotation).toEqual(APLRotation.create({ simple: { specRotationJson: ARMS } }));
-		expect(bulkState(host.player).results!.map(entry => entry.results.talentSetups)).toEqual([2, 2]);
+		expect(bulkState(host.player).results!.map(entry => entry.results.talentPairs)).toEqual([2, 2]);
 	});
 
 	it('runs a saved setup with the talents it holds when the batch starts', async () => {

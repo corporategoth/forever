@@ -6,14 +6,18 @@ import type { EquippedItem } from '@sim/proto/equipped_item';
 import { type CsvValue, toCsv } from '@sim/utils/csv';
 import { stDevToConf95 } from '@sim/utils/math';
 
+import { settingsSideLabel } from './encounter_pairs';
 import { encounterLabel } from './encounters';
 import { formatBulkItemLabel } from './format';
+import { gearSetupNames } from './gear_setups';
+import { rotationLabel } from './rotations';
 import { talentsLabel } from './talents';
 
 export const BULK_RESULTS_CSV_FILE_NAME = 'wowsims-batch-results.csv';
 
 const COLUMNS = [
 	'encounter',
+	'settings',
 	'duration',
 	'variation',
 	'rank',
@@ -24,6 +28,9 @@ const COLUMNS = [
 	'diff_pct',
 	'talents',
 	'talents_string',
+	'gear_set',
+	'enchant_preset',
+	'rotation',
 ] as const;
 
 const slotHeaders = (slot: ItemSlot): string[] => {
@@ -44,13 +51,16 @@ export const bulkResultsCsv = (entries: readonly BulkEncounterResults[]): string
 	const rows = entries.flatMap(entry => {
 		const { chains, originalGearResults: base, iterations } = entry.results;
 		const encounter = encounterLabel(entry);
+		const settings = entry.settings ? settingsSideLabel(entry.settings) : '';
 		return chains.flat().map((result, index): CsvValue[] => {
 			const avg = result.dpsMetrics.avg;
 			const diff = avg - base.dpsMetrics.avg;
 			// The percentage is taken against the smaller of the two, as the result rows show it.
 			const diffPct = (diff / (Math.min(avg, base.dpsMetrics.avg) || 1)) * 100;
+			const gearSetup = result.gearSetup ? gearSetupNames(result.gearSetup) : { gearSet: '', enchantPreset: '' };
 			return [
 				encounter,
+				settings,
 				entry.duration ?? '',
 				entry.durationVariation ?? '',
 				index + 1,
@@ -61,6 +71,9 @@ export const bulkResultsCsv = (entries: readonly BulkEncounterResults[]): string
 				diffPct,
 				talentsLabel(result.talents),
 				result.talents.talentsString,
+				gearSetup.gearSet,
+				gearSetup.enchantPreset,
+				rotationLabel(result.rotation),
 				...slots.flatMap(slot => slotCells(result.gear.getEquippedItem(slot))),
 			];
 		});

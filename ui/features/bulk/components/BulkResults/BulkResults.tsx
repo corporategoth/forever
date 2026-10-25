@@ -21,7 +21,7 @@ export const BulkResults = ({ onActivateTab, selected }: BulkResultsProps) => {
 
 	const { results: shown } = results[selected];
 	const iterations = shown.iterations;
-	const showTalents = shown.talentSetups > 1;
+	const showTalents = shown.talentPairs > 1;
 	return (
 		<div>
 			{shown.chains.map((chain, chainIdx) =>

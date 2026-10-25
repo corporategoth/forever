@@ -20,14 +20,15 @@ const RUN_ITERATIONS = 30000;
 
 const result = (avg: number) => ({ gear: {}, dpsMetrics: { avg, stdev: 1 }, talents: CURRENT_TALENT_SETUP }) as unknown as BulkRankedResult;
 
-const entry = (iterations: number, talentSetups = 1): BulkEncounterResults => {
+const entry = (iterations: number, talentPairs = 1): BulkEncounterResults => {
 	const baseline = result(1000);
 	return {
 		name: '',
 		isCurrent: true,
 		duration: 180,
 		durationVariation: 5,
-		results: { chains: [[result(1100)], [baseline]], originalGearResults: baseline, iterations, talentSetups },
+		settings: null,
+		results: { chains: [[result(1100)], [baseline]], originalGearResults: baseline, iterations, talentPairs },
 	};
 };
 
@@ -55,8 +56,8 @@ describe('BulkResults', () => {
 	it.each([
 		[1, 'false'],
 		[2, 'true'],
-	])('has the rows name their talent setup only when the encounter ran more than one (%i setups)', (talentSetups, shown) => {
-		mount([entry(RUN_ITERATIONS, talentSetups)]);
+	])('has the rows name their talent pair only when the encounter pair ran more than one (%i pairs)', (talentPairs, shown) => {
+		mount([entry(RUN_ITERATIONS, talentPairs)]);
 
 		expect(screen.getAllByTestId('row').map(row => row.getAttribute('data-show-talents'))).toEqual([shown, shown]);
 	});

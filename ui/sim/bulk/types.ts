@@ -23,9 +23,12 @@ export interface TopGearResult {
 	pairedErrorToBaseline?: number;
 }
 
-/** A gear set and the talent setup it ran with. Only rows from the current talents' run carry the backend rank and paired errors. */
+/** A gear set and the talent pair it ran with. Only rows from the reference request carry the backend rank and paired errors. */
 export interface BulkRankedResult extends TopGearResult {
 	talents: BulkTalentSetup;
+	rotation: BulkRotationSetup;
+	/** Null on Gear-mode rows and on the reference row. */
+	gearSetup: BulkGearSetup | null;
 }
 
 export interface BulkPickerEntry {
@@ -39,8 +42,8 @@ export interface BulkResults {
 	originalGearResults: BulkRankedResult;
 	/** Frozen at run end: the tie brackets were built with it, so the per-row margins have to agree. */
 	iterations: number;
-	/** How many talent setups the encounter ran; rows name theirs when it is more than one. */
-	talentSetups: number;
+	/** How many talent pairs the encounter pair ran; rows name theirs when it is more than one. */
+	talentPairs: number;
 }
 
 export interface BulkTalentSetup {
@@ -113,6 +116,8 @@ export interface BulkEncounterResults {
 	/** Seconds; null for a health-based encounter, which has no set length. */
 	duration: number | null;
 	durationVariation: number | null;
+	/** The encounter pair's settings; null in Gear mode. */
+	settings: BulkPlayerSettingsSetup | null;
 	results: BulkResults;
 }
 

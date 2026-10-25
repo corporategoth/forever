@@ -1,7 +1,8 @@
 import { DistributionMetrics } from '@generated/proto/api';
+import { APLRotation } from '@generated/proto/apl';
 import { Class, ItemSlot, ItemType, Spec } from '@generated/proto/common';
 import { UIItem } from '@generated/proto/ui';
-import type { BulkEncounterResults, BulkRankedResult, BulkTalentSetup } from '@sim/bulk/types';
+import type { BulkEncounterResults, BulkRankedResult, BulkRotationSetup, BulkTalentSetup } from '@sim/bulk/types';
 import type { Player } from '@sim/player/player';
 import { EquippedItem } from '@sim/proto/equipped_item';
 import { Gear } from '@sim/proto/gear';
@@ -21,17 +22,21 @@ const CURRENT = compareGearSet(1);
 
 export const CURRENT_TALENT_SETUP: BulkTalentSetup = { name: '', talentsString: '0000000000', isCurrent: true };
 
+export const CURRENT_ROTATION_SETUP: BulkRotationSetup = { name: '', isCurrent: true, rotation: APLRotation.create() };
+
 const ARMS_TALENT_SETUP: BulkTalentSetup = { name: 'Arms', talentsString: '3030500130', isCurrent: false };
 
 const result = (gear: Gear, avg: number, talents = CURRENT_TALENT_SETUP): BulkRankedResult => ({
 	gear,
 	dpsMetrics: DistributionMetrics.create({ avg, stdev: 10 }),
 	talents,
+	rotation: CURRENT_ROTATION_SETUP,
+	gearSetup: null,
 });
 
 // An encounter ranking the sets with the given helm ids at the given DPS, with the current talents unless a set names
 // others, and the current gear with the current talents at 1000, best first.
-const encounter = (name: string, duration: number | null, ranked: Array<[number, number, BulkTalentSetup?]>, talentSetups = 1): BulkEncounterResults => {
+const encounter = (name: string, duration: number | null, ranked: Array<[number, number, BulkTalentSetup?]>, talentPairs = 1): BulkEncounterResults => {
 	const base = result(CURRENT, 1000);
 	const results = [...ranked.map(([id, avg, talents]) => result(compareGearSet(id), avg, talents)), base].sort((a, b) => b.dpsMetrics.avg - a.dpsMetrics.avg);
 	return {
@@ -39,7 +44,8 @@ const encounter = (name: string, duration: number | null, ranked: Array<[number,
 		isCurrent: false,
 		duration,
 		durationVariation: duration === null ? null : 5,
-		results: { chains: results.map(ranking => [ranking]), originalGearResults: base, iterations: 100, talentSetups },
+		settings: null,
+		results: { chains: results.map(ranking => [ranking]), originalGearResults: base, iterations: 100, talentPairs },
 	};
 };
 

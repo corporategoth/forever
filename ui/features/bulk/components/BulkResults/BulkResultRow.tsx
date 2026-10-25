@@ -20,7 +20,7 @@ import clsx from 'clsx';
 import { type ReactNode, useId } from 'react';
 
 import { formatBulkDps } from '../../model/format';
-import { bulkResultKey, equipBulkResult } from '../../model/results';
+import { type BulkEquipped, bulkResultKey, equipBulkResult } from '../../model/results';
 import { getSwappableItemSlotPair, itemSpecPairsEqualUnordered } from '../../model/swappable_slots';
 import { talentsLabel } from '../../model/talents';
 import { BulkTalentsGrid } from '../BulkTalentsGrid';
@@ -115,6 +115,17 @@ export const BulkResultRowView = ({
 	);
 };
 
+const equippedToast = (equipped: BulkEquipped): string => {
+	switch (equipped) {
+		case 'build':
+			return i18n.t('bulk_tab.results.build_equipped');
+		case 'gear_talents':
+			return i18n.t('bulk_tab.results.gear_talents_equipped');
+		case 'gear':
+			return i18n.t('bulk_tab.results.gear_equipped');
+	}
+};
+
 export interface BulkResultRowProps {
 	result: BulkRankedResult;
 	baseResult: BulkRankedResult;
@@ -161,12 +172,9 @@ export const BulkResultRow = ({ result, baseResult, iterations, showTalents, onA
 			}
 			gearUnchanged={gearUnchanged}
 			onEquip={() => {
-				const talentsChanged = equipBulkResult(host.player, result);
+				const equipped = equipBulkResult(host, result, null);
 				onActivateTab('gear-tab');
-				toastManager.add({
-					variant: 'success',
-					body: talentsChanged ? i18n.t('bulk_tab.results.gear_talents_equipped') : i18n.t('bulk_tab.results.gear_equipped'),
-				});
+				toastManager.add({ variant: 'success', body: equippedToast(equipped) });
 			}}>
 			{!isBaseResult &&
 				resultAsSpec.items.map((spec, idx) => {

@@ -1,10 +1,12 @@
 import { DistributionMetrics } from '@generated/proto/api';
-import { ItemSlot, ItemType } from '@generated/proto/common';
+import { APLRotation, APLRotation_Type as APLRotationType } from '@generated/proto/apl';
+import { ItemSlot, ItemType, Stat } from '@generated/proto/common';
 import { UIEnchant, UIItem } from '@generated/proto/ui';
-import type { BulkEncounterResults, BulkRankedResult } from '@sim/bulk/types';
+import type { BulkEncounterResults, BulkGearSetup, BulkRankedResult, BulkRotationSetup } from '@sim/bulk/types';
 import { EquippedItem } from '@sim/proto/equipped_item';
 import { Gear } from '@sim/proto/gear';
-import { BULK_COMPARE_TALENT_ENTRIES, CURRENT_TALENT_SETUP } from '@testing/storybook/fixtures/bulk-compare';
+import { Stats } from '@sim/proto/stats';
+import { BULK_COMPARE_TALENT_ENTRIES, CURRENT_ROTATION_SETUP, CURRENT_TALENT_SETUP } from '@testing/storybook/fixtures/bulk-compare';
 import { describe, expect, it } from 'vitest';
 
 import { changedItemLabels, compareMatrix, gainTint, type MatrixRow } from './compare';
@@ -15,10 +17,13 @@ const equipped = (id: number, enchant?: UIEnchant) =>
 // A set wearing `head` and, when given, `hands`; two sets built from the same ids are the same set to the gear identity key.
 const gearSet = (head: number, hands?: EquippedItem) => new Gear({ [ItemSlot.ItemSlotHead]: equipped(head), [ItemSlot.ItemSlotHands]: hands ?? null });
 
-const result = (gear: Gear, avg: number): BulkRankedResult => ({
+const result = (gear: Gear, avg: number, build: Partial<BulkRankedResult> = {}): BulkRankedResult => ({
 	gear,
 	dpsMetrics: DistributionMetrics.create({ avg, stdev: 1 }),
 	talents: CURRENT_TALENT_SETUP,
+	rotation: CURRENT_ROTATION_SETUP,
+	gearSetup: null,
+	...build,
 });
 
 const CURRENT = gearSet(1);
@@ -27,15 +32,18 @@ const B = gearSet(3);
 const C = gearSet(4);
 
 // An encounter ranking `ranked` and the current gear at 1000 DPS, best first, as the run stores it.
-const entry = (name: string, duration: number | null, ranked: Array<[Gear, number]>): BulkEncounterResults => {
+const entry = (name: string, duration: number | null, ranked: Array<[Gear, number, Partial<BulkRankedResult>?]>, talentPairs = 1): BulkEncounterResults => {
 	const base = result(CURRENT, 1000);
-	const chains = [...ranked.map(([gear, avg]) => result(gear, avg)), base].sort((a, b) => b.dpsMetrics.avg - a.dpsMetrics.avg).map(ranking => [ranking]);
+	const chains = [...ranked.map(([gear, avg, build]) => result(gear, avg, build)), base]
+		.sort((a, b) => b.dpsMetrics.avg - a.dpsMetrics.avg)
+		.map(ranking => [ranking]);
 	return {
 		name,
 		isCurrent: false,
 		duration,
 		durationVariation: duration === null ? null : 5,
-		results: { chains, originalGearResults: base, iterations: 100, talentSetups: 1 },
+		settings: null,
+		results: { chains, originalGearResults: base, iterations: 100, talentPairs },
 	};
 };
 
@@ -136,10 +144,57 @@ describe('compareMatrix', () => {
 		]);
 	});
 
-	it('shows talents only when an encounter ran more than one setup', () => {
+	it('keys a set by gear setup, talents and rotation, so the same gear under another talent pair is a set of its own', () => {
+		const opener: BulkRotationSetup = {
+			name: 'Opener',
+			isCurrent: false,
+			rotation: APLRotation.create({ type: APLRotationType.TypeSimple, simple: { specRotationJson: '{"useOpener":true}' } }),
+		};
+		const raid: BulkGearSetup = { gearSet: 'Raid', enchantPreset: 'Undead', gear: A, bonusStats: new Stats().withStat(Stat.StatStrength, 20) };
+		const saved: BulkGearSetup = { ...raid, gearSet: 'Saved', bonusStats: new Stats() };
+		const raidOnCurrent: BulkGearSetup = { ...raid, gear: CURRENT };
+		const { rows } = compareMatrix([
+			entry(
+				'Short',
+				60,
+				[
+					[A, 1100, { gearSetup: raid }],
+					[A, 1080, { gearSetup: raid, rotation: opener }],
+					[A, 1060, { gearSetup: saved }],
+					[CURRENT, 1050, { gearSetup: raidOnCurrent }],
+				],
+				2,
+			),
+			entry('Long', 120, [[A, 1070, { gearSetup: raid, rotation: opener }]], 2),
+		]);
+
+		expect(rows.map(row => [row.set?.number ?? null, row.gearSetup, row.rotation.name])).toEqual([
+			[null, null, ''],
+			[1, raid, ''],
+			[2, raid, 'Opener'],
+			[3, saved, ''],
+			[4, raidOnCurrent, ''],
+		]);
+		expect(rows.map(row => row.set?.gearSetup ?? null)).toEqual([null, raid, raid, saved, raidOnCurrent]);
+		expect(rows.map(row => row.cells.map(cell => (cell ? cell.rank : 'gap')))).toEqual([
+			[null, null],
+			[1, 'gap'],
+			[2, 1],
+			[3, 'gap'],
+			[4, 'gap'],
+		]);
+	});
+
+	it('names talent pairs only when an encounter pair ran more than one', () => {
 		expect(compareMatrix(ENTRIES).showTalents).toBe(false);
 		expect(compareMatrix(BULK_COMPARE_TALENT_ENTRIES).showTalents).toBe(true);
 		expect(compareMatrix([...ENTRIES, BULK_COMPARE_TALENT_ENTRIES[0]]).showTalents).toBe(true);
+		expect(compareMatrix(BULK_COMPARE_TALENT_ENTRIES).rows.map(row => [row.talents.name, row.rotation])).toEqual([
+			['', CURRENT_ROTATION_SETUP],
+			['Arms', CURRENT_ROTATION_SETUP],
+			['Arms', CURRENT_ROTATION_SETUP],
+			['', CURRENT_ROTATION_SETUP],
+		]);
 	});
 });
 

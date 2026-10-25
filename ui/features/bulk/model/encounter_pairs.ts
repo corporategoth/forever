@@ -3,12 +3,12 @@ import { settingsPresets } from '@features/settings/components/SavedSettings/uti
 import type { Encounter } from '@generated/proto/common';
 import { type BulkEncounterPair, BulkEncounterPairs, BulkSettingsRef, SavedSettings } from '@generated/proto/ui';
 import i18n from '@i18n/config';
-import type { BulkEncounterPairSetup, BulkEncounterSetup, BulkPlayerSettingsSetup } from '@sim/bulk/types';
+import type { BulkEncounterPairSetup, BulkEncounterResults, BulkEncounterSetup, BulkPlayerSettingsSetup } from '@sim/bulk/types';
 import type { Player } from '@sim/player/player';
 import { bulkState, patchBulkState, storeBulkEncounterPairs } from '@sim/settings/bulk_settings';
 import type { IndividualSimHost } from '@sim/sim_host';
 
-import type { BulkEncounterEntry } from './encounters';
+import { type BulkEncounterEntry, encounterLabel } from './encounters';
 import {
 	CURRENT_REF,
 	pairsAfterAdd,
@@ -58,12 +58,15 @@ export const pickableBulkSettings = (host: IndividualSimHost<any>): BulkSettings
 
 const encounterSideLabel = ({ isCurrent, name }: PairSide): string => (isCurrent ? i18n.t('bulk_tab.builds.pairs.current_encounter') : name);
 
-const settingsSideLabel = ({ isCurrent, name }: PairSide): string => (isCurrent ? i18n.t('bulk_tab.builds.pairs.current_settings') : name);
+export const settingsSideLabel = ({ isCurrent, name }: PairSide): string => (isCurrent ? i18n.t('bulk_tab.builds.pairs.current_settings') : name);
 
 export const encounterPairLabel = (pair: {
 	encounter: Pick<BulkEncounterSetup, 'isCurrent' | 'name'>;
 	settings: Pick<BulkPlayerSettingsSetup, 'isCurrent' | 'name'>;
 }): string => `${encounterSideLabel(pair.encounter)} · ${settingsSideLabel(pair.settings)}`;
+
+export const bulkEntryLabel = (entry: Pick<BulkEncounterResults, 'isCurrent' | 'name' | 'settings'>): string =>
+	entry.settings === null ? encounterLabel(entry) : encounterPairLabel({ encounter: entry, settings: entry.settings });
 
 export const encounterPairOptions = (encounters: readonly BulkEncounterEntry[], settings: readonly BulkSettingsEntry[]) => ({
 	encounters: pairSideOptions(encounters, encounterSideLabel),

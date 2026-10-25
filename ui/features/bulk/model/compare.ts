@@ -1,5 +1,5 @@
 import { type ItemSlot, ItemSpec } from '@generated/proto/common';
-import type { BulkEncounterResults, BulkTalentSetup, TopGearResult } from '@sim/bulk/types';
+import type { BulkEncounterResults, BulkGearSetup, BulkRankedResult, BulkRotationSetup, BulkTalentSetup, TopGearResult } from '@sim/bulk/types';
 import type { Gear } from '@sim/proto/gear';
 
 import { formatBulkItemLabel } from './format';
@@ -10,6 +10,8 @@ interface ComparedSet {
 	key: string;
 	gear: Gear;
 	talents: BulkTalentSetup;
+	rotation: BulkRotationSetup;
+	gearSetup: BulkGearSetup | null;
 	number: number;
 }
 
@@ -71,6 +73,8 @@ export interface MatrixRow {
 	/** Null for the current gear's row. */
 	set: ComparedSet | null;
 	talents: BulkTalentSetup;
+	rotation: BulkRotationSetup;
+	gearSetup: BulkGearSetup | null;
 	/** One per column; null where the encounter did not rank the set. */
 	cells: Array<MatrixCell | null>;
 }
@@ -83,13 +87,13 @@ interface CompareMatrix {
 	/** The span every cell's tint is measured against, one for the whole table. */
 	scale: GainScale;
 	current: Gear | null;
-	/** Some encounter ran more than one talent setup, so every row names its own. */
+	/** Some encounter pair ran more than one talent pair, so every row names its own. */
 	showTalents: boolean;
 }
 
-// A set is a gear set with the talent setup it ran with, so the current gear with other talents is a set of its own. It
-// is numbered where it first shows, reading the columns in order and each one's ranking top down, and keeps that number
-// in every other column that ranks it.
+// A set is a gear set, with its gear setup when it has one, and the talent pair it ran with, so the same gear under
+// another talent pair is a set of its own. It is numbered where it first shows, reading the columns in order and each
+// one's ranking top down, and keeps that number in every other column that ranks it.
 export const compareMatrix = (entries: readonly BulkEncounterResults[]): CompareMatrix => {
 	const reference = entries[0]?.results.originalGearResults ?? null;
 	const current = reference?.gear ?? null;
@@ -103,16 +107,21 @@ export const compareMatrix = (entries: readonly BulkEncounterResults[]): Compare
 			results.map(result => {
 				const key = bulkResultKey(result);
 				const isCurrent = key === currentKey;
-				if (!isCurrent && !sets.has(key)) sets.set(key, { key, gear: result.gear, talents: result.talents, number: sets.size + 1 });
+				if (!isCurrent && !sets.has(key)) {
+					const { gear, talents, rotation, gearSetup } = result;
+					sets.set(key, { key, gear, talents, rotation, gearSetup, number: sets.size + 1 });
+				}
 				return [key, { result, rank: isCurrent ? null : ++rank }];
 			}),
 		);
 		return { base: originalGearResults.dpsMetrics.avg, top: Math.max(...results.map(result => result.dpsMetrics.avg)), byKey };
 	});
-	const rowOf = (key: string, set: ComparedSet | null, talents: BulkTalentSetup) => ({
+	const rowOf = (key: string, set: ComparedSet | null, { talents, rotation, gearSetup }: Pick<BulkRankedResult, 'talents' | 'rotation' | 'gearSetup'>) => ({
 		key,
 		set,
 		talents,
+		rotation,
+		gearSetup,
 		cells: rankings.map(({ base, top, byKey }) => {
 			const ranked = byKey.get(key);
 			if (!ranked) return null;
@@ -120,10 +129,10 @@ export const compareMatrix = (entries: readonly BulkEncounterResults[]): Compare
 			return { ...ranked, gainPct: percentOf(avg - base, base), best: avg === top };
 		}),
 	});
-	const rows = [...(reference ? [rowOf(currentKey, null, reference.talents)] : []), ...[...sets.values()].map(set => rowOf(set.key, set, set.talents))];
+	const rows = [...(reference ? [rowOf(currentKey, null, reference)] : []), ...[...sets.values()].map(set => rowOf(set.key, set, set))];
 	const gains = rows.flatMap(row => row.cells.flatMap(cell => (cell ? [cell.gainPct] : [])));
 	const scale = { low: Math.min(0, ...gains), high: Math.max(0, ...gains) };
 	const tinted = (cell: Omit<MatrixCell, 'tint'> | null): MatrixCell | null => cell && { ...cell, tint: gainTint(cell.gainPct, scale) };
-	const showTalents = entries.some(entry => entry.results.talentSetups > 1);
+	const showTalents = entries.some(entry => entry.results.talentPairs > 1);
 	return { columns, rows: rows.map((row): MatrixRow => ({ ...row, cells: row.cells.map(tinted) })), scale, current, showTalents };
 };
