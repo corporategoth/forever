@@ -470,6 +470,7 @@ message BulkGearSetSelection {
 message BulkGearSetRef {
 	string name = 1;
 	bool preset = 2;
+	string group = 3; // The preset's group in the Gear tab, empty for an ungrouped preset or a saved set; two presets may share a name across groups.
 }
 
 // Local storage data for the enchant presets the bulk sim runs every gear set with in Builds mode, by name. Separate

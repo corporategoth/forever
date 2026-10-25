@@ -61,16 +61,31 @@ const CheckRow = ({ id, label, summary, checked, disabled, duplicate = false, du
 	</>
 );
 
+// Ungrouped presets under the presets heading first, then one heading per preset group in the order the rows bring them,
+// as the Gear tab groups its preset chips.
+const presetGroups = (heading: string, presets: readonly BulkCheckRow[]): Array<{ heading: string; rows: BulkCheckRow[] }> => {
+	const byGroup = new Map<string, BulkCheckRow[]>([['', []]]);
+	for (const row of presets) {
+		const group = row.ref.group ?? '';
+		if (!byGroup.has(group)) byGroup.set(group, []);
+		byGroup.get(group)!.push(row);
+	}
+	return [...byGroup].map(([group, rows]) => ({ heading: group || heading, rows }));
+};
+
 export const BulkCheckList = ({ strings, current, presets, saved, onCheckedChange, testIds }: BulkCheckListProps) => {
 	const idPrefix = useId();
-	const group = (preset: boolean, heading: string, rows: readonly BulkCheckRow[]) =>
+	// A labelled group per heading, so two rows of one name under two headings read apart.
+	const group = (key: string, heading: string, rows: readonly BulkCheckRow[]) =>
 		rows.length > 0 && (
-			<div className="grid gap-1">
-				<h6 className="mb-0 text-xs text-gray-400">{heading}</h6>
+			<div key={key} role="group" aria-labelledby={`${idPrefix}-${key}`} className="grid gap-1">
+				<h6 id={`${idPrefix}-${key}`} className="mb-0 text-xs text-gray-400">
+					{heading}
+				</h6>
 				{rows.map((row, index) => (
 					<CheckRow
 						key={row.name}
-						id={`${idPrefix}-${preset ? 'preset' : 'saved'}-${index}`}
+						id={`${idPrefix}-${key}-${index}`}
 						label={row.name}
 						summary={row.summary}
 						checked={row.checked}
@@ -97,8 +112,8 @@ export const BulkCheckList = ({ strings, current, presets, saved, onCheckedChang
 					testId={testIds.current}
 				/>
 			)}
-			{group(true, strings.presets, presets)}
-			{group(false, strings.saved, saved)}
+			{presetGroups(strings.presets, presets).map(({ heading, rows }, index) => group(`preset-${index}`, heading, rows))}
+			{group('saved', strings.saved, saved)}
 			{!presets.length && !saved.length && <p className="mb-0 text-sm text-gray-400">{strings.empty}</p>}
 		</div>
 	);

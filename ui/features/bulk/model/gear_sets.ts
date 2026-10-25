@@ -31,15 +31,16 @@ type GearAndBonusStats = Pick<BulkGearSetPick, 'gear' | 'bonusStats'>;
 export const sameGearSet = (a: GearAndBonusStats, b: GearAndBonusStats): boolean =>
 	getGearIdentityKey(a.gear.asSpec()) === getGearIdentityKey(b.gear.asSpec()) && a.bonusStats.equals(b.bonusStats);
 
-const entry = (name: string, preset: boolean, gear: Gear, bonusStats: Stats): BulkGearSetEntry => ({
-	ref: BulkGearSetRef.create({ name, preset }),
+const entry = (name: string, preset: boolean, gear: Gear, bonusStats: Stats, group = ''): BulkGearSetEntry => ({
+	ref: BulkGearSetRef.create({ name, preset, group }),
 	name,
 	gear,
 	bonusStats,
 });
 
 // Presets first, the ones the player can load, then the user's saved sets in the order the Saved Gear panel lists them.
-// A preset brings no bonus stats, and its `onLoad` never runs here.
+// A preset brings no bonus stats, and its `onLoad` never runs here. Its ref carries its group, so presets of one name
+// in two groups stay apart.
 export const bulkGearSetEntries = (
 	presets: readonly PresetGear[],
 	saved: ReadonlyArray<{ name: string; data: SavedGearSet }>,
@@ -47,7 +48,7 @@ export const bulkGearSetEntries = (
 ): BulkGearSetEntry[] => [
 	...presets
 		.filter(preset => !preset.enableWhen || preset.enableWhen(player))
-		.map(preset => entry(preset.name, true, player.sim.db.lookupEquipmentSpec(preset.gear), new Stats())),
+		.map(preset => entry(preset.name, true, player.sim.db.lookupEquipmentSpec(preset.gear), new Stats(), preset.group)),
 	...saved.map(({ name, data }) =>
 		entry(name, false, player.sim.db.lookupEquipmentSpec(data.gear ?? EquipmentSpec.create()), Stats.fromProto(data.bonusStatsStats ?? UnitStats.create())),
 	),
@@ -66,12 +67,13 @@ export const pickableBulkGearSets = (host: IndividualSimHost<any>): BulkGearSetE
 export const bulkGearSetList = (current: GearAndBonusStats, entries: readonly BulkGearSetEntry[], checked: readonly BulkGearSetRef[]) =>
 	checkedRefList(entries, checked, entry => sameGearSet(entry, current), sameGearSet);
 
-// The current gear runs first, unnamed, then every checked row the list neither leaves out nor flags.
+// The current gear runs first, unnamed, then every checked row the list neither leaves out nor flags. A grouped preset
+// runs as "<group> · <name>", so the results, Compare and the CSV tell two presets of one name apart.
 export const bulkGearSetRuns = (current: GearAndBonusStats, entries: readonly BulkGearSetEntry[], checked: readonly BulkGearSetRef[]): BulkGearSetPick[] => [
 	{ name: '', isCurrent: true, gear: current.gear, bonusStats: current.bonusStats },
 	...bulkGearSetList(current, entries, checked)
 		.filter(item => item.checked && !item.duplicate)
-		.map(({ name, gear, bonusStats }) => ({ name, isCurrent: false, gear, bonusStats })),
+		.map(({ ref, name, gear, bonusStats }) => ({ name: ref.group ? `${ref.group} · ${name}` : name, isCurrent: false, gear, bonusStats })),
 ];
 
 // No `settings` bump: the gear sets change neither the Gear mode's combination count nor the stored BulkSettings.

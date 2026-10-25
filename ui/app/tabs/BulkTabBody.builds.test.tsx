@@ -20,11 +20,13 @@ import i18n from '@i18n/config';
 import { SimHostProvider } from '@sim/context/SimHostContext';
 import type { Player } from '@sim/player/player';
 import { PlayerSpecs } from '@sim/player/specs';
+import type { PresetGear } from '@sim/presets/types';
 import { Stats } from '@sim/proto/stats';
 import {
 	bulkState,
 	loadStoredBulkBuildEnchantPresets,
 	loadStoredBulkEncounterPairs,
+	loadStoredBulkGearSets,
 	loadStoredBulkTalentPairs,
 	patchBulkState,
 	seedBulkSettings,
@@ -66,12 +68,14 @@ const encounter = (duration: number) => Encounter.create({ duration, targets: [T
 const enchants = (name: string, effectIds: number[]) =>
 	BulkEnchantPreset.create({ name, slots: [BulkEnchantSlotOptions.create({ slot: ItemSlot.ItemSlotMainHand, effectIds })] });
 
+const GEAR_PRESETS: PresetGear[] = [
+	{ name: 'P1 Fury', gear: spec(2) },
+	{ name: 'Not for this player', gear: spec(3), enableWhen: () => false },
+	{ name: 'Pre-BiS', gear: spec(4) },
+];
+
 const PRESETS = {
-	gear: [
-		{ name: 'P1 Fury', gear: spec(2) },
-		{ name: 'Not for this player', gear: spec(3), enableWhen: () => false },
-		{ name: 'Pre-BiS', gear: spec(4) },
-	],
+	gear: GEAR_PRESETS,
 	encounters: [{ name: 'Patchwerk', encounter: encounter(300) }],
 	settings: [{ name: 'Tank healing', race: Race.RaceHuman }],
 	talents: [{ name: 'Arms', data: SavedTalents.create({ talentsString: '3030500130' }) }],
@@ -219,6 +223,29 @@ describe('BulkTabBody in Builds mode', () => {
 		expect(box('Current gear').getAttribute('aria-checked')).toBe('true');
 		expect(box('Current gear').getAttribute('aria-disabled')).toBe('true');
 		expect(descriptions('Current gear')).toEqual(['1 item.']);
+	});
+
+	it('lists the preset gear sets under their groups, ungrouped first, and keeps two of one name in two groups apart', () => {
+		const player = mount({
+			presets: {
+				...PRESETS,
+				gear: [
+					{ name: 'P1 Fury', gear: spec(2) },
+					{ name: 'Pre-BiS', group: 'Fury', gear: spec(4) },
+					{ name: 'Pre-BiS', group: 'Arms', gear: spec(6) },
+				],
+			},
+		});
+		const preBiS = (group: string) => within(screen.getByRole('group', { name: group })).getByRole('checkbox', { name: 'Pre-BiS' });
+
+		expect(listRows('bulk-gear-sets', 'bulk-gear-set')).toEqual(['Current gear', 'P1 Fury', 'Pre-BiS', 'Pre-BiS', 'My raid set']);
+		expect(texts(within(screen.getByTestId('bulk-gear-sets')).getAllByRole('heading', { level: 6 }))).toEqual(['Presets', 'Fury', 'Arms', 'Saved']);
+
+		fireEvent.click(preBiS('Arms'));
+
+		expect(['Fury', 'Arms'].map(group => preBiS(group).getAttribute('aria-checked'))).toEqual(['false', 'true']);
+		expect(bulkState(player).gearSets).toEqual([BulkGearSetRef.create({ name: 'Pre-BiS', preset: true, group: 'Arms' })]);
+		expect(loadStoredBulkGearSets(player)?.gearSets).toEqual([BulkGearSetRef.create({ name: 'Pre-BiS', preset: true, group: 'Arms' })]);
 	});
 
 	it('lists the enchant presets with no current row, and stores a pick without checking the preset for Gear mode', () => {
