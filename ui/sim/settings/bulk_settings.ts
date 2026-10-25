@@ -6,9 +6,11 @@ import { ItemSlot } from '@generated/proto/common';
 import {
 	BulkEnchantPresets,
 	BulkEnchantPresetSelection,
+	BulkEncounterPairs,
 	BulkEncounterSelection,
 	BulkGearSetSelection,
 	BulkRotationSelection,
+	BulkTalentPairs,
 	BulkTalentSelection,
 } from '@generated/proto/ui';
 import type { IMessageType } from '@protobuf-ts/runtime';
@@ -26,6 +28,8 @@ const BULK_TALENTS_STORAGE_KEY = 'bulk-talents.v1';
 const BULK_GEAR_SETS_STORAGE_KEY = 'bulk-gear-sets.v1';
 const BULK_BUILD_ENCHANT_PRESETS_STORAGE_KEY = 'bulk-build-enchant-presets.v1';
 const BULK_ROTATIONS_STORAGE_KEY = 'bulk-rotations.v1';
+const BULK_ENCOUNTER_PAIRS_STORAGE_KEY = 'bulk-encounter-pairs.v1';
+const BULK_TALENT_PAIRS_STORAGE_KEY = 'bulk-talent-pairs.v1';
 const BULK_MODE_STORAGE_KEY = 'bulk-mode.v1';
 
 const initialBulkSlice = (): BulkSlice => ({
@@ -46,6 +50,8 @@ const initialBulkSlice = (): BulkSlice => ({
 	gearSets: [],
 	buildEnchantPresets: [],
 	rotations: [],
+	encounterPairs: [],
+	talentPairs: [],
 	mode: 'gear',
 	combinations: 0,
 	iterations: 0,
@@ -139,6 +145,17 @@ export const loadStoredBulkRotations = (player: Player<any>): BulkRotationSelect
 
 export const storeBulkRotations = (player: Player<any>, selection: BulkRotationSelection) =>
 	storeProto(player, BULK_ROTATIONS_STORAGE_KEY, BulkRotationSelection, selection);
+
+export const loadStoredBulkEncounterPairs = (player: Player<any>): BulkEncounterPairs | null =>
+	loadStoredProto(player, BULK_ENCOUNTER_PAIRS_STORAGE_KEY, BulkEncounterPairs);
+
+export const storeBulkEncounterPairs = (player: Player<any>, pairs: BulkEncounterPairs) =>
+	storeProto(player, BULK_ENCOUNTER_PAIRS_STORAGE_KEY, BulkEncounterPairs, pairs);
+
+export const loadStoredBulkTalentPairs = (player: Player<any>): BulkTalentPairs | null =>
+	loadStoredProto(player, BULK_TALENT_PAIRS_STORAGE_KEY, BulkTalentPairs);
+
+export const storeBulkTalentPairs = (player: Player<any>, pairs: BulkTalentPairs) => storeProto(player, BULK_TALENT_PAIRS_STORAGE_KEY, BulkTalentPairs, pairs);
 
 // Null when nothing or an unknown mode is stored.
 export const loadStoredBulkMode = (player: Player<any>): BulkMode | null => {

@@ -21,9 +21,11 @@ import {
 } from '@generated/proto/common';
 import {
 	type BulkEnchantPreset,
+	type BulkEncounterPair,
 	type BulkEncounterRef,
 	type BulkGearSetRef,
 	type BulkRotationRef,
+	type BulkTalentPair,
 	type BulkTalentRef,
 	DatabaseFilters,
 } from '@generated/proto/ui';
@@ -254,6 +256,10 @@ export interface BulkSlice {
 	buildEnchantPresets: readonly string[];
 	// The checked rotations Builds mode runs, in list order; the current rotation is read live and never stored here.
 	rotations: readonly BulkRotationRef[];
+	// The encounter and settings pairs Builds mode lists, in list order; the current pair runs anyway and is never stored here.
+	encounterPairs: readonly BulkEncounterPair[];
+	// The talent and rotation pairs Builds mode lists, in list order; the current pair runs anyway and is never stored here.
+	talentPairs: readonly BulkTalentPair[];
 	// Picked in the top navigation; Builds counts only with power tools on.
 	mode: BulkMode;
 	combinations: number;

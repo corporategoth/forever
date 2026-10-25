@@ -1165,6 +1165,12 @@
 				"description": "Best gear and talents across encounters"
 			}
 		},
+		"builds": {
+			"pairs": {
+				"current_encounter": "Current encounter",
+				"current_settings": "Current settings"
+			}
+		},
 		"actions": {
 			"import_bags": "Import From Bags",
 			"import_favorites": "Import Favorites",

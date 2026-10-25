@@ -4,11 +4,13 @@ import type { Player } from '@sim/player/player';
 import type { EquippedItem } from '@sim/proto/equipped_item';
 import {
 	loadStoredBulkBuildEnchantPresets,
+	loadStoredBulkEncounterPairs,
 	loadStoredBulkEncounters,
 	loadStoredBulkGearSets,
 	loadStoredBulkMode,
 	loadStoredBulkRotations,
 	loadStoredBulkSettings,
+	loadStoredBulkTalentPairs,
 	loadStoredBulkTalents,
 	loadStoredEnchantPresets,
 	patchBulkState,
@@ -74,6 +76,16 @@ const loadSettings = (player: Player<any>) => {
 	const rotations = loadStoredBulkRotations(player);
 	if (rotations != null) {
 		patchBulkState(player, { rotations: rotations.rotations });
+	}
+
+	const encounterPairs = loadStoredBulkEncounterPairs(player);
+	if (encounterPairs != null) {
+		patchBulkState(player, { encounterPairs: encounterPairs.pairs });
+	}
+
+	const talentPairs = loadStoredBulkTalentPairs(player);
+	if (talentPairs != null) {
+		patchBulkState(player, { talentPairs: talentPairs.pairs });
 	}
 
 	const mode = loadStoredBulkMode(player);

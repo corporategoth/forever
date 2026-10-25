@@ -69,6 +69,31 @@ export interface BulkRotationSetup {
 	rotation: APLRotation;
 }
 
+export interface BulkTalentPairSetup {
+	talents: BulkTalentSetup;
+	rotation: BulkRotationSetup;
+}
+
+export interface BulkEncounterSetup {
+	/** Empty for the current encounter, which the views label themselves. */
+	name: string;
+	isCurrent: boolean;
+	encounter: Encounter;
+}
+
+export interface BulkPlayerSettingsSetup {
+	/** Empty for the current settings, which the views label themselves. */
+	name: string;
+	isCurrent: boolean;
+	/** Null for the current settings, which send none. */
+	settings: SavedSettings | null;
+}
+
+export interface BulkEncounterPairSetup {
+	encounter: BulkEncounterSetup;
+	settings: BulkPlayerSettingsSetup;
+}
+
 export interface BulkBuildOverride {
 	talentsString: string;
 	rotation: APLRotation;

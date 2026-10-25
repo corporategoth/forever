@@ -4182,6 +4182,26 @@
 					"additionalProperties": false,
 					"required": ["gear", "builds"]
 				},
+				"builds": {
+					"type": "object",
+					"properties": {
+						"pairs": {
+							"type": "object",
+							"properties": {
+								"current_encounter": {
+									"type": "string"
+								},
+								"current_settings": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": false,
+							"required": ["current_encounter", "current_settings"]
+						}
+					},
+					"additionalProperties": false,
+					"required": ["pairs"]
+				},
 				"actions": {
 					"type": "object",
 					"properties": {
@@ -4808,6 +4828,7 @@
 				"download_native",
 				"tabs",
 				"modes",
+				"builds",
 				"actions",
 				"search",
 				"settings",
