@@ -57,14 +57,15 @@ func (rot *APLRotation) postFinalize(action *APLAction) {
 		}
 	}
 	for _, inner := range all {
-		if spell := castSpellOf(inner); spell != nil && !inGroup[inner] {
+		if spell := castSpellOf(inner.impl); spell != nil && !inGroup[inner] {
 			rot.warnIfNeverInRange(spell)
 		}
 	}
 }
 
-func castSpellOf(action *APLAction) *Spell {
-	switch impl := action.impl.(type) {
+// The spell a cast action casts or queues, nil for any other action.
+func castSpellOf(impl APLActionImpl) *Spell {
+	switch impl := impl.(type) {
 	case *APLActionCastSpell:
 		return impl.spell
 	case *APLActionCastFriendlySpell:
