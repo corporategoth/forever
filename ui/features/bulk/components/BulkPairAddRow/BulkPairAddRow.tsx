@@ -1,7 +1,7 @@
 import i18n from '@i18n/config';
 import { Button } from '@ui-kit/Button';
 import { ChoiceField } from '@ui-kit/ChoiceField';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { sameRef, type SavedRef } from '../../model/saved_refs';
 
@@ -20,11 +20,17 @@ export interface BulkPairAddRowProps {
 
 const samePick = (a: SavedRef | null, b: SavedRef | null) => (a === null || b === null ? a === b : sameRef(a, b));
 
+// A pick whose option is gone, such as an encounter deleted elsewhere, counts as no pick.
+const livePick = (side: PairSelect, pick: SavedRef | null) => (pick !== null && side.options.some(option => sameRef(option.value, pick)) ? pick : null);
+
 // Both selects start empty, so nothing is marked until a whole pair is picked; after an add they are empty again.
 export const BulkPairAddRow = ({ first, second, inList, onAdd, testId }: BulkPairAddRowProps) => {
-	const [firstPick, setFirstPick] = useState<SavedRef | null>(null);
-	const [secondPick, setSecondPick] = useState<SavedRef | null>(null);
+	const [firstChoice, setFirstPick] = useState<SavedRef | null>(null);
+	const [secondChoice, setSecondPick] = useState<SavedRef | null>(null);
+	const firstPick = livePick(first, firstChoice);
+	const secondPick = livePick(second, secondChoice);
 	const blocked = firstPick !== null && secondPick !== null && inList(firstPick, secondPick);
+	const messageId = useId();
 	const select = (side: PairSelect, value: SavedRef | null, onChange: (next: SavedRef | null) => void) => (
 		<ChoiceField<SavedRef | null>
 			className="flex-1"
@@ -34,6 +40,7 @@ export const BulkPairAddRow = ({ first, second, inList, onAdd, testId }: BulkPai
 			value={value}
 			equals={samePick}
 			invalid={blocked}
+			aria-describedby={blocked ? messageId : undefined}
 			onChange={onChange}
 		/>
 	);
@@ -55,7 +62,11 @@ export const BulkPairAddRow = ({ first, second, inList, onAdd, testId }: BulkPai
 					{i18n.t('bulk_tab.builds.pairs.add')}
 				</Button>
 			</div>
-			{blocked && <p className="mb-0 text-xs text-danger">{i18n.t('bulk_tab.builds.pairs.in_list')}</p>}
+			{blocked && (
+				<p id={messageId} className="mb-0 text-xs text-danger">
+					{i18n.t('bulk_tab.builds.pairs.in_list')}
+				</p>
+			)}
 		</div>
 	);
 };

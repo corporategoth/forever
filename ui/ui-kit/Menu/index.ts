@@ -4,3 +4,5 @@ export { MenuItem } from './MenuItem';
 export type { MenuItemProps } from './MenuItem';
 export { MenuLinkItem } from './MenuLinkItem';
 export type { MenuLinkItemProps } from './MenuLinkItem';
+export { MenuRadioGroup, MenuRadioItem } from './MenuRadioItem';
+export type { MenuRadioGroupProps, MenuRadioItemProps } from './MenuRadioItem';

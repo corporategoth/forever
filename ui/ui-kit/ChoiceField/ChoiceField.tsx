@@ -29,6 +29,7 @@ export const ChoiceField = <V,>({
 	placeholder,
 	renderValue,
 	ariaLabel,
+	'aria-describedby': describedBy,
 	side,
 	positionMethod,
 	className,
@@ -54,6 +55,7 @@ export const ChoiceField = <V,>({
 		'data-variant': variant,
 		'data-testid': rooted ? undefined : testId,
 		'aria-label': ariaLabel,
+		'aria-describedby': describedBy,
 		'aria-invalid': invalid || undefined,
 		disabled,
 	};

@@ -376,12 +376,14 @@ describe('BulkSettings', () => {
 		expect(simulate().disabled).toBe(false);
 	});
 
-	it('lists no gear set and counts no gear setup in Builds mode until the sim is ready', () => {
+	it('lists no gear set and shows spinners for the counts, not the no-setups hint, in Builds mode until the sim is ready', () => {
 		init.ready = false;
 		mount({ mode: 'builds', gearSetups: true, gearSets: [gearSet('Raid', true)], buildEnchantPresets: ['Cloaks'] });
 
 		expect(screen.queryAllByTestId('bulk-gear-set')).toHaveLength(0);
-		expect(text('bulk-gear-setups')).toBe('0');
+		expect(screen.getByTestId('bulk-gear-setups').querySelector('[data-testid="loader"]')).not.toBeNull();
+		expect(screen.getByTestId('bulk-total-iterations').querySelector('[data-testid="loader"]')).not.toBeNull();
+		expect(screen.queryByTestId('bulk-no-gear-setups')).toBeNull();
 		expect(simulate().disabled).toBe(true);
 
 		act(setReady);

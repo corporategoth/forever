@@ -1236,7 +1236,10 @@
 				"frozen_slots": "Frozen slots"
 			},
 			"encounters": {
-				"health_summary": "Health"
+				"health_summary": "Health",
+				"targets": "{{count}} targets",
+				"targets_one": "{{count}} target",
+				"targets_other": "{{count}} targets"
 			},
 			"talents": {
 				"no_points": "No talent points"
@@ -1246,22 +1249,23 @@
 				"current": "Current gear",
 				"presets": "Presets",
 				"saved": "Saved",
-				"empty": "No saved gear sets yet. Save one in Gear → Saved Gear Sets to run it too.",
+				"empty": "No saved gear sets yet. Save one in Gear → Gear sets to run it too.",
 				"duplicate": "Same as another gear set, skipped",
-				"items": "{{count}} items",
-				"items_one": "{{count}} item",
-				"items_other": "{{count}} items"
+				"items": "{{count}} items.",
+				"items_one": "{{count}} item.",
+				"items_other": "{{count}} items."
 			},
 			"enchant_picks": {
 				"heading": "Enchant presets",
 				"saved": "Saved",
 				"empty": "No enchant presets yet. Make one under Enchants in Batch · Gear.",
 				"duplicate": "Same enchants as another preset, skipped",
-				"slots": "{{count}} slots",
-				"slots_one": "{{count}} slot",
-				"slots_other": "{{count}} slots"
+				"slots": "{{count}} slots.",
+				"slots_one": "{{count}} slot.",
+				"slots_other": "{{count}} slots."
 			},
 			"runs": {
+				"pairs": "{{encounters}} × {{talents}}",
 				"encounters": "{{count}} encounter setups",
 				"encounters_one": "{{count}} encounter setup",
 				"encounters_other": "{{count}} encounter setups",
@@ -1322,7 +1326,9 @@
 			"time_remaining": "{{time}} remaining",
 			"finalist_iteration_rounds": "Running finalist tie-breaker rounds",
 			"title": "Bulk Sim",
-			"status": "Status"
+			"status": "Status",
+			"done": "Done",
+			"running": "Running"
 		},
 		"notifications": {
 			"bulk_sim_cancelled": "Bulk sim cancelled.",
@@ -1347,7 +1353,6 @@
 			"run_simulation": "Run a simulation to view results",
 			"equip_button": "Equip",
 			"gear_equipped": "Batch gear equipped!",
-			"gear_talents_equipped": "Batch gear and talents equipped!",
 			"build_equipped": "Batch build equipped!",
 			"gear_unchanged": "No gear changes",
 			"current_gear": "Current gear",

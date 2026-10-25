@@ -293,15 +293,17 @@ describe('bulkBuildsCount', () => {
 });
 
 describe('bulkBuildStep', () => {
-	it('names a step by its encounter, settings, talents and rotation, calling each current one current', () => {
+	it('names a step by its encounter with its length and targets, settings, talents and rotation, calling each current one current', () => {
 		expect(bulkBuildStep({ encounterPair: RAID_PAIR, talentPair: ARMS_CUSTOM })).toEqual({
 			encounter: 'Raid boss',
+			encounterSummary: '5:00 ±5s · bulk_tab.settings.encounters.targets:1',
 			settings: 'Tank',
 			talents: 'Arms',
 			rotation: 'Custom',
 		});
 		expect(bulkBuildStep({ encounterPair: CURRENT_PAIR, talentPair: CURRENT_TALENT_PAIR })).toEqual({
 			encounter: 'bulk_tab.builds.pairs.current_encounter',
+			encounterSummary: '3:00 ±5s · bulk_tab.settings.encounters.targets:1',
 			settings: 'bulk_tab.builds.pairs.current_settings',
 			talents: 'bulk_tab.results.current_talents',
 			rotation: 'bulk_tab.results.current_rotation',

@@ -25,6 +25,15 @@
 		@apply flex items-center;
 	}
 
+	/* Kept mounted so every row of a radio group keeps the check's width and the labels line up. */
+	.ui-menu-radio-indicator {
+		@apply shrink-0 text-success;
+
+		&[data-unchecked] {
+			@apply invisible;
+		}
+	}
+
 	.ui-menu-positioner {
 		@apply z-dropdown;
 	}

@@ -21,12 +21,12 @@ const checkRow = (name: string, summary: string, preset: boolean, checked: boole
 });
 
 export const gearSetupsProps = (overrides: Partial<GearSetupsViewProps> = {}): GearSetupsViewProps => ({
-	currentGearSummary: '16 items',
+	currentGearSummary: '16 items.',
 	gearSets: {
-		presets: [checkRow('P1 Fury', '17 items', true, true), checkRow('Pre-BiS', '17 items', true, false)],
-		saved: [checkRow('My raid set', '16 items', false, true)],
+		presets: [checkRow('P1 Fury', '17 items.', true, true), checkRow('Pre-BiS', '17 items.', true, false)],
+		saved: [checkRow('My raid set', '16 items.', false, true)],
 	},
-	enchantPicks: [checkRow('Agility cloak', '1 slot', false, true), checkRow('Crusader weapons', '2 slots', false, false)],
+	enchantPicks: [checkRow('Agility cloak', '1 slot.', false, true), checkRow('Crusader weapons', '2 slots.', false, false)],
 	onGearSetCheckedChange: fn(),
 	onEnchantPickCheckedChange: fn(),
 	...overrides,

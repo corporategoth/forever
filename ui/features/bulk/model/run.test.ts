@@ -242,12 +242,19 @@ const specsOf = (gears: readonly Gear[] | undefined) => (gears ?? []).map(gear =
 
 const steps = (host: IndividualSimHost<any>) => bulkProgress(host.player)!.steps;
 
+// Each encounter's length and target count as the step row words them: CURRENT, COUNCIL and the health-based PATCHWERK.
+const ENCOUNTER_SUMMARIES: Record<string, string> = {
+	'bulk_tab.builds.pairs.current_encounter': '3:00 ±5s · bulk_tab.settings.encounters.targets',
+	Council: '1:30 ±10s · bulk_tab.settings.encounters.targets',
+	Patchwerk: 'bulk_tab.settings.encounters.health_summary · bulk_tab.settings.encounters.targets',
+};
+
 const step = (
 	encounter = 'bulk_tab.builds.pairs.current_encounter',
 	settings = 'bulk_tab.builds.pairs.current_settings',
 	talents = 'bulk_tab.results.current_talents',
 	rotation = 'bulk_tab.results.current_rotation',
-) => ({ encounter, settings, talents, rotation });
+) => ({ encounter, encounterSummary: ENCOUNTER_SUMMARIES[encounter], settings, talents, rotation });
 
 const rowsOf = (host: IndividualSimHost<any>) => bulkState(host.player).results![0].results.chains.flat();
 

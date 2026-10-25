@@ -16,8 +16,7 @@
 				@apply bg-input-disabled opacity-100;
 			}
 
-			&[aria-invalid='true'],
-			&[aria-invalid='true']:focus {
+			&[aria-invalid='true'] {
 				@apply border-danger;
 			}
 		}

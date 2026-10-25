@@ -8,8 +8,8 @@ export interface TableProps extends Omit<ComponentPropsWithoutRef<'table'>, 'cla
 	hover?: boolean;
 	/** Halves the cell padding. */
 	dense?: boolean;
-	/** `plain` draws no row or column rules and keeps the cell padding. */
-	variant?: 'default' | 'plain';
+	/** `plain` draws no row or column rules and keeps the cell padding; `rows` draws the row rules alone. */
+	variant?: 'default' | 'plain' | 'rows';
 	/** The first and last cell of every row drop their outer padding, so the row's content runs edge to edge. */
 	flush?: boolean;
 	className?: ClassValue;
@@ -26,7 +26,7 @@ export const Table = ({ striped, hover, dense, variant, flush, className, testId
 		data-hover={flag(hover)}
 		data-dense={flag(dense)}
 		data-flush={flag(flush)}
-		data-variant={variant === 'plain' ? variant : undefined}
+		data-variant={variant === 'default' ? undefined : variant}
 		data-testid={testId}>
 		{children}
 	</table>

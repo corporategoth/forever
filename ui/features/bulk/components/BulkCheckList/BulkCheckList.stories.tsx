@@ -57,9 +57,9 @@ const meta = {
 	render: args => <StatefulCheckList {...args} />,
 	args: {
 		strings: gearSetStrings,
-		current: { label: i18n.t('bulk_tab.settings.gear_sets.current'), summary: '16 items' },
-		presets: [presetRow('P1 Fury', '17 items', true), presetRow('Pre-BiS', '17 items')],
-		saved: [savedRow('My raid set', '16 items', true)],
+		current: { label: i18n.t('bulk_tab.settings.gear_sets.current'), summary: '16 items.' },
+		presets: [presetRow('P1 Fury', '17 items.', true), presetRow('Pre-BiS', '17 items.')],
+		saved: [savedRow('My raid set', '16 items.', true)],
 		onCheckedChange: fn(),
 		testIds: { list: 'bulk-gear-sets', row: 'bulk-gear-set', current: 'bulk-gear-set-current' },
 	},
@@ -86,14 +86,14 @@ export const WithoutCurrentRow: Story = {
 		strings: enchantPickStrings,
 		current: null,
 		presets: [],
-		saved: [savedRow('Agility cloak', '1 slot', true), savedRow('Crusader weapons', '2 slots')],
+		saved: [savedRow('Agility cloak', '1 slot.', true), savedRow('Crusader weapons', '2 slots.')],
 		testIds: { list: 'bulk-enchant-picks', row: 'bulk-enchant-pick' },
 	},
 };
 
 export const Duplicate: Story = {
 	args: {
-		saved: [savedRow('My raid set', '16 items', true), savedRow('My raid set, saved twice', '16 items', true, true), savedRow('Old set', '15 items')],
+		saved: [savedRow('My raid set', '16 items.', true), savedRow('My raid set, saved twice', '16 items.', true, true), savedRow('Old set', '15 items.')],
 	},
 };
 
