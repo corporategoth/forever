@@ -1,5 +1,5 @@
 import { APLRotation, APLRotation_Type as APLRotationType } from '@generated/proto/apl';
-import { Cooldowns, ItemSwap, Profession, type Spec } from '@generated/proto/common';
+import { Cooldowns, ItemSwap, Profession, Spec } from '@generated/proto/common';
 import type { Player } from '@sim/player/player';
 import type { StatSweepSettings } from '@sim/settings/stat_sweep_settings';
 import type { StatWeightActionSettings } from '@sim/settings/stat_weight_settings';
@@ -98,7 +98,14 @@ export function applyIndividualDefaults<SpecType extends Spec>(host: DefaultsHos
 
 		host.reforger?.applyDefaults();
 
-		sim.raid.setTargetDummies(healingSpec ? 9 : 0);
+		// Healers get a full party of allies. Balance keeps one so Innervate can leave the druid.
+		if (healingSpec) {
+			sim.raid.setTargetDummies(9);
+		} else if (player.getSpec() === Spec.SpecBalanceDruid) {
+			sim.raid.setTargetDummies(1);
+		} else {
+			sim.raid.setTargetDummies(0);
+		}
 		if (config.defaults.encounter?.encounter) {
 			sim.encounter.fromProto(config.defaults.encounter.encounter);
 		} else {
