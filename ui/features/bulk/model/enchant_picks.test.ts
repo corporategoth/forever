@@ -46,16 +46,16 @@ describe('bulkEnchantPickList', () => {
 			['Raid copy', true, true],
 			['Undead', false, false],
 		]);
-		expect(bulkEnchantPickRuns(entries, ['Raid', 'Raid copy']).map(run => run.name)).toEqual(['', 'Raid']);
+		expect(bulkEnchantPickRuns(entries, ['Raid', 'Raid copy']).map(run => run.name)).toEqual(['Raid']);
 	});
 });
 
 describe('bulkEnchantPickRuns', () => {
-	it('runs the own enchants first, then each checked preset', () => {
+	it('runs the checked presets alone, with no own-enchants entry', () => {
 		const entries = bulkEnchantPickEntries([RAID, EMPTY, UNDEAD]);
 
+		expect(bulkEnchantPickRuns(entries, [])).toEqual([]);
 		expect(bulkEnchantPickRuns(entries, ['Undead', 'Empty', 'Raid'])).toEqual([
-			{ name: '', preset: null },
 			{ name: 'Raid', preset: RAID },
 			{ name: 'Undead', preset: UNDEAD },
 		]);

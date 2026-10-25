@@ -53,10 +53,7 @@ export interface BulkTalentSetup {
 export interface BulkGearSetup {
 	/** Empty for the current gear, which the views label themselves. */
 	gearSet: string;
-	/** Empty for the gear set's own enchants. */
 	enchantPreset: string;
-	/** The current gear with its own enchants. */
-	isCurrent: boolean;
 	gear: Gear;
 	bonusStats: Stats;
 }

@@ -1,17 +1,26 @@
 import { APLRotation, APLRotation_Type as APLRotationType } from '@generated/proto/apl';
-import type { Encounter } from '@generated/proto/common';
-import type { BulkBuildOverride, BulkEncounterResults, BulkGearSetup, BulkRotationSetup, BulkTalentSetup } from '@sim/bulk/types';
+import { Profession } from '@generated/proto/common';
+import type { BulkBuildOverride, BulkEncounterPairSetup, BulkGearSetup, BulkTalentPairSetup } from '@sim/bulk/types';
 import type { Gear } from '@sim/proto/gear';
 import { getGearIdentityKey } from '@sim/proto/items';
+import type { Stats } from '@sim/proto/stats';
 import { omitDeep } from '@sim/utils/collections';
 import { estimateBulkSimIterations } from '@sim/wasm/bulk_sim/estimate';
 
-import { encounterLabel, formatEncounterSummary } from './encounters';
-import { bonusStatsKey } from './gear_setups';
-import { rotationLabel } from './rotations';
-import { talentsLabel } from './talents';
+import { encounterPairLabel } from './encounter_pairs';
+import { formatEncounterSummary } from './encounters';
+import { bonusStatsKey, gearSetupsSentWith } from './gear_setups';
+import { talentPairLabel } from './talent_pairs';
 
 export type ResolveBuildRotation = (build: { talentsString: string; gear: Gear; rotation: APLRotation }) => APLRotation;
+
+export interface BulkBuildReference {
+	/** The current gear as equipped. */
+	gear: Gear;
+	bonusStats: Stats;
+	/** By the live professions. */
+	isEnchanter: boolean;
+}
 
 export interface BulkBuildRequest {
 	/** None of them wears the current gear, which the request sims as its baseline. */
@@ -22,21 +31,26 @@ export interface BulkBuildRequest {
 }
 
 export interface BulkBuildRun {
-	talents: BulkTalentSetup;
-	rotation: BulkRotationSetup;
+	encounterPair: BulkEncounterPairSetup;
+	talentPair: BulkTalentPairSetup;
 	requests: readonly BulkBuildRequest[];
 }
 
 export interface BulkBuildsCount {
 	setups: number;
-	encounters: number;
-	talentSetups: number;
-	rotations: number;
-	/** Encounters × talent setups × rotations. */
+	encounterPairs: number;
+	talentPairs: number;
+	/** The requests of every encounter pair, after splits and collapses. */
 	runs: number;
 	totalIterations: number;
 	largestRequestIterations: number;
 	largestRequestCandidates: number;
+}
+
+interface BuildGroup {
+	setups: BulkGearSetup[];
+	bonusStats: Stats;
+	resolved: APLRotation;
 }
 
 const gearIdentity = (gear: Gear): string => getGearIdentityKey(gear.asSpec());
@@ -46,52 +60,70 @@ const gearIdentity = (gear: Gear): string => getGearIdentityKey(gear.asSpec());
 const simmedRotationKey = (rotation: APLRotation): string =>
 	APLRotation.toJsonString({ ...omitDeep(rotation, ['uuid']), type: APLRotationType.TypeUnknown, simple: undefined });
 
-// One request per bonus stats and rotation the setups resolve to, in the order of each group's first setup. A setup
-// that an earlier rotation of the same talents resolved alike is in `simmed` and left out.
-const buildRequests = (
+const groupKey = (bonusStats: Stats, resolved: APLRotation): string => `${bonusStatsKey(bonusStats)}|${simmedRotationKey(resolved)}`;
+
+// A settings entry sends its own professions; the current settings send the live ones.
+const pairIsEnchanter = (encounterPair: BulkEncounterPairSetup, reference: BulkBuildReference): boolean =>
+	encounterPair.settings.settings ? encounterPair.settings.settings.professions.includes(Profession.Enchanting) : reference.isEnchanter;
+
+// One group per bonus stats and rotation the setups resolve to, in the order of each group's first setup. A setup that
+// an earlier talent pair with the same talents resolved alike is in `simmed` and left out.
+const buildGroups = (
 	setups: readonly BulkGearSetup[],
-	talents: BulkTalentSetup,
-	rotation: BulkRotationSetup,
+	{ talents, rotation }: BulkTalentPairSetup,
 	resolve: ResolveBuildRotation,
-	currentGear: string,
 	simmed: Set<string>,
-): BulkBuildRequest[] => {
-	const groups = new Map<string, { setups: BulkGearSetup[]; resolved: APLRotation }>();
+): Map<string, BuildGroup> => {
+	const groups = new Map<string, BuildGroup>();
 	for (const setup of setups) {
 		const resolved = resolve({ talentsString: talents.talentsString, gear: setup.gear, rotation: rotation.rotation });
-		const key = `${bonusStatsKey(setup.bonusStats)}|${simmedRotationKey(resolved)}`;
+		const key = groupKey(setup.bonusStats, resolved);
 		const simKey = `${gearIdentity(setup.gear)}|${key}`;
 		if (simmed.has(simKey)) continue;
 		simmed.add(simKey);
 		const group = groups.get(key);
 		if (group) group.setups.push(setup);
-		else groups.set(key, { setups: [setup], resolved });
+		else groups.set(key, { setups: [setup], bonusStats: setup.bonusStats, resolved });
 	}
-	return [...groups.values()].map(group => ({
-		candidates: group.setups.filter(setup => gearIdentity(setup.gear) !== currentGear),
-		baselineSetup: group.setups.find(setup => gearIdentity(setup.gear) === currentGear) ?? null,
-		override: { talentsString: talents.talentsString, rotation: group.resolved, bonusStats: group.setups[0].bonusStats.toProto() },
-	}));
+	return groups;
 };
 
-// Talents outer, rotation inner, so with current-first inputs `runs[0]` is the current talents with the current
-// rotation, and its first request holds the current setup. Rotations that resolve alike for a setup sim it once, under
-// the first of them; a rotation left with no setup has no run.
+// Encounter pair outer, talent pair inner, so with current-first inputs each encounter pair's first run is the current
+// talent pair. Its first request carries the reference: the live bonus stats and the rotation the current gear resolves
+// to, with no candidates when no setup shares them. Talent pairs that resolve alike for a setup under the same talents
+// sim it once, under the first of them; a talent pair left with no setup has no run.
 export const bulkBuildRuns = (
 	setups: readonly BulkGearSetup[],
-	talentRuns: readonly BulkTalentSetup[],
-	rotationRuns: readonly BulkRotationSetup[],
+	reference: BulkBuildReference,
+	encounterPairs: readonly BulkEncounterPairSetup[],
+	talentPairs: readonly BulkTalentPairSetup[],
 	resolve: ResolveBuildRotation,
 ): BulkBuildRun[] => {
 	if (!setups.length) return [];
-	// The current setup is the batch's reference and the gear every request sims as its baseline.
-	if (!setups[0].isCurrent) throw new Error('A Builds batch needs the current gear setup first');
-	const currentGear = gearIdentity(setups[0].gear);
-	return talentRuns.flatMap(talents => {
-		const simmed = new Set<string>();
-		return rotationRuns.flatMap(rotation => {
-			const requests = buildRequests(setups, talents, rotation, resolve, currentGear, simmed);
-			return requests.length ? [{ talents, rotation, requests }] : [];
+	return encounterPairs.flatMap(encounterPair => {
+		const isEnchanter = pairIsEnchanter(encounterPair, reference);
+		const sent = gearSetupsSentWith(setups, isEnchanter);
+		const referenceGear = isEnchanter ? reference.gear : reference.gear.withoutEnchanting();
+		const referenceIdentity = gearIdentity(referenceGear);
+		const simmedByTalents = new Map<string, Set<string>>();
+		return talentPairs.flatMap((talentPair, index): BulkBuildRun[] => {
+			const { talentsString } = talentPair.talents;
+			const simmed = simmedByTalents.get(talentsString) ?? new Set<string>();
+			simmedByTalents.set(talentsString, simmed);
+			const groups = buildGroups(sent, talentPair, resolve, simmed);
+			let ordered = [...groups.values()];
+			if (index === 0) {
+				const resolved = resolve({ talentsString, gear: referenceGear, rotation: talentPair.rotation.rotation });
+				const key = groupKey(reference.bonusStats, resolved);
+				const lead = groups.get(key) ?? { setups: [], bonusStats: reference.bonusStats, resolved };
+				ordered = [lead, ...ordered.filter(group => group !== lead)];
+			}
+			const requests = ordered.map((group): BulkBuildRequest => ({
+				candidates: group.setups.filter(setup => gearIdentity(setup.gear) !== referenceIdentity),
+				baselineSetup: group.setups.find(setup => gearIdentity(setup.gear) === referenceIdentity) ?? null,
+				override: { talentsString, rotation: group.resolved, bonusStats: group.bonusStats.toProto() },
+			}));
+			return requests.length ? [{ encounterPair, talentPair, requests }] : [];
 		});
 	});
 };
@@ -99,34 +131,24 @@ export const bulkBuildRuns = (
 export const bulkBuildsCount = (
 	setups: readonly BulkGearSetup[],
 	runs: readonly BulkBuildRun[],
-	encounters: number,
-	talentSetups: number,
-	rotations: number,
+	encounterPairs: number,
+	talentPairs: number,
 ): BulkBuildsCount => {
 	const requests = runs.flatMap(run => run.requests);
 	const iterations = requests.map(request => estimateBulkSimIterations(request.candidates.length));
 	return {
 		setups: setups.length,
-		encounters,
-		talentSetups,
-		rotations,
-		runs: encounters * talentSetups * rotations,
-		totalIterations: encounters * iterations.reduce((sum, count) => sum + count, 0),
+		encounterPairs,
+		talentPairs,
+		runs: requests.length,
+		totalIterations: iterations.reduce((sum, count) => sum + count, 0),
 		largestRequestIterations: iterations.reduce((largest, count) => Math.max(largest, count), 0),
 		largestRequestCandidates: requests.reduce((largest, request) => Math.max(largest, request.candidates.length), 0),
 	};
 };
 
-export const bulkBuildStepLabel = (
-	encounter: Pick<BulkEncounterResults, 'isCurrent' | 'name'> & { encounter: Encounter },
-	run: BulkBuildRun,
-	talentSetups: number,
-	rotations: number,
-): string => {
-	const parts = [
-		encounterLabel(encounter),
-		...(talentSetups > 1 ? [talentsLabel(run.talents)] : []),
-		...(rotations > 1 ? [rotationLabel(run.rotation)] : []),
-	];
-	return (parts.length === 1 ? [...parts, formatEncounterSummary(encounter.encounter)] : parts).join(' · ');
-};
+export const bulkBuildStepLabel = (run: BulkBuildRun, talentPairs: number): string =>
+	[
+		encounterPairLabel(run.encounterPair),
+		talentPairs > 1 ? talentPairLabel(run.talentPair) : formatEncounterSummary(run.encounterPair.encounter.encounter),
+	].join(' · ');

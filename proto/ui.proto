@@ -472,9 +472,8 @@ message BulkGearSetRef {
 	bool preset = 2;
 }
 
-// Local storage data for the enchant presets the bulk sim also runs every gear set with in Builds mode, by name. Each
-// set's own enchants always run first and are not stored here. Separate from BulkEnchantPreset.checked, which picks the
-// enchants Gear mode tries.
+// Local storage data for the enchant presets the bulk sim runs every gear set with in Builds mode, by name. Separate
+// from BulkEnchantPreset.checked, which picks the enchants Gear mode tries.
 message BulkEnchantPresetSelection {
 	repeated string names = 1;
 }

@@ -1,12 +1,12 @@
-import { enchantPresetSlotIds } from '@features/enchant-presets/model/enchant_presets';
-import { Profession, UnitStats } from '@generated/proto/common';
-import type { BulkEnchantPreset } from '@generated/proto/ui';
+import { enchantPresetPoolSlot } from '@features/enchant-presets/model/enchant_presets';
+import { ItemSlot, UnitStats } from '@generated/proto/common';
+import type { BulkEnchantPreset, UIEnchant } from '@generated/proto/ui';
 import i18n from '@i18n/config';
 import type { BulkGearSetup } from '@sim/bulk/types';
 import type { Player } from '@sim/player/player';
 import type { EquippedItem } from '@sim/proto/equipped_item';
 import { Gear } from '@sim/proto/gear';
-import { enchantAppliesToItem, getGearIdentityKey } from '@sim/proto/items';
+import { canEquipEnchant, enchantAppliesToItem, getGearIdentityKey } from '@sim/proto/items';
 import type { Stats } from '@sim/proto/stats';
 
 import type { BulkEnchantPick } from './enchant_picks';
@@ -17,8 +17,18 @@ export const bonusStatsKey = (bonusStats: Stats): string => UnitStats.toJsonStri
 export const gearSetupKey = (setup: Pick<BulkGearSetup, 'gear' | 'bonusStats'>): string =>
 	`${getGearIdentityKey(setup.gear.asSpec())}|${bonusStatsKey(setup.bonusStats)}`;
 
-// Without Enchanting the request drops the ring enchants, so setups compare as the baseline it sends.
-const asSent = (player: Player<any>, gear: Gear): Gear => (player.hasProfession(Profession.Enchanting) ? gear : gear.withoutEnchanting());
+// The slot's enchant list as Gear mode reads it, with Enchanting taken as known: each request drops the ring enchants
+// by its own professions.
+const slotEnchants = (player: Player<any>, slot: ItemSlot): UIEnchant[] =>
+	player.sim.db.getEnchants(slot).filter(enchant => canEquipEnchant(enchant, player.getPlayerSpec(), true));
+
+// Each once and sorted. The Off Hand also takes the Main Hand's, which go to both hands.
+const presetEffectIds = (preset: BulkEnchantPreset, slot: ItemSlot): number[] => {
+	const poolSlot = enchantPresetPoolSlot(slot);
+	const sources = poolSlot === ItemSlot.ItemSlotOffHand ? [ItemSlot.ItemSlotMainHand, ItemSlot.ItemSlotOffHand] : [poolSlot];
+	const effectIds = preset.slots.filter(options => sources.includes(options.slot)).flatMap(options => options.effectIds);
+	return [...new Set(effectIds)].sort((a, b) => a - b);
+};
 
 // Every slot the preset holds a fitting enchant for takes one of them, in every combination; the other slots keep the
 // set's own enchant.
@@ -26,8 +36,9 @@ const enchantVariants = (player: Player<any>, gear: Gear, preset: BulkEnchantPre
 	const slotChoices = gear.getItemSlots().flatMap(slot => {
 		const equipped = gear.getEquippedItem(slot);
 		if (!equipped) return [];
-		const items = enchantPresetSlotIds(player, [preset], slot).flatMap((effectId): EquippedItem[] => {
-			const enchant = player.sim.db.getEnchantsByEffectId(effectId).find(row => enchantAppliesToItem(row, equipped.item));
+		const rows = slotEnchants(player, slot);
+		const items = presetEffectIds(preset, slot).flatMap((effectId): EquippedItem[] => {
+			const enchant = rows.find(row => row.effectId === effectId && enchantAppliesToItem(row, equipped.item));
 			return enchant ? [equipped.withEnchant(enchant)] : [];
 		});
 		return items.length ? [{ slot, items }] : [];
@@ -44,36 +55,41 @@ const enchantVariants = (player: Player<any>, gear: Gear, preset: BulkEnchantPre
 			}),
 		);
 	}
-	return variants.map(variant => asSent(player, variant));
+	return variants;
 };
 
-// Gear set major, so with the picks' current entries first the current gear with its own enchants leads. A setup equal
-// to an earlier one, such as a preset that fits nothing on a set, is dropped.
-export const bulkGearSetups = (player: Player<any>, gearSets: readonly BulkGearSetPick[], enchantPicks: readonly BulkEnchantPick[]): BulkGearSetup[] => {
+const firstOfEachKey = (setups: readonly BulkGearSetup[]): BulkGearSetup[] => {
 	const seen = new Set<string>();
-	return gearSets
-		.flatMap(gearSet =>
+	return setups.filter(setup => {
+		const key = gearSetupKey(setup);
+		if (seen.has(key)) return false;
+		seen.add(key);
+		return true;
+	});
+};
+
+// Gear set major. A setup equal to an earlier one, such as a preset that fits nothing on a set, is dropped.
+export const bulkGearSetups = (player: Player<any>, gearSets: readonly BulkGearSetPick[], enchantPicks: readonly BulkEnchantPick[]): BulkGearSetup[] =>
+	firstOfEachKey(
+		gearSets.flatMap(gearSet =>
 			enchantPicks.flatMap(({ name, preset }) =>
-				(preset ? enchantVariants(player, gearSet.gear, preset) : [asSent(player, gearSet.gear)]).map(gear => ({
+				enchantVariants(player, gearSet.gear, preset).map(gear => ({
 					gearSet: gearSet.name,
-					enchantPreset: preset ? name : '',
-					isCurrent: gearSet.isCurrent && !preset,
+					enchantPreset: name,
 					gear,
 					bonusStats: gearSet.bonusStats,
 				})),
 			),
-		)
-		.filter(setup => {
-			const key = gearSetupKey(setup);
-			if (seen.has(key)) return false;
-			seen.add(key);
-			return true;
-		});
-};
+		),
+	);
+
+// Without Enchanting the request drops the ring enchants, so setups that become equal run as the first of them.
+export const gearSetupsSentWith = (setups: readonly BulkGearSetup[], isEnchanter: boolean): BulkGearSetup[] =>
+	firstOfEachKey(isEnchanter ? setups : setups.map(setup => ({ ...setup, gear: setup.gear.withoutEnchanting() })));
 
 export const gearSetupNames = (setup: BulkGearSetup): { gearSet: string; enchantPreset: string } => ({
 	gearSet: setup.gearSet || i18n.t('bulk_tab.results.current_gear'),
-	enchantPreset: setup.enchantPreset || i18n.t('bulk_tab.settings.enchant_picks.current'),
+	enchantPreset: setup.enchantPreset,
 });
 
 export const gearSetupLabel = (setup: BulkGearSetup): string => {

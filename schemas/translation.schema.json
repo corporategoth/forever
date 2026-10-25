@@ -4381,9 +4381,6 @@
 						"enchant_picks": {
 							"type": "object",
 							"properties": {
-								"current": {
-									"type": "string"
-								},
 								"slots": {
 									"type": "string"
 								},
@@ -4395,7 +4392,7 @@
 								}
 							},
 							"additionalProperties": false,
-							"required": ["current", "slots", "slots_one", "slots_other"]
+							"required": ["slots", "slots_one", "slots_other"]
 						},
 						"runs": {
 							"type": "object",

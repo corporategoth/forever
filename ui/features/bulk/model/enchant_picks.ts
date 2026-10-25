@@ -13,9 +13,8 @@ export interface BulkEnchantPickEntry {
 }
 
 export interface BulkEnchantPick {
-	/** Empty, with a null preset, for the gear set's own enchants. */
 	name: string;
-	preset: BulkEnchantPreset | null;
+	preset: BulkEnchantPreset;
 }
 
 const filledSlots = (preset: BulkEnchantPreset) => preset.slots.filter(options => options.effectIds.length > 0);
@@ -33,8 +32,8 @@ const refOf = (name: string): SavedRef => ({ name, preset: false });
 export const bulkEnchantPickEntries = (presets: readonly BulkEnchantPreset[]): BulkEnchantPickEntry[] =>
 	presets.map(preset => ({ ref: refOf(preset.name), name: preset.name, preset }));
 
-// The rows the Enchant presets list shows, in list order. One with no enchants is left out, since it runs as the set's
-// own enchants; a checked one holding the same enchants as an earlier checked row is flagged.
+// The rows the Enchant presets list shows, in list order. One with no enchants is left out; a checked one holding the
+// same enchants as an earlier checked row is flagged.
 export const bulkEnchantPickList = (entries: readonly BulkEnchantPickEntry[], checked: readonly string[]) =>
 	checkedRefList(
 		entries,
@@ -43,13 +42,11 @@ export const bulkEnchantPickList = (entries: readonly BulkEnchantPickEntry[], ch
 		(a, b) => enchantsKey(a.preset) === enchantsKey(b.preset),
 	);
 
-// The gear set's own enchants run first, then every checked row the list neither leaves out nor flags.
-export const bulkEnchantPickRuns = (entries: readonly BulkEnchantPickEntry[], checked: readonly string[]): BulkEnchantPick[] => [
-	{ name: '', preset: null },
-	...bulkEnchantPickList(entries, checked)
+// Every checked row the list neither leaves out nor flags.
+export const bulkEnchantPickRuns = (entries: readonly BulkEnchantPickEntry[], checked: readonly string[]): BulkEnchantPick[] =>
+	bulkEnchantPickList(entries, checked)
 		.filter(item => item.checked && !item.duplicate)
-		.map(({ name, preset }) => ({ name, preset })),
-];
+		.map(({ name, preset }) => ({ name, preset }));
 
 // Stored apart from `BulkEnchantPreset.checked`, the Gear mode's pick, so no `settings` bump. Names go in list order, and
 // one no longer pickable goes.
