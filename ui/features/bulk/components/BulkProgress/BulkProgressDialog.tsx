@@ -1,11 +1,12 @@
 import i18n from '@i18n/config';
 import { useSimHost } from '@sim/context/SimHostContext';
 import type { ProgressStepListHandle, ProgressTrackerHandle } from '@ui-kit/ProgressTrackerDialog';
-import { HandleProgressStepList, ProgressTrackerDialog } from '@ui-kit/ProgressTrackerDialog';
+import { ProgressTrackerDialog } from '@ui-kit/ProgressTrackerDialog';
 import { useEffect, useRef, useState } from 'react';
 
 import { bulkProgress, cancelBulkBatch, subscribeBulkProgress } from '../../model/run';
 import { BulkProgressMessage } from './BulkProgressMessage';
+import { HandleBulkProgressSteps } from './BulkProgressSteps';
 
 /** One element, so the dialog's own state changes only when the stage does. */
 const MESSAGE = <BulkProgressMessage />;
@@ -16,7 +17,7 @@ export const BulkProgressDialog = () => {
 
 	const [state, setState] = useState({ stage: 'preparing', hasMessage: false });
 	// The run emits its first progress before it is marked running, so the encounter list is complete at mount.
-	const [labels] = useState(() => bulkProgress(host.player)?.steps.labels ?? []);
+	const [rows] = useState(() => bulkProgress(host.player)?.steps.rows ?? []);
 	const barRef = useRef<ProgressTrackerHandle>(null);
 	const stepsRef = useRef<ProgressStepListHandle>(null);
 
@@ -40,7 +41,7 @@ export const BulkProgressDialog = () => {
 			title={i18n.t('bulk_tab.progress.title')}
 			state={{ stage: state.stage, message: state.hasMessage ? MESSAGE : undefined }}
 			hasProgressBar
-			belowBar={labels.length > 1 && <HandleProgressStepList ref={stepsRef} labels={labels} />}
+			belowBar={rows.length > 1 && <HandleBulkProgressSteps ref={stepsRef} rows={rows} />}
 			onCancel={() => void cancelBulkBatch(host)}
 			ref={barRef}
 		/>

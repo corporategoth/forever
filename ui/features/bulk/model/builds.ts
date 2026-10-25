@@ -7,10 +7,11 @@ import type { Stats } from '@sim/proto/stats';
 import { omitDeep } from '@sim/utils/collections';
 import { estimateBulkSimIterations } from '@sim/wasm/bulk_sim/estimate';
 
-import { encounterPairLabel } from './encounter_pairs';
-import { formatEncounterSummary } from './encounters';
+import { encounterSideLabel, settingsSideLabel } from './encounter_pairs';
 import { bonusStatsKey, gearSetupsSentWith } from './gear_setups';
-import { talentPairLabel } from './talent_pairs';
+import type { PairSide } from './pairs';
+import { rotationLabel } from './rotations';
+import { talentsLabel } from './talents';
 
 export type ResolveBuildRotation = (build: { talentsString: string; gear: Gear; rotation: APLRotation }) => APLRotation;
 
@@ -207,8 +208,22 @@ export const bulkBuildsCount = (
 	};
 };
 
-export const bulkBuildStepLabel = (run: BulkBuildRun, talentPairs: number): string =>
-	[
-		encounterPairLabel(run.encounterPair),
-		talentPairs > 1 ? talentPairLabel(run.talentPair) : formatEncounterSummary(run.encounterPair.encounter.encounter),
-	].join(' · ');
+export interface BulkBuildStep {
+	encounter: string;
+	settings: string;
+	talents: string;
+	rotation: string;
+}
+
+export const bulkBuildStep = ({
+	encounterPair,
+	talentPair,
+}: {
+	encounterPair: Record<'encounter' | 'settings', PairSide>;
+	talentPair: Record<'talents' | 'rotation', PairSide>;
+}): BulkBuildStep => ({
+	encounter: encounterSideLabel(encounterPair.encounter),
+	settings: settingsSideLabel(encounterPair.settings),
+	talents: talentsLabel(talentPair.talents),
+	rotation: rotationLabel(talentPair.rotation),
+});
