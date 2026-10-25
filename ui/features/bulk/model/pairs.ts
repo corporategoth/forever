@@ -23,6 +23,9 @@ const samePair = <P>(sides: PairSides<P>, a: P, b: P) => {
 export const pairInList = <P>(pairs: readonly P[], pair: P, sides: PairSides<P>): boolean =>
 	sides(pair).every(isCurrentRef) || pairs.some(stored => samePair(sides, stored, pair));
 
+// Equal for two pairs exactly when their refs are, so it keys a list row.
+export const pairKey = <P>(pair: P, sides: PairSides<P>): string => JSON.stringify(sides(pair).map(ref => [ref.name, ref.preset]));
+
 export const pairsAfterAdd = <P extends { checked: boolean }>(pairs: readonly P[], pair: P, sides: PairSides<P>): P[] =>
 	pairInList(pairs, pair, sides) ? [...pairs] : [...pairs, { ...pair, checked: true }];
 

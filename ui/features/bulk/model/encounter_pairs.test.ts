@@ -19,7 +19,7 @@ import {
 	setBulkEncounterPairChecked,
 } from './encounter_pairs';
 import { pickableBulkEncounters } from './encounters';
-import { pairInList } from './pairs';
+import { pairInList, pairKey } from './pairs';
 
 // No i18n mock: the labels are the real copy, and the test setup loads no locale, so this suite loads the English one.
 beforeAll(() => {
@@ -107,6 +107,15 @@ describe('encounter pairs', () => {
 		addBulkEncounterPair(player, currentPair);
 
 		expect(bulkState(player).encounterPairs).toEqual(stored);
+	});
+
+	it('keys two pairs alike exactly when their refs match, an absent side as the current one', () => {
+		const key = (encounterSide?: BulkEncounterRef, settingsSide?: BulkSettingsRef) => pairKey(pair(encounterSide, settingsSide), encounterPairSides);
+
+		expect(key(encounterRef('Raid', true), settingsRef('Healer'))).toBe(key(encounterRef('Raid', true), settingsRef('Healer', false)));
+		expect(key(encounterRef('Raid', true), settingsRef('Healer'))).not.toBe(key(encounterRef('Raid'), settingsRef('Healer')));
+		expect(key(encounterRef('Raid'), settingsRef('Healer'))).not.toBe(key(settingsRef('Healer'), encounterRef('Raid')));
+		expect(key(undefined, undefined)).toBe(key(encounterRef(''), settingsRef('')));
 	});
 
 	it('adds a pair checked at the end and stores it so it loads back', () => {

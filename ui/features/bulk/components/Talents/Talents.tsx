@@ -23,27 +23,28 @@ export const Talents = () => {
 	}, [playerSpec, current, entries, checked]);
 
 	return (
-		<BulkCheckList
-			strings={{
-				description: t('description'),
-				current: t('current'),
-				presets: t('presets'),
-				saved: t('saved'),
-				empty: t('empty'),
-				duplicate: t('duplicate'),
-			}}
-			currentSummary={formatTalentsSummary(current)}
-			presets={rows.presets}
-			saved={rows.saved}
-			onCheckedChange={(ref, value) =>
-				setBulkTalentChecked(
-					player,
-					ref,
-					value,
-					entries.map(entry => entry.ref),
-				)
-			}
-			testIds={{ list: 'bulk-talents', row: 'bulk-talent', current: 'bulk-talent-current' }}
-		/>
+		<div className="grid gap-2">
+			<p className="mb-0 text-xs">{t('description')}</p>
+			<BulkCheckList
+				strings={{
+					presets: t('presets'),
+					saved: t('saved'),
+					empty: t('empty'),
+					duplicate: t('duplicate'),
+				}}
+				current={{ label: t('current'), summary: formatTalentsSummary(current) }}
+				presets={rows.presets}
+				saved={rows.saved}
+				onCheckedChange={(ref, value) =>
+					setBulkTalentChecked(
+						player,
+						ref,
+						value,
+						entries.map(entry => entry.ref),
+					)
+				}
+				testIds={{ list: 'bulk-talents', row: 'bulk-talent', current: 'bulk-talent-current' }}
+			/>
+		</div>
 	);
 };

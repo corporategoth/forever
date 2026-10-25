@@ -12,8 +12,13 @@ import { CombinationsCountView } from './CombinationsCount';
 
 const stringsOf = (group: 'encounters' | 'talents'): BulkCheckListProps['strings'] => {
 	const t = (key: string) => i18n.t(`bulk_tab.settings.${group}.${key}`);
-	return { description: t('description'), current: t('current'), presets: t('presets'), saved: t('saved'), empty: t('empty'), duplicate: t('duplicate') };
+	return { presets: t('presets'), saved: t('saved'), empty: t('empty'), duplicate: t('duplicate') };
 };
+
+const currentOf = (group: 'encounters' | 'talents', summary: string): BulkCheckListProps['current'] => ({
+	label: i18n.t(`bulk_tab.settings.${group}.current`),
+	summary,
+});
 
 const pair = (id: string, label: string, first: [string, ItemSlot], second: [string, ItemSlot]) => ({
 	id,
@@ -68,7 +73,7 @@ const meta = {
 		encounters: (
 			<BulkCheckList
 				strings={stringsOf('encounters')}
-				currentSummary="3:00 ±5s · 1 target"
+				current={currentOf('encounters', '3:00 ±5s · 1 target')}
 				presets={[]}
 				saved={[]}
 				onCheckedChange={fn()}
@@ -78,7 +83,7 @@ const meta = {
 		talents: (
 			<BulkCheckList
 				strings={stringsOf('talents')}
-				currentSummary="30305001302"
+				current={currentOf('talents', '30305001302')}
 				presets={[{ ref: { name: 'Arms', preset: true }, name: 'Arms', summary: '3030500130', checked: true, duplicate: false }]}
 				saved={[]}
 				onCheckedChange={fn()}

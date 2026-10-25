@@ -1166,9 +1166,30 @@
 			}
 		},
 		"builds": {
+			"columns": {
+				"gear": {
+					"title": "Gear",
+					"hint": "Each gear set runs with each enchant preset."
+				},
+				"encounters": {
+					"title": "Encounters & settings",
+					"hint": "Each pair gets its own ranking."
+				},
+				"talents": {
+					"title": "Talents & rotations",
+					"hint": "Every gear setup runs with each pair. Simple and Auto rotations follow each gear set and its talents."
+				}
+			},
 			"pairs": {
 				"current_encounter": "Current encounter",
-				"current_settings": "Current settings"
+				"current_settings": "Current settings",
+				"encounter": "Encounter",
+				"settings": "Settings",
+				"talents": "Talents",
+				"rotation": "Rotation",
+				"add": "Add",
+				"in_list": "Already in the list",
+				"remove": "Remove {{pair}}"
 			}
 		},
 		"actions": {
@@ -1220,11 +1241,21 @@
 				"no_points": "No talent points"
 			},
 			"gear_sets": {
+				"heading": "Gear sets",
+				"current": "Current gear",
+				"presets": "Presets",
+				"saved": "Saved",
+				"empty": "No saved gear sets yet. Save one in Gear → Saved Gear Sets to run it too.",
+				"duplicate": "Same as another gear set, skipped",
 				"items": "{{count}} items",
 				"items_one": "{{count}} item",
 				"items_other": "{{count}} items"
 			},
 			"enchant_picks": {
+				"heading": "Enchant presets",
+				"saved": "Saved",
+				"empty": "No enchant presets yet. Make one under Enchants in Batch · Gear.",
+				"duplicate": "Same enchants as another preset, skipped",
 				"current": "Own enchants",
 				"slots": "{{count}} slots",
 				"slots_one": "{{count}} slot",

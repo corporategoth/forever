@@ -1,4 +1,5 @@
 import { Tabs } from '@base-ui/react/tabs';
+import { BulkBuildsColumns } from '@features/bulk/components/BulkBuildsColumns';
 import { BulkCompareButton } from '@features/bulk/components/BulkCompareButton';
 import { BulkEncounterResults } from '@features/bulk/components/BulkEncounterResults';
 import { BulkItemSearch } from '@features/bulk/components/BulkItemSearch';
@@ -7,6 +8,7 @@ import { BulkProgressDialog } from '@features/bulk/components/BulkProgress';
 import { BulkResults } from '@features/bulk/components/BulkResults';
 import { BulkResultsCsvButton } from '@features/bulk/components/BulkResultsCsvButton';
 import { BulkSettings } from '@features/bulk/components/BulkSettings';
+import { useBulkMode } from '@features/bulk/hooks/useBulkMode';
 import { useBulkResultSelection } from '@features/bulk/hooks/useBulkResultSelection';
 import { useBulkState } from '@features/bulk/hooks/useBulkState';
 import { addBulkItems, clearBulkItems } from '@features/bulk/model/items';
@@ -70,6 +72,7 @@ export const BulkTabBody = () => {
 	const activateTab = useActivateTab();
 	const results = useBulkState(slice => slice.results);
 	const isRunning = useBulkState(slice => slice.isRunning);
+	const { builds } = useBulkMode();
 
 	const [activeId, setActiveId] = useState<BulkPaneId>('bulkSetupTab');
 	const [importOpen, setImportOpen] = useState(false);
@@ -86,19 +89,25 @@ export const BulkTabBody = () => {
 					<TabPanel value="bulkSetupTab">
 						<TabPanelColumns.Root fullWidth>
 							<TabPanelColumns.Left variant="auto-columns">
-								<BulkTabActionsView
-									showNativeDownload={ready && host.sim.isNative === false}
-									onImportBags={() => setImportOpen(true)}
-									onImportFavorites={() =>
-										addBulkItems(
-											host.player,
-											host.sim.getFilters().favoriteItems.map(itemID => ItemSpec.create({ id: itemID })),
-										)
-									}
-									onClear={() => clearBulkItems(host.player)}
-								/>
-								<BulkItemSearch ready={ready} />
-								<BulkPickerGroups />
+								{builds ? (
+									<BulkBuildsColumns />
+								) : (
+									<>
+										<BulkTabActionsView
+											showNativeDownload={ready && host.sim.isNative === false}
+											onImportBags={() => setImportOpen(true)}
+											onImportFavorites={() =>
+												addBulkItems(
+													host.player,
+													host.sim.getFilters().favoriteItems.map(itemID => ItemSpec.create({ id: itemID })),
+												)
+											}
+											onClear={() => clearBulkItems(host.player)}
+										/>
+										<BulkItemSearch ready={ready} />
+										<BulkPickerGroups />
+									</>
+								)}
 							</TabPanelColumns.Left>
 							<BulkSettings />
 						</TabPanelColumns.Root>

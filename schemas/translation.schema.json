@@ -4185,6 +4185,52 @@
 				"builds": {
 					"type": "object",
 					"properties": {
+						"columns": {
+							"type": "object",
+							"properties": {
+								"gear": {
+									"type": "object",
+									"properties": {
+										"title": {
+											"type": "string"
+										},
+										"hint": {
+											"type": "string"
+										}
+									},
+									"additionalProperties": false,
+									"required": ["title", "hint"]
+								},
+								"encounters": {
+									"type": "object",
+									"properties": {
+										"title": {
+											"type": "string"
+										},
+										"hint": {
+											"type": "string"
+										}
+									},
+									"additionalProperties": false,
+									"required": ["title", "hint"]
+								},
+								"talents": {
+									"type": "object",
+									"properties": {
+										"title": {
+											"type": "string"
+										},
+										"hint": {
+											"type": "string"
+										}
+									},
+									"additionalProperties": false,
+									"required": ["title", "hint"]
+								}
+							},
+							"additionalProperties": false,
+							"required": ["gear", "encounters", "talents"]
+						},
 						"pairs": {
 							"type": "object",
 							"properties": {
@@ -4193,14 +4239,35 @@
 								},
 								"current_settings": {
 									"type": "string"
+								},
+								"encounter": {
+									"type": "string"
+								},
+								"settings": {
+									"type": "string"
+								},
+								"talents": {
+									"type": "string"
+								},
+								"rotation": {
+									"type": "string"
+								},
+								"add": {
+									"type": "string"
+								},
+								"in_list": {
+									"type": "string"
+								},
+								"remove": {
+									"type": "string"
 								}
 							},
 							"additionalProperties": false,
-							"required": ["current_encounter", "current_settings"]
+							"required": ["current_encounter", "current_settings", "encounter", "settings", "talents", "rotation", "add", "in_list", "remove"]
 						}
 					},
 					"additionalProperties": false,
-					"required": ["pairs"]
+					"required": ["columns", "pairs"]
 				},
 				"actions": {
 					"type": "object",
@@ -4365,6 +4432,24 @@
 						"gear_sets": {
 							"type": "object",
 							"properties": {
+								"heading": {
+									"type": "string"
+								},
+								"current": {
+									"type": "string"
+								},
+								"presets": {
+									"type": "string"
+								},
+								"saved": {
+									"type": "string"
+								},
+								"empty": {
+									"type": "string"
+								},
+								"duplicate": {
+									"type": "string"
+								},
 								"items": {
 									"type": "string"
 								},
@@ -4376,11 +4461,23 @@
 								}
 							},
 							"additionalProperties": false,
-							"required": ["items", "items_one", "items_other"]
+							"required": ["heading", "current", "presets", "saved", "empty", "duplicate", "items", "items_one", "items_other"]
 						},
 						"enchant_picks": {
 							"type": "object",
 							"properties": {
+								"heading": {
+									"type": "string"
+								},
+								"saved": {
+									"type": "string"
+								},
+								"empty": {
+									"type": "string"
+								},
+								"duplicate": {
+									"type": "string"
+								},
 								"current": {
 									"type": "string"
 								},
@@ -4395,7 +4492,7 @@
 								}
 							},
 							"additionalProperties": false,
-							"required": ["current", "slots", "slots_one", "slots_other"]
+							"required": ["heading", "saved", "empty", "duplicate", "current", "slots", "slots_one", "slots_other"]
 						},
 						"runs": {
 							"type": "object",
