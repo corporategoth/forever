@@ -122,6 +122,9 @@ func (druid *Druid) applyNaturesGrace() {
 	// only once the hit resolves. The direct hit and heal callbacks leave the periodic ones out. The
 	// buff comes a spell batch after the crit, so a cast that starts as the crit lands, such as the
 	// one queued behind a Starfire, is not hasted.
+	// TODO: Ingame research needed once characters reach level 60 -- whether a Hurricane tick crit
+	// grants it. Each tick is its own direct hit here and procs it, the way Blizzard's ticks roll
+	// Fingers of Frost in the logs.
 	trigger.Name = "Nature's Grace - Trigger"
 	trigger.Callback = core.CallbackOnSpellHitDealt | core.CallbackOnHealDealt
 	trigger.Outcome = core.OutcomeCrit
