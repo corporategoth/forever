@@ -387,6 +387,9 @@ func (action *APLActionStrictMultidot) IsReady(sim *Simulation) bool {
 
 	return len(action.readyActions) > 0
 }
+
+// The gate re-checks the entry's If and the If of every Group Reference above it, at any depth; the
+// Ifs of Sequence and Schedule wrappers only decide the start.
 func (action *APLActionStrictMultidot) Execute(sim *Simulation) {
 	groupConditions := action.unit.Rotation.groupConditions
 	var gate APLValue
