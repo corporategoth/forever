@@ -49,7 +49,7 @@ rulings the code follows are in `references/rulings.md`; text here follows `wows
   `Refund` share and a mana cost refunds nothing (`mana.go`). `SpellConfig` sets the share from the row's `MissRefund()`
   (0.8 where the row flags Discount Power On Miss), the default unless verified spell-specific behaviour differs.
 - **Combo points are not part of the cost.** The spell spends them through `SpendComboPoints` (`energy.go`), each
-  resource on its own: a failed Ferocious Bite keeps its points and loses its energy.
+  resource on its own: a failed Ferocious Bite pays its base cost and keeps its points and its extra energy.
 - **A one-charge buff is spent by the cast it modifies**; the spender is `wowsims-procs`. A spell's own charges
   (`MaxCharges`) are spent by `ConsumeCharge` and refuse the cast at zero.
 
