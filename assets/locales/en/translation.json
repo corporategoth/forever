@@ -1360,6 +1360,7 @@
 			"current_talents": "Current talents",
 			"current_rotation": "Current rotation",
 			"talent_preset": "Talent preset: {{name}}",
+			"rotation": "Rotation: {{name}}",
 			"export_csv": "Export CSV"
 		},
 		"compare": {

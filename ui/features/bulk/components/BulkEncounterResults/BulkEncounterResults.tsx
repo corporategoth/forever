@@ -7,7 +7,8 @@ import { ToggleGroup } from '@ui-kit/ToggleGroup';
 import type { ReactNode } from 'react';
 
 import { useBulkState } from '../../hooks/useBulkState';
-import { encounterLabel, formatEncounterDuration } from '../../model/encounters';
+import { bulkEntryLabel } from '../../model/encounter_pairs';
+import { formatEncounterDuration } from '../../model/encounters';
 import { formatBulkDps } from '../../model/format';
 
 interface BulkEncounterResultRow {
@@ -76,7 +77,7 @@ const resultRow = (entry: BulkEncounterResultsEntry): BulkEncounterResultRow => 
 	const gain = best.dpsMetrics.avg - originalGearResults.dpsMetrics.avg;
 	// Formatted as the result rows format a set's DPS and its gain, without the significance colour.
 	return {
-		label: encounterLabel(entry),
+		label: bulkEntryLabel(entry),
 		durationLabel: formatEncounterDuration(entry),
 		bestDps: formatBulkDps(best.dpsMetrics.avg),
 		gain: gain === 0 ? null : formatDeltaText(originalGearResults.dpsMetrics.avg, best.dpsMetrics.avg, 2, undefined, true, true).text,

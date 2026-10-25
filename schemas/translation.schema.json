@@ -4868,6 +4868,9 @@
 						"talent_preset": {
 							"type": "string"
 						},
+						"rotation": {
+							"type": "string"
+						},
 						"export_csv": {
 							"type": "string"
 						}
@@ -4889,6 +4892,7 @@
 						"current_talents",
 						"current_rotation",
 						"talent_preset",
+						"rotation",
 						"export_csv"
 					]
 				},

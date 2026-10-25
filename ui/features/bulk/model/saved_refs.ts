@@ -6,9 +6,10 @@ import { savedDataEntries } from '@ui-kit/hooks/useSavedData';
 export interface SavedRef {
 	name: string;
 	preset: boolean;
+	group?: string; // Only gear set refs carry one, empty or missing when ungrouped.
 }
 
-export const sameRef = (a: SavedRef, b: SavedRef) => a.name === b.name && a.preset === b.preset;
+export const sameRef = (a: SavedRef, b: SavedRef) => a.name === b.name && a.preset === b.preset && (a.group ?? '') === (b.group ?? '');
 
 export const isRefChecked = (checked: readonly SavedRef[], ref: SavedRef) => checked.some(item => sameRef(item, ref));
 

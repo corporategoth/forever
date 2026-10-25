@@ -26,6 +26,19 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
+export const Grouped: Story = {
+	args: gearSetupsProps({
+		gearSets: {
+			presets: [
+				{ ref: { name: 'P1 Fury', preset: true }, name: 'P1 Fury', summary: '17 items', checked: false, duplicate: false },
+				{ ref: { name: 'Pre-BiS', preset: true, group: 'Fury' }, name: 'Pre-BiS', summary: '17 items', checked: true, duplicate: false },
+				{ ref: { name: 'Pre-BiS', preset: true, group: 'Arms' }, name: 'Pre-BiS', summary: '16 items', checked: false, duplicate: false },
+			],
+			saved: [{ ref: { name: 'My raid set', preset: false }, name: 'My raid set', summary: '16 items', checked: true, duplicate: false }],
+		},
+	}),
+};
+
 export const Duplicate: Story = {
 	args: gearSetupsProps({
 		gearSets: {

@@ -21,10 +21,18 @@ interface StoryRow extends Omit<BulkCompareTableRow, 'cells'> {
 // A cell `gainPct` over the current gear's DPS; null is a gap.
 const cell = (gainPct: number | null, best = false): StoryCell | null => (gainPct === null ? null : { gainPct, best });
 
-const row = (key: string, label: string, changes: string[], cells: Array<StoryCell | null>, talents: string | null = null): StoryRow => ({
+const row = (
+	key: string,
+	label: string,
+	changes: string[],
+	cells: Array<StoryCell | null>,
+	talents: string | null = null,
+	rotation: string | null = null,
+): StoryRow => ({
 	key,
 	label,
 	talents,
+	rotation,
 	changes,
 	cells,
 });
@@ -131,6 +139,30 @@ const TALENT_ROWS = [
 	row('set-3', 'S3', ['Slayer’s Crest'], [cell(6.07), cell(4.85), cell(4.29), cell(4.63)], 'Current talents'),
 ];
 
+// A Builds batch over three encounter pairs and three talent pairs: each column names its encounter and settings, and each
+// set its gear setup in place of the items it changes.
+const BUILD_COLUMNS = [
+	{ label: 'Short fight · Current settings', length: '1:30' },
+	{ label: 'Current encounter · Current settings', length: '3:00' },
+	{ label: 'Current encounter · Tank healing', length: '3:00' },
+];
+
+const BUILD_CURRENT_DPS = [622.04, 600.3, 588.12];
+
+const BUILD_ROWS = [
+	row(
+		'current',
+		'Current gear',
+		[],
+		BUILD_COLUMNS.map(() => cell(0)),
+		'Current talents',
+		'Current rotation',
+	),
+	row('set-1', 'S1', ['P1 Fury · Agility cloak'], [cell(6.4, true), cell(5.1, true), cell(4.8, true)], 'Fury', 'Fury'),
+	row('set-2', 'S2', ['P1 Fury · Agility cloak'], [cell(5.2), cell(4.4), null], 'Fury', 'My APL'),
+	row('set-3', 'S3', ['Current gear · Crusader weapons'], [cell(1.9), cell(2.3), cell(2.6)], 'Current talents', 'Current rotation'),
+];
+
 const meta = {
 	title: 'Features/Bulk/BulkCompareTable',
 	component: BulkCompareTable,
@@ -152,6 +184,10 @@ export const AllGains: Story = {
 
 export const TalentSetups: Story = {
 	args: tableArgs(GAIN_COLUMNS, GAIN_CURRENT_DPS, TALENT_ROWS),
+};
+
+export const Builds: Story = {
+	args: tableArgs(BUILD_COLUMNS, BUILD_CURRENT_DPS, BUILD_ROWS),
 };
 
 // Narrower than the columns need, so the table scrolls sideways under its fixed set column.

@@ -1,3 +1,4 @@
+import { BulkGearSetRef } from '@generated/proto/ui';
 import i18n from '@i18n/config';
 import { usePlayer } from '@sim/context/SimHostContext';
 import { useMemo } from 'react';
@@ -90,7 +91,7 @@ export const GearSetups = () => {
 			onGearSetCheckedChange={(ref, checked) =>
 				setBulkGearSetChecked(
 					player,
-					ref,
+					BulkGearSetRef.create({ ...ref, group: ref.group ?? '' }),
 					checked,
 					gearSetEntries.map(entry => entry.ref),
 				)

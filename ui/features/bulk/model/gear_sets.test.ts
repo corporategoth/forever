@@ -132,6 +132,22 @@ describe('bulkGearSetRuns', () => {
 			{ name: 'Buffed', gear: entries[1].gear, bonusStats: entries[1].bonusStats },
 		]);
 	});
+
+	it('names a grouped preset by its group and name, and an ungrouped preset or a saved set by its name', () => {
+		const grouped = (group: string, id: number) => ({
+			...entry('Pre-BiS', id, new Stats(), true),
+			ref: BulkGearSetRef.create({ name: 'Pre-BiS', preset: true, group }),
+		});
+		const entries = [grouped('Fury', 2), grouped('Arms', 3), entry('Raid', 4, new Stats(), true), entry('Mine', 5)];
+
+		const runs = bulkGearSetRuns(
+			current,
+			entries,
+			entries.map(item => item.ref),
+		);
+
+		expect(runs.map(run => run.name)).toEqual(['', 'Fury · Pre-BiS', 'Arms · Pre-BiS', 'Raid', 'Mine']);
+	});
 });
 
 describe('setBulkGearSetChecked', () => {
