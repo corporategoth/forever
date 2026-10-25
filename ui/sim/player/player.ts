@@ -1115,7 +1115,7 @@ export class Player<SpecType extends Spec> {
 	setWeaponSkills(newWeaponSkills: Array<WeaponSkillValue>) {
 		const current = this.slice().weaponSkills;
 		const sorted = newWeaponSkills.map(entry => WeaponSkillValue.clone(entry)).sort((a, b) => a.skill - b.skill);
-		if (arrayEquals(sorted, current, WeaponSkillValue.equals)) return;
+		if (arrayEquals(sorted, current, (a, b) => WeaponSkillValue.equals(a, b))) return;
 
 		this.patch('weaponSkills', sorted);
 	}
