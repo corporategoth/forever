@@ -17,18 +17,28 @@ import {
 	HealingModel,
 	ItemRandomSuffix,
 	ItemSlot,
+	ItemSwap,
 	Profession,
 	PseudoStat,
 	Race,
 	Spec,
 	Stat,
+	Target,
 	UnitReference,
 	UnitStats,
 	WeaponSkill,
 	WeaponSkillValue,
 } from '@generated/proto/common';
 import { SimDatabase } from '@generated/proto/db';
-import { DungeonDifficulty, RaidFilterOption, SourceFilterOption, UIEnchant as Enchant, UIItem as Item, UIItem_FactionRestriction } from '@generated/proto/ui';
+import {
+	DungeonDifficulty,
+	RaidFilterOption,
+	type SavedSettings,
+	SourceFilterOption,
+	UIEnchant as Enchant,
+	UIItem as Item,
+	UIItem_FactionRestriction,
+} from '@generated/proto/ui';
 
 import * as Mechanics from '../constants/mechanics';
 import { CURRENT_API_VERSION } from '../constants/other';
@@ -1024,6 +1034,34 @@ export class Player<SpecType extends Spec> {
 		return view.getResolvedAplRotation(true);
 	}
 
+	// The consumables getConsumes(true) gives once applySavedSettings has loaded `settings`, worked out on a view whose
+	// slice reports the entry's race, professions and consumables, so the player itself is never written. As loading
+	// does, the consumables are matched to the weapons and the current swap weapons first, then to the entry's swap
+	// weapons. A rank stays where its profession does not change, as setProfession1/2 keep it.
+	getConsumesForSettings(settings: Pick<SavedSettings, 'race' | 'professions' | 'consumables' | 'itemSwap'>): ConsumesSpec {
+		const current = this.slice();
+		const profession1 = settings.professions[0] || Profession.ProfessionUnknown;
+		const profession2 = settings.professions[1] || Profession.ProfessionUnknown;
+		const consumables = this.sim.db
+			.lookupItemSwap(settings.itemSwap ?? ItemSwap.create())
+			.adjustSwapImbues(this.itemSwapSettings.getGear().adjustSwapImbues(this.getGear().adjustImbues(settings.consumables ?? ConsumesSpec.create())));
+		const view: Player<SpecType> = Object.create(this, {
+			slice: {
+				value: () => ({
+					...current,
+					race: settings.race,
+					profession1,
+					profession2,
+					prof1Rank: profession1 == current.profession1 ? current.prof1Rank : 0,
+					prof2Rank: profession2 == current.profession2 ? current.prof2Rank : 0,
+					consumables,
+				}),
+			},
+			relevantConsumablesCache: { value: null, writable: true },
+		});
+		return view.getConsumes(true);
+	}
+
 	getTalents(): SpecTalents<SpecType> {
 		if (this.talents == null) {
 			this.talents = playerTalentStringToProto(this.playerSpec, this.getTalentsString()) as SpecTalents<SpecType>;
@@ -1139,8 +1177,7 @@ export class Player<SpecType extends Spec> {
 		this.setWeaponSkills(value == MAX_WEAPON_SKILL ? others : [...others, WeaponSkillValue.create({ skill, value })]);
 	}
 
-	setDefaultHealingParams(hm: HealingModel) {
-		const boss = this.sim.encounter.primaryTarget;
+	setDefaultHealingParams(hm: HealingModel, boss: Target = this.sim.encounter.primaryTarget) {
 		const dualWield = boss.dualWield;
 		if (hm.cadenceSeconds == 0) {
 			let maxCadence = 1.5 * boss.swingSpeed;
@@ -1172,16 +1209,21 @@ export class Player<SpecType extends Spec> {
 		return HealingModel.clone(this.slice().healingModel);
 	}
 
+	// The healing model setHealingModel stores for `healingModel` when `boss` is the primary target.
+	getHealingModelFor(healingModel: HealingModel, boss: Target): HealingModel {
+		// Make a defensive copy
+		const filled = HealingModel.clone(healingModel);
+		// If we have enabled healing model and try to set 0s cadence or 0 incoming HPS, then set intelligent defaults instead based on boss parameters.
+		if (this.healingEnabled) {
+			this.setDefaultHealingParams(filled, boss);
+		}
+		return filled;
+	}
+
 	setHealingModel(newHealingModel: HealingModel) {
 		if (HealingModel.equals(this.slice().healingModel, newHealingModel)) return;
 
-		// Make a defensive copy
-		const healingModel = HealingModel.clone(newHealingModel);
-		// If we have enabled healing model and try to set 0s cadence or 0 incoming HPS, then set intelligent defaults instead based on boss parameters.
-		if (this.healingEnabled) {
-			this.setDefaultHealingParams(healingModel);
-		}
-		this.patch('healingModel', healingModel);
+		this.patch('healingModel', this.getHealingModelFor(newHealingModel, this.sim.encounter.primaryTarget));
 	}
 
 	computeStatsEP(stats?: Stats): number {

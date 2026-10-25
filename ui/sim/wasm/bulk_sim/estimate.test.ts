@@ -8,6 +8,10 @@ describe('estimateBulkSimIterations', () => {
 		expect(estimateBulkSimIterations(19)).toBe(bulkSimHighStageFloor() * 20);
 	});
 
+	it('pins the estimate at 20 candidates', () => {
+		expect(estimateBulkSimIterations(20)).toBe(210_000);
+	});
+
 	it('takes the staged estimate from 20 candidates on when it sims fewer', () => {
 		expect(estimateBulkSimIterations(5000)).toBeLessThan(bulkSimHighStageFloor() * 5001);
 	});

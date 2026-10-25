@@ -1,6 +1,7 @@
 import { DistributionMetrics } from '@generated/proto/api';
 import type { APLRotation } from '@generated/proto/apl';
 import type { Encounter, UnitStats } from '@generated/proto/common';
+import type { SavedSettings } from '@generated/proto/ui';
 
 import type { EquippedItem } from '../proto/equipped_item';
 import { Gear } from '../proto/gear';
@@ -76,6 +77,8 @@ export interface BulkBuildOverride {
 
 export interface BulkSimOverrides {
 	encounter?: Encounter;
+	/** The Settings tab's saved settings the request runs under; absent for the current settings. */
+	settings?: SavedSettings;
 	build?: BulkBuildOverride;
 	/** Sent as they are in place of the generated ones; a candidate that repeats the baseline is dropped. */
 	candidates?: readonly Gear[];

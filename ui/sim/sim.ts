@@ -27,12 +27,16 @@ import {
 	StatWeightsTargetMetric,
 } from '@generated/proto/api';
 import { APLRotation } from '@generated/proto/apl';
+import { Debuffs, IndividualBuffs, PartyBuffs, RaidBuffs } from '@generated/proto/buffs';
 import {
 	ArmorType,
 	ConsumableType,
 	Encounter as EncounterProto,
 	EquipmentSpec,
 	Faction,
+	HealingModel,
+	ItemSpec,
+	ItemSwap,
 	Profession,
 	PseudoStat,
 	RangedWeaponType,
@@ -42,7 +46,7 @@ import {
 	UnitStats,
 	WeaponType,
 } from '@generated/proto/common';
-import { DatabaseFilters, RaidFilterOption, SimSettings as SimSettingsProto, SourceFilterOption } from '@generated/proto/ui';
+import { DatabaseFilters, RaidFilterOption, SavedSettings, SimSettings as SimSettingsProto, SourceFilterOption } from '@generated/proto/ui';
 import i18n from '@i18n/config';
 import { getLang } from '@i18n/locale_service';
 import { SimRequest } from '@worker/types';
@@ -379,6 +383,45 @@ export class Sim {
 		return gear;
 	}
 
+	// Writes the fields applySavedSettings (features/settings) loads from `settings` onto the request, with its
+	// defaults. ui/sim cannot import it, so a field it gains is added here too.
+	private applyBulkSettings(request: RaidSimRequest, settings: SavedSettings): void {
+		const entry = SavedSettings.clone(settings);
+		const raid = request.raid!;
+		const party = raid.parties[0];
+		const player = party.players[0];
+		const profession1 = entry.professions[0] || Profession.ProfessionUnknown;
+		const profession2 = entry.professions[1] || Profession.ProfessionUnknown;
+		const itemSwapGear = this.db.lookupItemSwap(entry.itemSwap ?? ItemSwap.create());
+		const livePlayer = this.raid.getActivePlayers()[0];
+
+		raid.buffs = entry.raidBuffs ?? RaidBuffs.create();
+		raid.debuffs = entry.debuffs ?? Debuffs.create();
+		party.buffs = entry.partyBuffs ?? PartyBuffs.create();
+		player.buffs = entry.playerBuffs ?? IndividualBuffs.create();
+		player.consumables = livePlayer.getConsumesForSettings(entry);
+		player.race = entry.race;
+		player.prof1Rank = profession1 == player.profession1 ? player.prof1Rank : 0;
+		player.prof2Rank = profession2 == player.profession2 ? player.prof2Rank : 0;
+		player.profession1 = profession1;
+		player.profession2 = profession2;
+		player.enableItemSwap = entry.enableItemSwap;
+		player.itemSwap = ItemSwap.create({
+			prepullBonusStats: Stats.fromProto(entry.itemSwap?.prepullBonusStats).toProto(),
+			items: itemSwapGear.asArray().map(item => (item ? item.asSpec() : ItemSpec.create())),
+		});
+		player.reactionTimeMs = entry.reactionTimeMs;
+		player.channelClipDelayMs = entry.channelClipDelayMs;
+		player.inFrontOfTarget = entry.inFrontOfTarget;
+		player.distanceFromTarget = entry.distanceFromTarget;
+		player.healingModel = livePlayer.getHealingModelFor(entry.healingModel ?? HealingModel.create(), request.encounter!.targets[0]);
+
+		const swapDatabase = itemSwapGear.toDatabase(this.db);
+		player.database = player.database ? Database.mergeSimDatabases(player.database, swapDatabase) : swapDatabase;
+		addPartyBuffItems(player.database, this.db, party.buffs);
+		extendPlayerProtoWithMissingEffects(player, this.db);
+	}
+
 	async runBulkSim(
 		onProgress: WorkerProgressCallback,
 		bulkSettings: BulkSettings,
@@ -400,6 +443,9 @@ export class Sim {
 			baseRequest.simOptions!.debugFirstIteration = false;
 			baseRequest.simOptions!.debug = false;
 
+			if (overrides.settings) {
+				this.applyBulkSettings(baseRequest, overrides.settings);
+			}
 			const player = baseRequest.raid!.parties[0].players[0];
 			if (overrides.build) {
 				player.talentsString = overrides.build.talentsString;
