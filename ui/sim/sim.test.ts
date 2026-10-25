@@ -28,12 +28,14 @@ import { UIEnchant, UIItem } from '@generated/proto/ui';
 import { makeEquippedItem } from '@testing/storybook/fixtures/gear';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { BulkSimOverrides } from './bulk/types';
 import { EquippedItem } from './proto/equipped_item';
 import { Gear } from './proto/gear';
 import { Stats } from './proto/stats';
 import { Sim, SimError } from './sim';
 import { RequestTypes } from './sim_signal_manager';
 import type { Env } from './state/env';
+import { hashString } from './utils/misc';
 
 const mocks = vi.hoisted(() => ({
 	raidSimAsync: vi.fn(),
@@ -519,12 +521,12 @@ describe('Sim.runBulkSim', () => {
 		}
 	});
 
-	const makeEmptyBulkSim = () => {
+	const makeEmptyBulkSim = (profession = Profession.ProfessionUnknown) => {
 		Object.assign(mocks.db, { lookupItemSpec: () => null, getItemEffectRandPropPoints: () => undefined, getEnchantsByEffectId: () => [] });
 		mocks.runConcurrentBulkSim.mockReset().mockResolvedValue(BulkSimResult.create());
 		mocks.bulkSimAsync.mockReset().mockResolvedValue(BulkSimResult.create());
 		mocks.bulkCandidates.mockReset();
-		const sim = makeSim();
+		const sim = makeSim({ profession });
 		vi.spyOn(sim.raid, 'getActivePlayers').mockReturnValue([{ getGear: () => new Gear({}) }] as any);
 		return sim;
 	};
@@ -549,7 +551,7 @@ describe('Sim.runBulkSim', () => {
 			targets: [Target.create(), Target.create()],
 		});
 
-		await sim.runBulkSim(() => {}, BulkSettings.create(), undefined, override);
+		await sim.runBulkSim(() => {}, BulkSettings.create(), undefined, { encounter: override });
 
 		const sent = mocks.bulkSimAsync.mock.calls[0][0].baseRequest.encounter;
 		expect(sent).toEqual(override);
@@ -557,26 +559,123 @@ describe('Sim.runBulkSim', () => {
 		expect(sim.encounter.toProto()).toEqual(live);
 	});
 
-	it('sends override talents and their rotation on the request copy', async () => {
+	it('sends override talents, their rotation and bonus stats on the request copy', async () => {
 		const sim = makeEmptyBulkSim();
 		const rotation = APLRotation.create({ type: APLRotationType.TypeAuto, priorityList: [APLListItem.create({ hide: true })] });
+		const bonusStats = new Stats().withStat(Stat.StatAgility, 25).toProto();
 
-		await sim.runBulkSim(() => {}, BulkSettings.create(), undefined, undefined, { talentsString: '05-3', rotation });
+		await sim.runBulkSim(() => {}, BulkSettings.create(), undefined, { build: { talentsString: '05-3', rotation, bonusStats } });
 
 		const sent = mocks.bulkSimAsync.mock.calls[0][0].baseRequest.raid.parties[0].players[0];
 		expect(sent.talentsString).toBe('05-3');
 		expect(sent.rotation).toEqual(rotation);
 		expect(sent.rotation).not.toBe(rotation);
+		expect(sent.bonusStats).toEqual(bonusStats);
+		expect(sent.bonusStats).not.toBe(bonusStats);
 	});
 
-	it('draws the same content seed with and without a talents override', async () => {
+	it('draws the same content seed with and without a build override', async () => {
 		const sim = makeEmptyBulkSim();
 
 		await sim.runBulkSim(() => {}, BulkSettings.create());
 		const plain = sim.getLastUsedRngSeed();
-		await sim.runBulkSim(() => {}, BulkSettings.create(), undefined, undefined, { talentsString: '05-3', rotation: APLRotation.create() });
+		await sim.runBulkSim(() => {}, BulkSettings.create(), undefined, {
+			build: { talentsString: '05-3', rotation: APLRotation.create(), bonusStats: new Stats().withStat(Stat.StatAgility, 25).toProto() },
+		});
 
 		expect(sim.getLastUsedRngSeed()).toBe(plain);
+	});
+
+	const cloakGear = (id: number, enchant?: UIEnchant) =>
+		new Gear({
+			[ItemSlot.ItemSlotBack]: new EquippedItem({
+				item: UIItem.create({ id, type: ItemType.ItemTypeBack, scalingOptions: { 0: { ilvl: 60 } } }),
+				enchant,
+			}),
+		});
+
+	it('sends explicit candidates as they are on both paths, without asking the workers for candidates', async () => {
+		const cloak = cloakGear(30);
+		mocks.isWasm.mockResolvedValue(true);
+		const wasmSim = makeEmptyBulkSim();
+
+		await wasmSim.runBulkSim(() => {}, BulkSettings.create(), undefined, { candidates: [cloak] });
+
+		expect(mocks.bulkCandidates).not.toHaveBeenCalled();
+		expect(mocks.runConcurrentBulkSim.mock.calls[0][0].candidates).toEqual([{ index: 0, gear: cloak.asSpec() }]);
+
+		mocks.isWasm.mockResolvedValue(false);
+		const nativeSim = makeEmptyBulkSim();
+
+		await nativeSim.runBulkSim(() => {}, BulkSettings.create(), undefined, { candidates: [cloak] });
+
+		expect(mocks.bulkSimAsync.mock.calls[0][0].candidates).toEqual([{ index: 0, gear: cloak.asSpec() }]);
+	});
+
+	it('drops an explicit candidate that repeats the baseline', async () => {
+		const sim = makeEmptyBulkSim();
+		const cloak = cloakGear(30);
+
+		await sim.runBulkSim(() => {}, BulkSettings.create(), undefined, { candidates: [new Gear({}), cloak] });
+
+		expect(mocks.bulkSimAsync.mock.calls[0][0].candidates).toEqual([{ index: 0, gear: cloak.asSpec() }]);
+	});
+
+	it('strips the ring enchants of an explicit candidate without Enchanting, as it does the baseline’s', async () => {
+		const ringEnchant = UIEnchant.create({ effectId: 2930, itemId: 4, name: 'Enchant Ring - Striking', type: ItemType.ItemTypeFinger });
+		const ringed = new Gear({
+			[ItemSlot.ItemSlotFinger1]: new EquippedItem({
+				item: UIItem.create({ id: 40, type: ItemType.ItemTypeFinger, scalingOptions: { 0: { ilvl: 60 } } }),
+				enchant: ringEnchant,
+			}),
+		});
+		const sentRingEnchant = async (profession: Profession) => {
+			const sim = makeEmptyBulkSim(profession);
+			await sim.runBulkSim(() => {}, BulkSettings.create(), undefined, { candidates: [ringed] });
+			return mocks.bulkSimAsync.mock.calls[0][0].candidates[0].gear.items[ItemSlot.ItemSlotFinger1].enchant;
+		};
+
+		expect(await sentRingEnchant(Profession.ProfessionUnknown)).toBeFalsy();
+		expect(await sentRingEnchant(Profession.Enchanting)).toBe(2930);
+	});
+
+	it('ships every item and enchant the explicit candidates wear', async () => {
+		const sim = makeEmptyBulkSim();
+		const cloakDodge = UIEnchant.create({ effectId: 2622, itemId: 3, name: 'Enchant Cloak - Dodge', type: ItemType.ItemTypeBack });
+		const cloakResistance = UIEnchant.create({ effectId: 1889, itemId: 2, name: 'Enchant Cloak - Superior Defense', type: ItemType.ItemTypeBack });
+		Object.assign(mocks.db, {
+			getEnchantsByEffectId: (effectId: number) => [cloakDodge, cloakResistance].filter(enchant => enchant.effectId === effectId),
+		});
+
+		await sim.runBulkSim(
+			() => {},
+			BulkSettings.create({ enchants: [BulkEnchantSlotOptions.create({ slot: ItemSlot.ItemSlotBack, effectIds: [1889] })] }),
+			undefined,
+			{ candidates: [cloakGear(30, cloakDodge)] },
+		);
+
+		const database = mocks.bulkSimAsync.mock.calls[0][0].baseRequest.raid.parties[0].players[0].database;
+		expect(database.items.map((item: { id: number }) => item.id)).toContain(30);
+		expect(database.enchants.map((enchant: { effectId: number }) => enchant.effectId)).toEqual(expect.arrayContaining([2622, 1889]));
+	});
+
+	it('keeps the Gear-mode seed without candidates and draws another for another candidate list', async () => {
+		const sim = makeEmptyBulkSim();
+		const seedWith = async (overrides: BulkSimOverrides = {}) => {
+			await sim.runBulkSim(() => {}, BulkSettings.create(), undefined, overrides);
+			return sim.getLastUsedRngSeed();
+		};
+		const gearModeHash = hashString(
+			hashString(EquipmentSpec.toJsonString(new Gear({}).asSpec())) + hashString(BulkSettings.toJsonString(BulkSettings.create())),
+		);
+
+		const plain = await seedWith();
+		const withCloakA = await seedWith({ candidates: [cloakGear(30)] });
+
+		expect(plain).toBe(Number(BigInt('0x' + gearModeHash.slice(0, 8))));
+		expect(withCloakA).not.toBe(plain);
+		expect(await seedWith({ candidates: [cloakGear(31)] })).not.toBe(withCloakA);
+		expect(await seedWith({ candidates: [cloakGear(30)] })).toBe(withCloakA);
 	});
 
 	it('drops the WASM candidates that repeat the baseline or one another', async () => {

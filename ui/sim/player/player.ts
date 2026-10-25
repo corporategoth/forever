@@ -1012,12 +1012,13 @@ export class Player<SpecType extends Spec> {
 		}
 	}
 
-	// The rotation for simming with `talentsString` in place of the player's talents. The generators run on a
-	// view whose slice reports that talents string and whose parsed-talents cache starts empty, so the player
-	// itself is never written.
-	getResolvedAplRotationForTalents(talentsString: string): APLRotation {
+	// The rotation for simming `rotation` with `talentsString` and `gear` in place of the player's own. The
+	// generators run on a view whose slice reports those talents and that gear, whose rotation is the given one
+	// and whose parsed-talents cache starts empty, so the player itself is never written.
+	getResolvedAplRotationForBuild({ talentsString, gear, rotation }: { talentsString: string; gear: Gear; rotation: APLRotation }): APLRotation {
 		const view: Player<SpecType> = Object.create(this, {
-			slice: { value: () => ({ ...this.slice(), talentsString }) },
+			slice: { value: () => ({ ...this.slice(), talentsString, gear }) },
+			aplRotation_: { value: rotation },
 			talents: { value: null, writable: true },
 		});
 		return view.getResolvedAplRotation(true);

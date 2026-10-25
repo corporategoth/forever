@@ -1,8 +1,7 @@
 import { enchantPresetPool } from '@features/enchant-presets/model/enchant_presets';
 import { BulkSettings, ProgressMetrics } from '@generated/proto/api';
-import type { Encounter } from '@generated/proto/common';
 import i18n from '@i18n/config';
-import { BulkEncounterResults, BulkSimProgressConfig, BulkTalentsOverride } from '@sim/bulk/types';
+import { BulkEncounterResults, BulkSimOverrides, BulkSimProgressConfig } from '@sim/bulk/types';
 import type { Player } from '@sim/player/player';
 import { bulkState, patchBulkState } from '@sim/settings/bulk_settings';
 import type { IndividualSimHost } from '@sim/sim_host';
@@ -150,8 +149,7 @@ const runCoreBulkSim = async (
 	host: IndividualSimHost<any>,
 	signal: AbortSignal,
 	bulkSettings: BulkSettings,
-	encounter: Encounter,
-	talents?: BulkTalentsOverride,
+	overrides: BulkSimOverrides,
 ): Promise<CoreBulkSimResult> => {
 	const { player } = host;
 	return runCoreBulkSimImpl(
@@ -164,8 +162,7 @@ const runCoreBulkSim = async (
 		},
 		signal,
 		bulkSettings,
-		encounter,
-		talents,
+		overrides,
 	);
 };
 
@@ -224,7 +221,15 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 			talents,
 			override: talents.isCurrent
 				? undefined
-				: { talentsString: talents.talentsString, rotation: player.getResolvedAplRotationForTalents(talents.talentsString) },
+				: {
+						talentsString: talents.talentsString,
+						rotation: player.getResolvedAplRotationForBuild({
+							talentsString: talents.talentsString,
+							gear: player.getGear(),
+							rotation: player.aplRotation,
+						}),
+						bonusStats: player.getBonusStats().toProto(),
+					},
 		}),
 	);
 	run.steps = {
@@ -266,7 +271,10 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 				run.steps = { ...run.steps, running: encounterIndex * talentRuns.length + setupIndex };
 				setCandidateGearProgress(player);
 				run.simStart = new Date().getTime();
-				finished.push({ talents, result: await runCoreBulkSim(host, abortSignal, bulkSettings, encounterRun.encounter, override) });
+				finished.push({
+					talents,
+					result: await runCoreBulkSim(host, abortSignal, bulkSettings, { encounter: encounterRun.encounter, build: override }),
+				});
 			}
 			// Pushed only once every setup finished, so a cancel or error mid-encounter drops the encounter.
 			entries.push({

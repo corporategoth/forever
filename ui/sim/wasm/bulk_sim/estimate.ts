@@ -33,3 +33,16 @@ const getBulkSimOptimisationIterationsUpperBound = (candidateCount: number): num
 
 	return iterations + bulkSimHighStageFloor() * (remainingCandidates + 1);
 };
+
+// What a batch of candidateCount gear sets sims at each stage's minimum, the baseline included, with every culling stage
+// keeping its most survivors. The error target can raise a stage above its minimum, and the adaptive passes and the finalist
+// stage add iterations on top, so a run usually sims more.
+export const estimateBulkSimIterations = (candidateCount: number): number => {
+	const singleStageIterations = bulkSimSingleStageIterations(candidateCount);
+	if (candidateCount < BULK_SIM_MIN_COMBINATIONS) {
+		return singleStageIterations;
+	}
+
+	// shouldUseSingleStageBulkSim runs whichever of the two sims fewer iterations.
+	return Math.min(singleStageIterations, getBulkSimOptimisationIterationsUpperBound(candidateCount));
+};

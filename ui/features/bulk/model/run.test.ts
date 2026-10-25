@@ -3,6 +3,7 @@ import { BulkEnchantSlotOptions, BulkSettings } from '@generated/proto/api';
 import { APLRotation } from '@generated/proto/apl';
 import { Encounter, ItemSlot, Target } from '@generated/proto/common';
 import { BulkEncounterRef, BulkTalentRef, SavedEncounter, SavedTalents, UIEnchant } from '@generated/proto/ui';
+import { Stats } from '@sim/proto/stats';
 import { bulkState, patchBulkState } from '@sim/settings/bulk_settings';
 import type { IndividualSimHost } from '@sim/sim_host';
 import { patchSlice } from '@sim/state/sim_store';
@@ -73,7 +74,11 @@ const batchHost = (
 	const player = makeBulkPlayer({
 		getGear: () => GEAR,
 		getTalentsString: () => LIVE,
-		getResolvedAplRotationForTalents: vi.fn((s: string) => APLRotation.create({ simple: { specRotationJson: s } })),
+		aplRotation: APLRotation.create(),
+		getBonusStats: () => new Stats(),
+		getResolvedAplRotationForBuild: vi.fn(({ talentsString }: { talentsString: string }) =>
+			APLRotation.create({ simple: { specRotationJson: talentsString } }),
+		),
 		setGearAsync: vi.fn(async () => {}),
 	});
 	patchSlice(player.sim.store, 'ui', { showPowerTools: powerTools });
@@ -110,9 +115,9 @@ const batchHost = (
 	return host;
 };
 
-const overrides = () => vi.mocked(runCoreBulkSim).mock.calls.map(call => call[3]);
+const overrides = () => vi.mocked(runCoreBulkSim).mock.calls.map(call => call[3].encounter);
 
-const talentOverrides = () => vi.mocked(runCoreBulkSim).mock.calls.map(call => call[4]?.talentsString);
+const talentOverrides = () => vi.mocked(runCoreBulkSim).mock.calls.map(call => call[3].build?.talentsString);
 
 const steps = (host: IndividualSimHost<any>) => bulkProgress(host.player)!.steps;
 
@@ -264,13 +269,13 @@ describe('runBulkBatch', () => {
 
 		await runBulkBatch(host);
 
-		expect(vi.mocked(runCoreBulkSim).mock.calls.map(call => [call[3].duration, call[4]?.talentsString])).toEqual([
+		expect(vi.mocked(runCoreBulkSim).mock.calls.map(call => [call[3].encounter?.duration, call[3].build?.talentsString])).toEqual([
 			[180, undefined],
 			[180, ARMS],
 			[90, undefined],
 			[90, ARMS],
 		]);
-		expect(vi.mocked(runCoreBulkSim).mock.calls[1][4]!.rotation).toEqual(APLRotation.create({ simple: { specRotationJson: ARMS } }));
+		expect(vi.mocked(runCoreBulkSim).mock.calls[1][3].build!.rotation).toEqual(APLRotation.create({ simple: { specRotationJson: ARMS } }));
 		expect(bulkState(host.player).results!.map(entry => entry.results.talentSetups)).toEqual([2, 2]);
 	});
 

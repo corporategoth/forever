@@ -39,6 +39,7 @@ import {
 	Stat,
 	UnitReference,
 	UnitReference_Type as UnitType,
+	UnitStats,
 	WeaponType,
 } from '@generated/proto/common';
 import { DatabaseFilters, RaidFilterOption, SimSettings as SimSettingsProto, SourceFilterOption } from '@generated/proto/ui';
@@ -48,7 +49,7 @@ import { SimRequest } from '@worker/types';
 
 import { hasTouch } from '../shared/pointer';
 import { makeBulkGearDatabase, makeBulkItemDatabaseFromSpecs } from './bulk/gear_database';
-import type { BulkTalentsOverride } from './bulk/types';
+import type { BulkSimOverrides } from './bulk/types';
 import { dedupeGearSets, throwIfAborted } from './bulk/utils';
 import { CURRENT_PHASE, LOCAL_STORAGE_PREFIX } from './constants/other';
 import { Player, UnitMetadata } from './player/player';
@@ -382,8 +383,7 @@ export class Sim {
 		onProgress: WorkerProgressCallback,
 		bulkSettings: BulkSettings,
 		abortSignal?: AbortSignal,
-		encounterOverride?: EncounterProto,
-		talentsOverride?: BulkTalentsOverride,
+		overrides: BulkSimOverrides = {},
 	): Promise<BulkSimResult | ErrorOutcome> {
 		this.requireRunnableSetup();
 
@@ -393,30 +393,42 @@ export class Sim {
 
 			const requestId = generateRequestId(SimRequest.bulkSimAsync);
 			const baseRequest = this.makeRaidSimRequest();
-			if (encounterOverride) {
-				baseRequest.encounter = EncounterProto.clone(encounterOverride);
+			if (overrides.encounter) {
+				baseRequest.encounter = EncounterProto.clone(overrides.encounter);
 			}
 			baseRequest.requestId = requestId;
 			baseRequest.simOptions!.debugFirstIteration = false;
 			baseRequest.simOptions!.debug = false;
 
 			const player = baseRequest.raid!.parties[0].players[0];
-			if (talentsOverride) {
-				player.talentsString = talentsOverride.talentsString;
-				player.rotation = APLRotation.clone(talentsOverride.rotation);
+			if (overrides.build) {
+				player.talentsString = overrides.build.talentsString;
+				player.rotation = APLRotation.clone(overrides.build.rotation);
+				player.bonusStats = UnitStats.clone(overrides.build.bonusStats);
 			}
 			const isEnchanter = [player.profession1, player.profession2].includes(Profession.Enchanting);
 
 			const baselineGear = Sim.prepareGear(this.raid.getActivePlayers()[0].getGear(), isEnchanter);
+			const preparedCandidates = overrides.candidates?.map(gear => Sim.prepareGear(gear, isEnchanter));
+			const explicitCandidates = preparedCandidates
+				? dedupeGearSets(
+						preparedCandidates.map(gear => gear.asSpec()),
+						[baselineGear.asSpec()],
+					).map((gear, index) => ({ index, gear }))
+				: null;
 			if (!this.getFixedRngSeed()) {
 				// Derive the seed from the run's content instead of Math.random(): the same
 				// setup then reproduces bit-identical results (the whole pipeline is
 				// deterministic given a seed), while any change to the setup draws a fresh
-				// sample. An explicit fixed RNG seed still takes precedence above. The two
-				// parts are hashed individually (they are already JSON) and the digests
-				// combined, avoiding a second full serialization pass.
+				// sample. An explicit fixed RNG seed still takes precedence above. The parts
+				// (the baseline, the settings and, when given, the explicit candidates) are
+				// hashed individually (they are already JSON) and the digests combined,
+				// avoiding a second full serialization pass.
+				const candidatesHash = explicitCandidates
+					? hashString(explicitCandidates.map(candidate => EquipmentSpec.toJsonString(candidate.gear)).join(','))
+					: '';
 				const contentHash = hashString(
-					hashString(EquipmentSpec.toJsonString(baselineGear.asSpec())) + hashString(BulkSettings.toJsonString(bulkSettings)),
+					hashString(EquipmentSpec.toJsonString(baselineGear.asSpec())) + hashString(BulkSettings.toJsonString(bulkSettings)) + candidatesHash,
 				);
 				const contentSeed = Number(BigInt('0x' + contentHash.slice(0, 8)));
 				baseRequest.simOptions!.randomSeed = BigInt(contentSeed);
@@ -426,8 +438,8 @@ export class Sim {
 			}
 			const useWasmBulkSim = await this.isWasm();
 			// The native sim generates the candidates itself when the request carries none.
-			let candidates: BulkGearCandidate[] = [];
-			if (useWasmBulkSim) {
+			let candidates: BulkGearCandidate[] = explicitCandidates ?? [];
+			if (useWasmBulkSim && !explicitCandidates) {
 				const bulkCandidatesResult = await this.getBulkCandidates(bulkSettings);
 				if (bulkCandidatesResult.error) {
 					throw new SimError(bulkCandidatesResult.error.message || i18n.t('sim.run_errors.bulk_candidates_failed'));
@@ -436,7 +448,14 @@ export class Sim {
 				candidates = dedupeGearSets(gearSets, [baselineGear.asSpec()]).map((gear, index) => ({ index, gear }));
 			}
 			throwIfAborted(abortSignal);
-			const bulkGearDatabase = makeBulkItemDatabaseFromSpecs(this.db, baselineGear, bulkSettings);
+			const bulkGearDatabase = preparedCandidates
+				? makeBulkGearDatabase(
+						this.db,
+						[baselineGear, ...preparedCandidates],
+						[],
+						bulkSettings.enchants.flatMap(options => options.effectIds),
+					)
+				: makeBulkItemDatabaseFromSpecs(this.db, baselineGear, bulkSettings);
 			player.database = player.database ? Database.mergeSimDatabases(player.database, bulkGearDatabase) : bulkGearDatabase;
 			player.equipment = baselineGear.asSpec();
 			baseRequest.raid!.parties[0].players[0] = player;

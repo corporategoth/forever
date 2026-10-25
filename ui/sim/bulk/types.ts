@@ -1,5 +1,6 @@
 import { DistributionMetrics } from '@generated/proto/api';
 import type { APLRotation } from '@generated/proto/apl';
+import type { Encounter, UnitStats } from '@generated/proto/common';
 
 import type { EquippedItem } from '../proto/equipped_item';
 import { Gear } from '../proto/gear';
@@ -47,9 +48,17 @@ export interface BulkTalentSetup {
 	isCurrent: boolean;
 }
 
-export interface BulkTalentsOverride {
+export interface BulkBuildOverride {
 	talentsString: string;
 	rotation: APLRotation;
+	bonusStats: UnitStats;
+}
+
+export interface BulkSimOverrides {
+	encounter?: Encounter;
+	build?: BulkBuildOverride;
+	/** Sent as they are in place of the generated ones; a candidate that repeats the baseline is dropped. */
+	candidates?: readonly Gear[];
 }
 
 export interface BulkEncounterResults {
