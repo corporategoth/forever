@@ -9,8 +9,11 @@ import { useMemo } from 'react';
 
 import { useBulkState } from '../../hooks/useBulkState';
 import { changedItemLabels, compareMatrix, gainTint, type MatrixCell } from '../../model/compare';
-import { encounterLabel, formatEncounterDuration } from '../../model/encounters';
+import { bulkEntryLabel } from '../../model/encounter_pairs';
+import { formatEncounterDuration } from '../../model/encounters';
 import { formatBulkDps } from '../../model/format';
+import { gearSetupLabel } from '../../model/gear_setups';
+import { rotationLabel } from '../../model/rotations';
 import { talentsLabel } from '../../model/talents';
 import { BulkCompareTable, type BulkCompareTableProps } from '../BulkCompareTable';
 
@@ -42,17 +45,19 @@ const changesOf = (gear: Gear, current: Gear, canDualWield: boolean): string[] =
 
 const tableProps = (entries: readonly BulkEncounterResults[], canDualWield: boolean): BulkCompareTableProps => {
 	const { columns, rows, scale, current, showTalents } = compareMatrix(entries);
+	const showRotation = new Set(rows.map(row => rotationLabel(row.rotation))).size > 1;
 	return {
 		// The column gives the length alone; the variation is on the encounter list.
 		columns: columns.map(entry => ({
-			label: encounterLabel(entry),
+			label: bulkEntryLabel(entry),
 			length: formatEncounterDuration({ duration: entry.duration, durationVariation: null }),
 		})),
-		rows: rows.map(({ key, set, talents, cells }) => ({
+		rows: rows.map(({ key, set, talents, rotation, cells }) => ({
 			key,
 			label: set ? shortLabel(set.number) : currentLabel(),
 			talents: showTalents ? talentsLabel(talents) : null,
-			changes: set && current ? changesOf(set.gear, current, canDualWield) : [],
+			rotation: showRotation ? rotationLabel(rotation) : null,
+			changes: set?.gearSetup ? [gearSetupLabel(set.gearSetup)] : set && current ? changesOf(set.gear, current, canDualWield) : [],
 			cells: cells.map(
 				(cell, index) =>
 					cell && {

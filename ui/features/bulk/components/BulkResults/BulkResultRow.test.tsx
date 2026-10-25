@@ -20,7 +20,9 @@ const renderRow = (props: Partial<BulkResultRowViewProps> = {}) => {
 			isBase={false}
 			delta={{ text: '+34.50 (2.88%)', tone: 'positive' }}
 			significance="Difference is significantly different (Z = 4.200)."
+			gearSetup={null}
 			talents={null}
+			rotation={null}
 			gearUnchanged={false}
 			onEquip={onEquip}
 			{...props}>

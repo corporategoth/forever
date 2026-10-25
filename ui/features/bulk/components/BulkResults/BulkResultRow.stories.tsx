@@ -31,12 +31,14 @@ const meta = {
 		isBase: false,
 		delta: { text: '+42.10 (3.07%)', tone: 'positive' },
 		significance: 'Difference is significantly different (Z = 5.214).',
+		gearSetup: null,
 		talents: null,
+		rotation: null,
 		gearUnchanged: false,
 		onEquip: fn(),
 		children: [cell('inv_sword_39', 'Thunderfury, Blessed Blade of the Windseeker', 80), cell('inv_jewelry_ring_36', 'Band of Accuria', 78)],
 	},
-	argTypes: { children: { control: false }, delta: { control: 'object' }, talents: { control: 'object' } },
+	argTypes: { children: { control: false }, delta: { control: 'object' }, talents: { control: 'object' }, rotation: { control: 'object' } },
 } satisfies Meta<typeof BulkResultRowView>;
 
 export default meta;
@@ -58,6 +60,15 @@ export const DamageHidden: Story = { args: { showDamage: false } };
 /** An encounter that ran more than one talent setup: the row names its own above the gear. */
 export const WithTalents: Story = {
 	args: { talents: { label: 'Arms', talentsString: '30305001302-05050005025012251', isCurrent: false, config: warriorTalentsConfig } },
+};
+
+/** A Builds row whose encounter pair ran more than one talent pair: its gear setup, talents and rotation above the gear. */
+export const Build: Story = {
+	args: {
+		gearSetup: 'P1 Fury · Agility cloak',
+		talents: { label: 'Arms', talentsString: '30305001302-05050005025012251', isCurrent: false, config: warriorTalentsConfig },
+		rotation: { label: 'Opener', isCurrent: false },
+	},
 };
 
 /** The current gear with another talent setup: no gear changes, but a difference and an equip button for the talents. */

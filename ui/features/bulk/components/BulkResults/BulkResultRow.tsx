@@ -4,7 +4,7 @@ import { ResultReferenceDiff } from '@features/results/components/ResultMetricLi
 import { ResultMetricValue } from '@features/results/components/ResultMetricValue';
 import { ItemSpec } from '@generated/proto/common';
 import i18n from '@i18n/config';
-import type { BulkRankedResult } from '@sim/bulk/types';
+import type { BulkPlayerSettingsSetup, BulkRankedResult } from '@sim/bulk/types';
 import { getBulkPlayerCanDualWield } from '@sim/bulk/utils';
 import { useSimHost } from '@sim/context/SimHostContext';
 import { useDisplayMetrics } from '@sim/hooks/useDisplayMetrics';
@@ -20,7 +20,9 @@ import clsx from 'clsx';
 import { type ReactNode, useId } from 'react';
 
 import { formatBulkDps } from '../../model/format';
+import { gearSetupLabel } from '../../model/gear_setups';
 import { type BulkEquipped, bulkResultKey, equipBulkResult } from '../../model/results';
+import { rotationLabel } from '../../model/rotations';
 import { getSwappableItemSlotPair, itemSpecPairsEqualUnordered } from '../../model/swappable_slots';
 import { talentsLabel } from '../../model/talents';
 import { BulkTalentsGrid } from '../BulkTalentsGrid';
@@ -33,8 +35,12 @@ export interface BulkResultRowViewProps {
 	isBase: boolean;
 	delta: DeltaText;
 	significance: string;
-	/** The row's talent setup, named when the encounter ran more than one, with its talents in the label's tooltip; null shows none. */
+	/** The row's gear setup; null in Gear mode and on the current gear's row. */
+	gearSetup: string | null;
+	/** The row's talent setup, named when the encounter pair ran more than one talent pair, with its talents in the label's tooltip; null shows none. */
 	talents: { label: string; talentsString: string; isCurrent: boolean; config: TalentsConfig<any> } | null;
+	/** The row's rotation, named when the encounter pair's rows differ in rotation; null shows none. */
+	rotation: { label: string; isCurrent: boolean } | null;
 	/** The current gear with another talent setup: says so in place of the gear cells. */
 	gearUnchanged: boolean;
 	onEquip: () => void;
@@ -48,7 +54,9 @@ export const BulkResultRowView = ({
 	isBase,
 	delta,
 	significance,
+	gearSetup,
 	talents,
+	rotation,
 	gearUnchanged,
 	onEquip,
 	children,
@@ -81,21 +89,31 @@ export const BulkResultRowView = ({
 				)}
 			</div>
 			<div className="flex min-w-0 flex-1 flex-wrap gap-1 max-md:order-last max-md:basis-full" data-testid="bulk-gear-combo">
-				{talents && (
-					<div className="basis-full text-sm wrap-break-word" data-testid="bulk-result-talents">
-						<Pill
-							rounded="xs"
-							tabIndex={0}
-							className="cursor-default focus-visible:focus-ring"
-							testId="bulk-result-talents-anchor"
-							{...tooltipAnchorProps(talentsTooltipId)}>
-							{talents.isCurrent ? talents.label : i18n.t('bulk_tab.results.talent_preset', { name: talents.label })}
-						</Pill>
-						<Tooltip
-							id={talentsTooltipId}
-							align="start"
-							content={<BulkTalentsGrid config={talents.config} talentsString={talents.talentsString} />}
-						/>
+				{(gearSetup !== null || talents || rotation) && (
+					<div className="flex basis-full flex-wrap items-center gap-2 text-sm wrap-break-word" data-testid="bulk-result-talents">
+						{gearSetup}
+						{talents && (
+							<>
+								<Pill
+									rounded="xs"
+									tabIndex={0}
+									className="cursor-default focus-visible:focus-ring"
+									testId="bulk-result-talents-anchor"
+									{...tooltipAnchorProps(talentsTooltipId)}>
+									{talents.isCurrent ? talents.label : i18n.t('bulk_tab.results.talent_preset', { name: talents.label })}
+								</Pill>
+								<Tooltip
+									id={talentsTooltipId}
+									align="start"
+									content={<BulkTalentsGrid config={talents.config} talentsString={talents.talentsString} />}
+								/>
+							</>
+						)}
+						{rotation && (
+							<Pill rounded="xs" testId="bulk-result-rotation">
+								{rotation.isCurrent ? rotation.label : i18n.t('bulk_tab.results.rotation', { name: rotation.label })}
+							</Pill>
+						)}
 					</div>
 				)}
 				{gearUnchanged ? (
@@ -131,10 +149,12 @@ export interface BulkResultRowProps {
 	baseResult: BulkRankedResult;
 	iterations: number;
 	showTalents: boolean;
+	showRotation: boolean;
+	settings: BulkPlayerSettingsSetup | null;
 	onActivateTab: (id: string) => void;
 }
 
-export const BulkResultRow = ({ result, baseResult, iterations, showTalents, onActivateTab }: BulkResultRowProps) => {
+export const BulkResultRow = ({ result, baseResult, iterations, showTalents, showRotation, settings, onActivateTab }: BulkResultRowProps) => {
 	const host = useSimHost();
 	const { damage: showDamage } = useDisplayMetrics(host.sim);
 
@@ -160,6 +180,7 @@ export const BulkResultRow = ({ result, baseResult, iterations, showTalents, onA
 			isBase={isBaseResult}
 			delta={delta}
 			significance={formatSignificance(test)}
+			gearSetup={result.gearSetup ? gearSetupLabel(result.gearSetup) : null}
 			talents={
 				showTalents
 					? {
@@ -170,9 +191,10 @@ export const BulkResultRow = ({ result, baseResult, iterations, showTalents, onA
 						}
 					: null
 			}
+			rotation={showRotation ? { label: rotationLabel(result.rotation), isCurrent: result.rotation.isCurrent } : null}
 			gearUnchanged={gearUnchanged}
 			onEquip={() => {
-				const equipped = equipBulkResult(host, result, null);
+				const equipped = equipBulkResult(host, result, settings);
 				onActivateTab('gear-tab');
 				toastManager.add({ variant: 'success', body: equippedToast(equipped) });
 			}}>

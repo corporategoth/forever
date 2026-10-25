@@ -39,7 +39,8 @@ export const BulkPairList = ({ current, rows, onCheckedChange, onRemove, removeL
 					/>
 					<Button
 						iconOnly
-						className="text-link-danger opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:focus-ring pointer-coarse:opacity-100"
+						variant="link-danger"
+						className="opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
 						aria-label={removeLabel(row.label)}
 						onClick={() => onRemove(row.key)}>
 						<Icon name="xmark" />

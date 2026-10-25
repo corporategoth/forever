@@ -63,3 +63,13 @@ export const LongNames: Story = {
 		],
 	},
 };
+
+export const EncounterPairs: Story = {
+	args: {
+		rows: [
+			{ label: 'Current encounter · Current settings', durationLabel: '3:00 ±5s', bestDps: '788.23', gain: '+13.45 (1.75%)' },
+			{ label: 'Long fight · Current settings', durationLabel: '8:00 ±30s', bestDps: '760.40', gain: '+9.10 (1.21%)' },
+			{ label: 'Long fight · Tank healing', durationLabel: '8:00 ±30s', bestDps: '742.95', gain: null },
+		],
+	},
+};

@@ -1,6 +1,7 @@
 import i18n from '@i18n/config';
 
 import { useBulkState } from '../../hooks/useBulkState';
+import { rotationLabel } from '../../model/rotations';
 import { BulkResultRow } from './BulkResultRow';
 import { BulkResultTieGroup } from './BulkResultTieGroup';
 
@@ -19,9 +20,11 @@ export const BulkResults = ({ onActivateTab, selected }: BulkResultsProps) => {
 		return started ? null : <div className="flex items-center justify-center p-6">{i18n.t('bulk_tab.results.run_simulation')}</div>;
 	}
 
-	const { results: shown } = results[selected];
+	const { results: shown, settings } = results[selected];
 	const iterations = shown.iterations;
 	const showTalents = shown.talentPairs > 1;
+	// Only rows that differ in rotation name it, so a Gear-mode or talents-only batch shows none.
+	const showRotation = new Set(shown.chains.flat().map(result => rotationLabel(result.rotation))).size > 1;
 	return (
 		<div>
 			{shown.chains.map((chain, chainIdx) =>
@@ -34,6 +37,8 @@ export const BulkResults = ({ onActivateTab, selected }: BulkResultsProps) => {
 								baseResult={shown.originalGearResults}
 								iterations={iterations}
 								showTalents={showTalents}
+								showRotation={showRotation}
+								settings={settings}
 								onActivateTab={onActivateTab}
 							/>
 						))}
@@ -45,6 +50,8 @@ export const BulkResults = ({ onActivateTab, selected }: BulkResultsProps) => {
 						baseResult={shown.originalGearResults}
 						iterations={iterations}
 						showTalents={showTalents}
+						showRotation={showRotation}
+						settings={settings}
 						onActivateTab={onActivateTab}
 					/>
 				),

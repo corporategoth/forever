@@ -29,7 +29,9 @@ export interface BulkCompareTableRow {
 	label: string;
 	/** The set's talent setup, named when some encounter ran more than one; null shows none. */
 	talents: string | null;
-	/** The items the set wears where the current gear wears something else. */
+	/** The set's rotation, named with its talents; null shows none. */
+	rotation: string | null;
+	/** The items the set wears where the current gear wears something else, or a Builds set's gear setup. */
 	changes: readonly string[];
 	/** One per column; null where the encounter did not rank the set. */
 	cells: ReadonlyArray<BulkCompareTableCell | null>;
@@ -161,6 +163,7 @@ export const BulkCompareTable = ({ columns, rows, legend }: BulkCompareTableProp
 									className={clsx(STICKY_CLASS, 'align-middle font-normal max-md:wrap-break-word max-md:hyphens-auto')}>
 									{row.label}
 									{row.talents !== null && <span className="block text-sm">{row.talents}</span>}
+									{row.rotation !== null && <span className="block text-sm">{row.rotation}</span>}
 									{row.changes.map((item, index) => (
 										<span key={index} className="block text-xs text-muted md:truncate" title={item}>
 											{item}

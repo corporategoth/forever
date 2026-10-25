@@ -7,16 +7,62 @@
 //
 // The talent fixture runs the current talents and Arms in Council and Patchwerk: S1 is helm 2 with Arms, S2 the current
 // gear with Arms, S3 helm 3 with the current talents.
-import type { BulkEncounterResults } from '@sim/bulk/types';
+//
+// The Builds fixture runs two encounter pairs, the current encounter under the current settings (3:00) and Patchwerk
+// under Healer (5:00). The first ranks Raid · Undead (helm 2) with Arms and Opener, then the current gear with Undead
+// (helm 3) with the current talent pair; Patchwerk ranks Raid · Undead with the current talent pair.
+import { DistributionMetrics } from '@generated/proto/api';
+import { APLRotation } from '@generated/proto/apl';
+import { SavedSettings } from '@generated/proto/ui';
+import type { BulkEncounterResults, BulkGearSetup, BulkRankedResult } from '@sim/bulk/types';
 import { SimHostProvider } from '@sim/context/SimHostContext';
-import { BULK_COMPARE_TALENT_ENTRIES, makeBulkCompareHost } from '@testing/storybook/fixtures/bulk-compare';
-import { render, screen, within } from '@testing-library/react';
+import { Stats } from '@sim/proto/stats';
+import {
+	BULK_COMPARE_TALENT_ENTRIES,
+	compareGearSet,
+	CURRENT_ROTATION_SETUP,
+	CURRENT_TALENT_SETUP,
+	makeBulkCompareHost,
+} from '@testing/storybook/fixtures/bulk-compare';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { PortalContainerContext } from '@ui-kit/hooks/usePortalContainer';
 import { describe, expect, it } from 'vitest';
 
 import { BulkCompareDialog } from './BulkCompareDialog';
 
 const rootElem = document.createElement('div');
+
+const RAID: BulkGearSetup = { gearSet: 'Raid', enchantPreset: 'Undead', gear: compareGearSet(2), bonusStats: new Stats() };
+const CURRENT_UNDEAD: BulkGearSetup = { gearSet: '', enchantPreset: 'Undead', gear: compareGearSet(3), bonusStats: new Stats() };
+const ARMS_OPENER = {
+	talents: { name: 'Arms', talentsString: '3030500130', isCurrent: false },
+	rotation: { name: 'Opener', isCurrent: false, rotation: APLRotation.create() },
+};
+const CURRENT_PAIR = { talents: CURRENT_TALENT_SETUP, rotation: CURRENT_ROTATION_SETUP };
+
+const buildRow = (gearSetup: BulkGearSetup | null, avg: number, pair = CURRENT_PAIR): BulkRankedResult => ({
+	gear: gearSetup?.gear ?? compareGearSet(1),
+	dpsMetrics: DistributionMetrics.create({ avg, stdev: 10 }),
+	...pair,
+	gearSetup,
+});
+
+const buildEntry = (encounter: string, settings: string, duration: number, ranked: BulkRankedResult[], talentPairs: number): BulkEncounterResults => {
+	const base = buildRow(null, 1000);
+	return {
+		name: encounter,
+		isCurrent: encounter === '',
+		duration,
+		durationVariation: 5,
+		settings: { name: settings, isCurrent: settings === '', settings: settings === '' ? null : SavedSettings.create() },
+		results: { chains: [...ranked, base].map(result => [result]), originalGearResults: base, iterations: 100, talentPairs },
+	};
+};
+
+const buildEntries = (talentPairs: number): BulkEncounterResults[] => [
+	buildEntry('', '', 180, [buildRow(RAID, 1050, talentPairs > 1 ? ARMS_OPENER : CURRENT_PAIR), buildRow(CURRENT_UNDEAD, 1020)], talentPairs),
+	buildEntry('Patchwerk', 'Healer', 300, [buildRow(RAID, 1100)], 1),
+];
 
 const mount = (entries?: BulkEncounterResults[]) => {
 	document.body.appendChild(rootElem);
@@ -80,7 +126,7 @@ describe('BulkCompareDialog', () => {
 		expect(cells(current)[0].getAttribute('data-tooltip-content')).toBe('bulk_tab.compare.readout_current bulk_tab.compare.readout_spread');
 	});
 
-	it('names the talent setup under each row’s label when the batch ran more than one', () => {
+	it('names the talent setup under each row’s label when the batch ran more than one, and no rotation when all ran one', () => {
 		mount(BULK_COMPARE_TALENT_ENTRIES);
 
 		const rows = bodyRows();
@@ -91,6 +137,39 @@ describe('BulkCompareDialog', () => {
 			'bulk_tab.compare.short_setbulk_tab.results.current_talentsHelm 3',
 		]);
 		expect(shown(rows[2])).toEqual(['+3.00%', 'gap']);
+	});
+
+	it('heads each column with its encounter pair and names each Builds set by its gear setup and, when more than one ran, its talent pair', () => {
+		mount(buildEntries(2));
+
+		const headers = within(dialog().getAllByRole('row')[0]).getAllByRole('columnheader');
+		expect(headers.map(header => header.firstChild!.textContent)).toEqual([
+			'bulk_tab.compare.table_set',
+			'bulk_tab.builds.pairs.current_encounter · bulk_tab.builds.pairs.current_settings',
+			'Patchwerk · Healer',
+		]);
+		const rowHeaders = () => bodyRows().map(row => within(row).getByRole('rowheader').textContent);
+		expect(rowHeaders()).toEqual([
+			'bulk_tab.results.current_gearbulk_tab.results.current_talentsbulk_tab.results.current_rotation',
+			'bulk_tab.compare.short_setArmsOpenerRaid · Undead',
+			'bulk_tab.compare.short_setbulk_tab.results.current_talentsbulk_tab.results.current_rotationbulk_tab.results.current_gear · Undead',
+			'bulk_tab.compare.short_setbulk_tab.results.current_talentsbulk_tab.results.current_rotationRaid · Undead',
+		]);
+		expect(bodyRows().map(shown)).toEqual([
+			['0.00%', '0.00%'],
+			['+5.00% best', 'gap'],
+			['+2.00%', 'gap'],
+			['gap', '+10.00% best'],
+		]);
+
+		cleanup();
+		mount(buildEntries(1));
+
+		expect(rowHeaders()).toEqual([
+			'bulk_tab.results.current_gear',
+			'bulk_tab.compare.short_setRaid · Undead',
+			'bulk_tab.compare.short_setbulk_tab.results.current_gear · Undead',
+		]);
 	});
 
 	it('names no talent setup when every encounter ran one', () => {
