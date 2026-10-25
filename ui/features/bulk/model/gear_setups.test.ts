@@ -10,7 +10,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { BulkEnchantPick } from './enchant_picks';
 import type { BulkGearSetPick } from './gear_sets';
-import { bulkGearSetups, gearSetupKey, gearSetupLabel, gearSetupsSentWith } from './gear_setups';
+import { bulkGearSetups, gearSetupLabel, gearSetupsSentWith } from './gear_setups';
 
 vi.mock('@i18n/config', () => ({
 	default: {
@@ -259,7 +259,6 @@ describe('bulkGearSetups', () => {
 		const setups = bulkGearSetups(makePlayer(), [currentSet(gear), buffed], [AGILITY]);
 
 		expect(setups.map(setup => setup.gearSet)).toEqual(['', 'Buffed']);
-		expect(gearSetupKey(setups[0])).not.toBe(gearSetupKey(setups[1]));
 	});
 });
 
@@ -293,6 +292,7 @@ describe('gearSetupsSentWith', () => {
 			['Raid', CLOAK_ARMOR.effectId, null, null],
 			['Rings', null, null, null],
 		]);
+		expect(sent.map(setup => setup.ownGear)).toEqual(setups.slice(0, 3).map(setup => setup.gear));
 	});
 });
 

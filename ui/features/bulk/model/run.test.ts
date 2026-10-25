@@ -30,6 +30,7 @@ import { makeEquippedItem } from '@testing/storybook/fixtures/gear';
 import { makeUIEnchant } from '@testing/storybook/fixtures/protos';
 import { beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 
+import { compareMatrix } from './compare';
 import { runCoreBulkSim } from './core_sim';
 import { setBulkMode } from './mode';
 import { bulkProgress, cancelBulkBatch, refreshBulkCombinations, runBulkBatch } from './run';
@@ -97,15 +98,18 @@ const HEALER = SavedSettings.create({ race: Race.RaceTroll, professions: [Profes
 
 const CLOAK_AGILITY = makeUIEnchant({ effectId: 849, name: 'Cloak agility', type: ItemType.ItemTypeBack });
 const CLOAK_ARMOR = makeUIEnchant({ effectId: 884, name: 'Cloak armor', type: ItemType.ItemTypeBack });
-const BACK_ENCHANTS = (slot: ItemSlot) => (slot === ItemSlot.ItemSlotBack ? [CLOAK_AGILITY, CLOAK_ARMOR] : []);
+const RING_STAMINA = makeUIEnchant({ effectId: 7301, name: 'Ring stamina', type: ItemType.ItemTypeFinger, requiredProfession: Profession.Enchanting });
+const SLOT_ENCHANTS = (slot: ItemSlot) =>
+	slot === ItemSlot.ItemSlotBack ? [CLOAK_AGILITY, CLOAK_ARMOR] : slot === ItemSlot.ItemSlotFinger1 ? [RING_STAMINA] : [];
 
 const cloak = (enchant?: UIEnchant) => makeEquippedItem({ item: { id: 101, type: ItemType.ItemTypeBack, unique: false }, enchant });
 const chest = () => makeEquippedItem({ item: { id: 102, type: ItemType.ItemTypeChest, unique: false } });
+const ring = () => makeEquippedItem({ item: { id: 103, type: ItemType.ItemTypeFinger, unique: false } });
 
 // The current gear already wears the Agility preset's cloak enchant; the Raid set does not.
 const CURRENT_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(CLOAK_AGILITY) });
-const RAID_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(), [ItemSlot.ItemSlotChest]: chest() });
-const RAID_WITH_AGILITY = new Gear({ [ItemSlot.ItemSlotBack]: cloak(CLOAK_AGILITY), [ItemSlot.ItemSlotChest]: chest() });
+const RAID_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(), [ItemSlot.ItemSlotChest]: chest(), [ItemSlot.ItemSlotFinger1]: ring() });
+const RAID_WITH_AGILITY = new Gear({ [ItemSlot.ItemSlotBack]: cloak(CLOAK_AGILITY), [ItemSlot.ItemSlotChest]: chest(), [ItemSlot.ItemSlotFinger1]: ring() });
 const KNOWN_GEAR = [CURRENT_GEAR, RAID_GEAR];
 
 const STRENGTH_BONUS = new Stats().withStat(Stat.StatStrength, 10);
@@ -113,6 +117,10 @@ const STRENGTH_BONUS = new Stats().withStat(Stat.StatStrength, 10);
 const AGILITY_PRESET = BulkEnchantPreset.create({
 	name: 'Agility',
 	slots: [BulkEnchantSlotOptions.create({ slot: ItemSlot.ItemSlotBack, effectIds: [CLOAK_AGILITY.effectId] })],
+});
+const RINGS_PRESET = BulkEnchantPreset.create({
+	name: 'Rings',
+	slots: [BulkEnchantSlotOptions.create({ slot: ItemSlot.ItemSlotFinger1, effectIds: [RING_STAMINA.effectId] })],
 });
 
 const LIVE_ROTATION = APLRotation.create({ type: APLRotationType.TypeAPL, priorityList: [APLListItem.create({ notes: 'live' })] });
@@ -148,9 +156,10 @@ interface BatchOptions {
 	talentPairs?: BulkTalentPair[];
 	gearSets?: BulkGearSetRef[];
 	buildEnchantPresets?: string[];
+	enchanter?: boolean;
 }
 
-// A non-enchanter with live bonus stats of zero. The resolver gives a rotation by the talents alone.
+// A non-enchanter unless `enchanter`, with live bonus stats of zero. The resolver gives a rotation by the talents alone.
 const batchHost = ({
 	mode = 'builds',
 	powerTools = true,
@@ -158,6 +167,7 @@ const batchHost = ({
 	talentPairs = [],
 	gearSets = [BulkGearSetRef.create({ name: 'Raid', preset: true })],
 	buildEnchantPresets = ['Agility'],
+	enchanter = false,
 }: BatchOptions = {}) => {
 	const party = { setBuffs: vi.fn() };
 	const player = makeBulkPlayer({
@@ -165,8 +175,8 @@ const batchHost = ({
 		getTalentsString: () => LIVE,
 		aplRotation: LIVE_ROTATION,
 		getBonusStats: () => new Stats(),
-		hasProfession: () => false,
-		getEnchants: BACK_ENCHANTS,
+		hasProfession: (profession: Profession) => enchanter && profession === Profession.Enchanting,
+		getEnchants: SLOT_ENCHANTS,
 		getResolvedAplRotationForBuild: vi.fn(({ talentsString }: { talentsString: string }) => resolvedFor(talentsString)),
 		getParty: () => party,
 		setGearAsync: vi.fn(async () => {}),
@@ -180,7 +190,7 @@ const batchHost = ({
 		setBuffs: vi.fn(),
 		sim: {
 			db: {
-				getEnchants: BACK_ENCHANTS,
+				getEnchants: SLOT_ENCHANTS,
 				lookupEquipmentSpec: (spec: EquipmentSpec) =>
 					KNOWN_GEAR.find(known => getGearIdentityKey(known.asSpec()) === getGearIdentityKey(spec)) ?? new Gear({}),
 			},
@@ -355,6 +365,22 @@ describe('runBulkBatch', () => {
 		expect(steps(host).rows).toHaveLength(1);
 		// The reference row once and with no gear setup; the split's rows named by their setups.
 		expect(rowsOf(host).map(row => row.gearSetup?.gearSet ?? null)).toEqual([null, 'Raid', 'Buffed']);
+	});
+
+	it('gives a setup one Compare row when an encounter pair without Enchanting sends it without its ring enchants', async () => {
+		const host = batchHost({ enchanter: true, encounterPairs: [COUNCIL_HEALER_PAIR], buildEnchantPresets: ['Rings'] });
+		patchBulkState(host.player, { enchantPresets: [RINGS_PRESET] });
+		vi.mocked(runCoreBulkSim).mockImplementation(echoCandidates as never);
+
+		await runBulkBatch(host);
+
+		const ringEnchant = (gear: Gear | undefined) => gear?.getEquippedItem(ItemSlot.ItemSlotFinger1)?.enchant?.effectId ?? null;
+		expect(calls().map(call => call[3].candidates?.map(ringEnchant))).toEqual([[RING_STAMINA.effectId], [null]]);
+		const { rows } = compareMatrix(bulkState(host.player).results!);
+		expect(rows.map(row => [row.gearSetup?.gearSet ?? null, ringEnchant(row.set?.gear), row.cells.map(cell => cell !== null)])).toEqual([
+			[null, null, [true, true]],
+			['Raid', RING_STAMINA.effectId, [true, true]],
+		]);
 	});
 
 	it('lists one step per encounter pair and talent pair from the start, encounter pair outer', async () => {

@@ -14,7 +14,7 @@ import type { BulkGearSetPick } from './gear_sets';
 
 export const bonusStatsKey = (bonusStats: Stats): string => UnitStats.toJsonString(bonusStats.toProto());
 
-export const gearSetupKey = (setup: Pick<BulkGearSetup, 'gear' | 'bonusStats'>): string =>
+const gearSetupKey = (setup: Pick<BulkGearSetup, 'gear' | 'bonusStats'>): string =>
 	`${getGearIdentityKey(setup.gear.asSpec())}|${bonusStatsKey(setup.bonusStats)}`;
 
 // The slot's enchant list as Gear mode reads it, with Enchanting taken as known: each request drops the ring enchants
@@ -75,9 +75,10 @@ export const bulkGearSetups = (player: Player<any>, gearSets: readonly BulkGearS
 		),
 	);
 
-// Without Enchanting the request drops the ring enchants, so setups that become equal run as the first of them.
+// Without Enchanting the request drops the ring enchants, so setups that become equal run as the first of them. Each
+// keeps the gear it holds as `ownGear`.
 export const gearSetupsSentWith = (setups: readonly BulkGearSetup[], isEnchanter: boolean): BulkGearSetup[] =>
-	firstOfEachKey(isEnchanter ? setups : setups.map(setup => ({ ...setup, gear: setup.gear.withoutEnchanting() })));
+	firstOfEachKey(isEnchanter ? setups : setups.map(setup => ({ ...setup, gear: setup.gear.withoutEnchanting(), ownGear: setup.gear })));
 
 export const gearSetupNames = (setup: BulkGearSetup): { gearSet: string; enchantPreset: string } => ({
 	gearSet: setup.gearSet || i18n.t('bulk_tab.results.current_gear'),

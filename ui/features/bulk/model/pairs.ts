@@ -26,8 +26,9 @@ export const pairInList = <P>(pairs: readonly P[], pair: P, sides: PairSides<P>)
 // Equal for two pairs exactly when their refs are, so it keys a list row.
 export const pairKey = <P>(pair: P, sides: PairSides<P>): string => JSON.stringify(sides(pair).map(ref => [ref.name, ref.preset]));
 
-export const pairsAfterAdd = <P extends { checked: boolean }>(pairs: readonly P[], pair: P, sides: PairSides<P>): P[] =>
-	pairInList(pairs, pair, sides) ? [...pairs] : [...pairs, { ...pair, checked: true }];
+// Null when Add is blocked, so nothing is written.
+export const pairsAfterAdd = <P extends { checked: boolean }>(pairs: readonly P[], pair: P, sides: PairSides<P>): P[] | null =>
+	pairInList(pairs, pair, sides) ? null : [...pairs, { ...pair, checked: true }];
 
 export const pairsAfterRemove = <P>(pairs: readonly P[], pair: P, sides: PairSides<P>): P[] => pairs.filter(stored => !samePair(sides, stored, pair));
 

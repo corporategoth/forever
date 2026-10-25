@@ -8,7 +8,7 @@ import { CURRENT_REF, pairsAfterAdd, pairsAfterChecked, pairsAfterRemove, pairSi
 import { type BulkRotationEntry, rotationLabel } from './rotations';
 import { type BulkTalentEntry, talentsLabel } from './talents';
 
-interface CurrentTalentPair {
+export interface CurrentTalentPair {
 	talentsString: string;
 	rotation: APLRotation;
 }
@@ -63,8 +63,10 @@ const setTalentPairs = (player: Player<any>, talentPairs: BulkTalentPair[]) => {
 	storeBulkTalentPairs(player, BulkTalentPairs.create({ pairs: talentPairs }));
 };
 
-export const addBulkTalentPair = (player: Player<any>, pair: BulkTalentPair) =>
-	setTalentPairs(player, pairsAfterAdd(bulkState(player).talentPairs, pair, talentPairSides));
+export const addBulkTalentPair = (player: Player<any>, pair: BulkTalentPair) => {
+	const talentPairs = pairsAfterAdd(bulkState(player).talentPairs, pair, talentPairSides);
+	if (talentPairs) setTalentPairs(player, talentPairs);
+};
 
 export const removeBulkTalentPair = (player: Player<any>, pair: BulkTalentPair) =>
 	setTalentPairs(player, pairsAfterRemove(bulkState(player).talentPairs, pair, talentPairSides));

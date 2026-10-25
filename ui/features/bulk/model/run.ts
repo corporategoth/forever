@@ -24,7 +24,7 @@ import { BulkProgress, candidateGearProgress, simProgress } from './progress';
 import { type BulkFinishedRequest, rankEncounterResults } from './results';
 import { pickableBulkRotations } from './rotations';
 import { createBulkSettingsProto } from './settings';
-import { bulkTalentPairRuns } from './talent_pairs';
+import { bulkTalentPairRuns, type CurrentTalentPair } from './talent_pairs';
 import { pickableBulkTalents } from './talents';
 
 // The stored settings plus the enchant pool, which is derived from the presets and never stored.
@@ -234,11 +234,6 @@ interface BulkEncounterPlan {
 	steps: Array<{ row: BulkBuildStep; requests: BulkRequestPlan[] }>;
 }
 
-interface CurrentTalentPair {
-	talentsString: string;
-	rotation: APLRotation;
-}
-
 const gearModePlan = (host: IndividualSimHost<any>, current: CurrentTalentPair): BulkEncounterPlan[] => {
 	const encounter: BulkEncounterSetup = { name: '', isCurrent: true, encounter: host.sim.encounter.toProto() };
 	const [talentPair] = bulkTalentPairRuns(current, [], [], []);
@@ -302,6 +297,7 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 
 	const builds = bulkRunsBuilds(sim.getShowPowerTools(), bulkState(player).mode);
 	const current = { talentsString: player.getTalentsString(), rotation: APLRotation.clone(player.aplRotation) };
+	// Read before `waitForInit`: Simulate is enabled only once the sim is ready, so the database is loaded.
 	const plan = builds ? buildsModePlan(host, current) : gearModePlan(host, current);
 	if (!plan.length) return;
 
@@ -309,7 +305,7 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 		action: 'sim',
 		category: 'simulate',
 		label: 'batch',
-		value: bulkState(player).combinations,
+		value: builds ? plan.flatMap(encounterPlan => encounterPlan.steps.flatMap(step => step.requests)).length : bulkState(player).combinations,
 	});
 
 	run.isCancelling = false;

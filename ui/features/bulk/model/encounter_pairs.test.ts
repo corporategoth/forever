@@ -4,7 +4,7 @@ import i18n from '@i18n/config';
 import { bulkState, loadStoredBulkEncounterPairs } from '@sim/settings/bulk_settings';
 import type { IndividualSimHost } from '@sim/sim_host';
 import { makeBulkPlayer } from '@testing/sim/bulk_player';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import english from '../../../../assets/locales/en/translation.json';
 import {
@@ -94,7 +94,7 @@ describe('encounter pairs', () => {
 		expect(list.map(row => row.checked)).toEqual([true, false]);
 	});
 
-	it('blocks a pair already in the list, the current pair included', () => {
+	it('blocks a pair already in the list, the current pair included, and writes nothing for it', () => {
 		const { player } = hostWith();
 		addBulkEncounterPair(player, pair(encounterRef('Raid', true), settingsRef('Healer')));
 		const stored = bulkState(player).encounterPairs;
@@ -104,10 +104,12 @@ describe('encounter pairs', () => {
 		expect(pairInList(stored, pair(undefined, undefined), encounterPairSides)).toBe(true);
 		expect(pairInList(stored, pair(encounterRef('Raid'), settingsRef('Healer')), encounterPairSides)).toBe(false);
 
+		const setItem = vi.spyOn(player.sim.env.storage, 'setItem');
 		addBulkEncounterPair(player, pair(encounterRef('Raid', true), settingsRef('Healer'), false));
 		addBulkEncounterPair(player, currentPair);
 
-		expect(bulkState(player).encounterPairs).toEqual(stored);
+		expect(bulkState(player).encounterPairs).toBe(stored);
+		expect(setItem).not.toHaveBeenCalled();
 	});
 
 	it('keys two pairs alike exactly when their refs match, an absent side as the current one', () => {

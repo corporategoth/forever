@@ -58,6 +58,8 @@ export interface BulkGearSetup {
 	gearSet: string;
 	enchantPreset: string;
 	gear: Gear;
+	/** Set on a setup a request sends without its ring enchants: the gear it holds, which its result rows carry. */
+	ownGear?: Gear;
 	bonusStats: Stats;
 }
 

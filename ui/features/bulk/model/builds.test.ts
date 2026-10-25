@@ -210,7 +210,7 @@ describe('bulkBuildRuns', () => {
 		const current = gearOf(1, 2, RING_STAMINA);
 		const setups = [setupOf('', gearOf(1, 2, RING_AGILITY), NO_BONUS, 'Agility'), setupOf('', current, NO_BONUS, 'Stamina')];
 		const enchanterEntry = encounterPair('', 'Enchanter', SavedSettings.create({ professions: [Profession.Mining, Profession.Enchanting] }));
-		const stripped = { ...setups[0], gear: setups[0].gear.withoutEnchanting() };
+		const stripped = { ...setups[0], gear: setups[0].gear.withoutEnchanting(), ownGear: setups[0].gear };
 
 		const [live, entry] = bulkBuildRuns(
 			setups,

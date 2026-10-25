@@ -108,7 +108,8 @@ The bulk sim crosses enchants through its checked enchant presets. `enchantPrese
 hands); the pool is derived, never stored, and sorted so preset order does not change the seed. The presets live in
 the bulk slice (`enchantPresets`, storage key `bulk-enchant-presets.v1`); checking a preset, or saving or deleting a
 checked one, bumps the slice's `settings` counter so the combination count refreshes. Builds checks the same presets
-on its own (`bulk-build-enchant-presets.v1`) and applies them to each gear set in `gear_setups.ts`.
+on its own (`bulk-build-enchant-presets.v1`) and applies them to each gear set in `gear_setups.ts`. That pick holds
+preset names, so renaming a preset carries its pick over and deleting one drops it.
 
 The gear optimizer's "Use enchant presets" option reads the same presets. That is the only thing `BulkSettings`
 and `ReforgeSettings` share; keep the two apart in request shaping and serialization. The fit rule
@@ -138,8 +139,9 @@ and `ReforgeSettings` share; keep the two apart in request shaping and serializa
 
 - `runBulkSim` hashes the baseline gear, `BulkSettings` and, when one is passed, the explicit candidate list (each
   serialized and hashed, the digests combined) into `simOptions.randomSeed`: the same setup reproduces bit-identical
-  results, any change draws a fresh sample. The encounter, settings and build overrides stay out of the hash. A fixed
-  RNG seed takes precedence, and `lastUsedRngSeed` records the seed actually used.
+  results, any change draws a fresh sample. The encounter, settings and build overrides stay out of the hash, but a
+  settings entry without Enchanting strips the ring enchants from the baseline and the candidates, which are hashed,
+  so the seed moves with it. A fixed RNG seed takes precedence, and `lastUsedRngSeed` records the seed actually used.
 - `buildTieChains` groups adjacent rows the paired test cannot separate, using the backend rank for "next result"
   and falling back to an unpaired `zTest` where no paired error exists. Each row's ± is `stDevToConf95`, the
   unpaired error of its own mean, a different quantity from the grouping test.
@@ -197,15 +199,17 @@ and `ReforgeSettings` share; keep the two apart in request shaping and serializa
   rows across all of them, plus the reference row. Only rows from the reference request keep the backend's paired
   errors; the others fall back to the unpaired test, and the tie test uses the fewest iterations of any request. A row
   no setup stands for is dropped. The current gear under another request is a row only when a setup wears it, labelled
-  "No gear changes". A row's key (`bulkResultKey`) is its gear identity, bonus stats, talents string and rotation as
-  picked. `results` holds one entry per finished encounter pair, the current one first, kept only when all its
-  requests finished.
+  "No gear changes". A row a setup stands for carries the setup's own gear (`BulkGearSetup.ownGear` when the request
+  sent it without ring enchants), so one setup keys alike under every encounter pair and Compare gives it one row. A
+  row's key (`bulkResultKey`) is its gear identity, bonus stats, talents string and rotation as picked. `results` holds
+  one entry per finished encounter pair, the current one first, kept only when all its requests finished.
 - A Builds row names its gear setup ("<gear set> · <enchant preset>"), a talent pill when more than one talent pair
   ran ("Talent preset: <name>", or "Current talents"), and a rotation pill only when the encounter pair's rows differ
   in rotation. Hovering or focusing the talent pill opens a tooltip (`BulkTalentsGrid`) with every talent that holds a
   point, as its icon and rank under its tree's name and points, the talent's name as screen reader text. Equip
   (`equipBulkResult`) applies the gear, bonus stats, talents, rotation and the pair's settings in one `batch`; a
-  current-settings row leaves the live settings alone. The CSV (`results_csv.ts`) has the columns `encounter`,
+  current-settings row leaves the live settings alone. In Gear mode Equip applies the gear only and leaves the talents
+  alone. The CSV (`results_csv.ts`) has the columns `encounter`,
   `settings`, `duration`, `variation`, `rank`, `current_gear`, `dps`, `dps_margin_95`, `diff`, `diff_pct`, `talents`,
   `talents_string`, `gear_set`, `enchant_preset` and `rotation`, then four per slot.
 - Stored per spec: `bulk-gear-sets.v1` (checked gear set refs), `bulk-build-enchant-presets.v1` (the enchant presets

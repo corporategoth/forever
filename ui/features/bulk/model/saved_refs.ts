@@ -11,7 +11,7 @@ export interface SavedRef {
 
 export const sameRef = (a: SavedRef, b: SavedRef) => a.name === b.name && a.preset === b.preset && (a.group ?? '') === (b.group ?? '');
 
-export const isRefChecked = (checked: readonly SavedRef[], ref: SavedRef) => checked.some(item => sameRef(item, ref));
+const isRefChecked = (checked: readonly SavedRef[], ref: SavedRef) => checked.some(item => sameRef(item, ref));
 
 // The rows a group shows, in list order. One equal to the current value is left out, since the current one runs anyway;
 // a checked one equal to an earlier checked row is flagged. A checked ref whose entry no longer exists has no row.

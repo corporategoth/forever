@@ -276,8 +276,8 @@ describe('equipBulkResult', () => {
 	const HEALER: BulkPlayerSettingsSetup = { name: 'Healer', isCurrent: false, settings: SavedSettings.create({ race: Race.RaceDwarf }) };
 	const CURRENT_SETTINGS: BulkPlayerSettingsSetup = { name: '', isCurrent: true, settings: null };
 
-	const hostWith = (talentsString: string) => {
-		const player = { setGear: vi.fn(), setTalentsString: vi.fn(), setAplRotation: vi.fn(), setBonusStats: vi.fn(), getTalentsString: () => talentsString };
+	const hostWith = () => {
+		const player = { setGear: vi.fn(), setTalentsString: vi.fn(), setAplRotation: vi.fn(), setBonusStats: vi.fn() };
 		return { player, host: { player } as unknown as IndividualSimHost<any> };
 	};
 
@@ -288,7 +288,7 @@ describe('equipBulkResult', () => {
 	it('sets gear, talents, rotation, bonus stats and the pair’s settings for a Builds row and says it equipped a build', () => {
 		const opener = rotationNamed('Opener', simple('{"useOpener":true}'));
 		const build = row(set2, { talents: ARMS_SETUP, rotation: opener, gearSetup: RAID_2 });
-		const { player, host } = hostWith(ARMS_SETUP.talentsString);
+		const { player, host } = hostWith();
 
 		expect(equipBulkResult(host, build, HEALER)).toBe('build');
 		expect(player.setGear).toHaveBeenCalledWith(set2);
@@ -303,17 +303,24 @@ describe('equipBulkResult', () => {
 		expect(applySavedSettings).toHaveBeenCalledOnce();
 	});
 
-	it('leaves rotation, bonus stats and settings alone for a Gear-mode row, and says gear only when the talents stay', () => {
-		const live = hostWith('live');
+	it('sets only the gear for a Gear-mode row and says it equipped gear', () => {
+		const { player, host } = hostWith();
 
-		expect(equipBulkResult(live.host, row(set2, { talents: ARMS_SETUP }), null)).toBe('gear_talents');
-		expect(live.player.setGear).toHaveBeenCalledWith(set2);
-		expect(live.player.setTalentsString).toHaveBeenCalledWith(ARMS_SETUP.talentsString);
-		expect(live.player.setAplRotation).not.toHaveBeenCalled();
-		expect(live.player.setBonusStats).not.toHaveBeenCalled();
+		expect(equipBulkResult(host, row(set2, { talents: ARMS_SETUP }), null)).toBe('gear');
+		expect(player.setGear).toHaveBeenCalledWith(set2);
+		expect(player.setTalentsString).not.toHaveBeenCalled();
+		expect(player.setAplRotation).not.toHaveBeenCalled();
+		expect(player.setBonusStats).not.toHaveBeenCalled();
 		expect(applySavedSettings).not.toHaveBeenCalled();
+	});
 
-		const arms = hostWith(ARMS_SETUP.talentsString);
-		expect(equipBulkResult(arms.host, row(set3, { talents: ARMS_SETUP }), null)).toBe('gear');
+	it('says gear for the Builds reference row under the current settings, which no gear setup stands for', () => {
+		const { player, host } = hostWith();
+
+		expect(equipBulkResult(host, row(current), CURRENT_SETTINGS)).toBe('gear');
+		expect(player.setGear).toHaveBeenCalledWith(current);
+		expect(player.setTalentsString).toHaveBeenCalledWith(CURRENT_TALENT_SETUP.talentsString);
+		expect(player.setBonusStats).not.toHaveBeenCalled();
+		expect(applySavedSettings).not.toHaveBeenCalled();
 	});
 });

@@ -109,8 +109,10 @@ const setEncounterPairs = (player: Player<any>, encounterPairs: BulkEncounterPai
 	storeBulkEncounterPairs(player, BulkEncounterPairs.create({ pairs: encounterPairs }));
 };
 
-export const addBulkEncounterPair = (player: Player<any>, pair: BulkEncounterPair) =>
-	setEncounterPairs(player, pairsAfterAdd(bulkState(player).encounterPairs, pair, encounterPairSides));
+export const addBulkEncounterPair = (player: Player<any>, pair: BulkEncounterPair) => {
+	const encounterPairs = pairsAfterAdd(bulkState(player).encounterPairs, pair, encounterPairSides);
+	if (encounterPairs) setEncounterPairs(player, encounterPairs);
+};
 
 export const removeBulkEncounterPair = (player: Player<any>, pair: BulkEncounterPair) =>
 	setEncounterPairs(player, pairsAfterRemove(bulkState(player).encounterPairs, pair, encounterPairSides));

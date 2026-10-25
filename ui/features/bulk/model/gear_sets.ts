@@ -27,7 +27,7 @@ export interface BulkGearSetPick {
 type GearAndBonusStats = Pick<BulkGearSetPick, 'gear' | 'bonusStats'>;
 
 // Two sets with the same items but other bonus stats sim differently, so both have to match.
-export const sameGearSet = (a: GearAndBonusStats, b: GearAndBonusStats): boolean =>
+const sameGearSet = (a: GearAndBonusStats, b: GearAndBonusStats): boolean =>
 	getGearIdentityKey(a.gear.asSpec()) === getGearIdentityKey(b.gear.asSpec()) && a.bonusStats.equals(b.bonusStats);
 
 const entry = (name: string, preset: boolean, gear: Gear, bonusStats: Stats, group = ''): BulkGearSetEntry => ({

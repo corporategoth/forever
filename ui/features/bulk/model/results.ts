@@ -43,7 +43,8 @@ interface NamedRow {
 // `requests[0]` is the reference request, whose reference DPS is the current gear's row every delta is measured against.
 // The backend's paired errors are against that request's own baseline, so rows from any other request keep only their
 // gear, DPS and names, and their ties fall back to the unpaired test. With gear setups, a row no setup stands for is
-// dropped.
+// dropped, and a row a setup stands for carries the gear the setup holds, so it keys, compares and equips alike under
+// every encounter pair whatever ring enchants the pair's professions sent.
 export const rankEncounterResults = (requests: readonly BulkFinishedRequest[], baseGear: Gear): BulkResults => {
 	const baseKey = gearKey(baseGear);
 	const [first] = requests;
@@ -60,11 +61,14 @@ export const rankEncounterResults = (requests: readonly BulkFinishedRequest[], b
 			if (key === baseKey) return [];
 			if (!setups) return [{ row, gearSetup: null }];
 			const gearSetup = setups.byGearKey.get(key);
-			return gearSetup ? [{ row, gearSetup }] : [];
+			return gearSetup ? [{ row: { ...row, gear: gearSetup.ownGear ?? row.gear }, gearSetup }] : [];
 		});
 		if (index === 0) return candidates.map(({ row, gearSetup }) => ({ ...row, talents, rotation, gearSetup }));
+		const baselineSetup = setups?.baseline ?? null;
 		const baseline: NamedRow[] =
-			setups && !setups.baseline ? [] : [{ row: { gear: baseGear, dpsMetrics: result.referenceDpsMetrics }, gearSetup: setups?.baseline ?? null }];
+			setups && !baselineSetup
+				? []
+				: [{ row: { gear: baselineSetup?.ownGear ?? baseGear, dpsMetrics: result.referenceDpsMetrics }, gearSetup: baselineSetup }];
 		return [...baseline, ...candidates].map(({ row, gearSetup }) => ({ gear: row.gear, dpsMetrics: row.dpsMetrics, talents, rotation, gearSetup }));
 	});
 	const best = pool.sort((a, b) => b.dpsMetrics.avg - a.dpsMetrics.avg).slice(0, BULK_RANKED_SETS);
@@ -78,13 +82,15 @@ export const rankEncounterResults = (requests: readonly BulkFinishedRequest[], b
 	};
 };
 
-// A Gear-mode row leaves the rotation and bonus stats alone, and a row run under the current settings leaves the settings
-// alone.
+// `settings` is null in Gear mode, whose rows apply the gear only. A Builds row applies its talents too, with its gear
+// setup's rotation and bonus stats; a row run under the current settings leaves the settings alone.
 export const equipBulkResult = (host: IndividualSimHost<any>, result: BulkRankedResult, settings: BulkPlayerSettingsSetup | null): BulkEquipped => {
 	const { player } = host;
 	const { gearSetup, talents } = result;
-	const savedSettings = settings?.settings ?? null;
-	const talentsChanged = player.getTalentsString() !== talents.talentsString;
+	if (!settings) {
+		player.setGear(result.gear);
+		return 'gear';
+	}
 	batch(() => {
 		player.setGear(result.gear);
 		player.setTalentsString(talents.talentsString);
@@ -92,8 +98,7 @@ export const equipBulkResult = (host: IndividualSimHost<any>, result: BulkRanked
 			player.setAplRotation(result.rotation.rotation);
 			player.setBonusStats(gearSetup.bonusStats);
 		}
-		if (savedSettings) applySavedSettings(host, savedSettings);
+		if (settings.settings) applySavedSettings(host, settings.settings);
 	});
-	if (gearSetup || savedSettings) return 'build';
-	return talentsChanged ? 'gear_talents' : 'gear';
+	return gearSetup || settings.settings ? 'build' : 'gear';
 };
