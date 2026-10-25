@@ -225,9 +225,10 @@ dps_results: {
 dps_results: {
  key: "TestAfflictionWrack-AllItems-DeathmistRaiment"
  value: {
-  dps: 579.60251
-  tps: 326.60639
-  dtps: 8.34788
+  dps: 576.60061
+  tps: 325.47911
+  dtps: 8.29175
+  hps: 6.92851
  }
 }
 dps_results: {
@@ -908,14 +909,6 @@ dps_results: {
  }
 }
 dps_results: {
- key: "TestAfflictionWrack-AllItems-Sorcerer'sRegalia"
- value: {
-  dps: 579.6074
-  tps: 328.09697
-  dtps: 8.12329
- }
-}
-dps_results: {
  key: "TestAfflictionWrack-AllItems-SwordofZeal-6622"
  value: {
   dps: 516.08671
@@ -1065,14 +1058,6 @@ dps_results: {
   dps: 533.0377
   tps: 304.73029
   dtps: 7.97154
- }
-}
-dps_results: {
- key: "TestAfflictionWrack-AllItems-VestmentsoftheVirtuous"
- value: {
-  dps: 567.64122
-  tps: 320.87188
-  dtps: 8.2696
  }
 }
 dps_results: {

@@ -216,15 +216,6 @@ dps_results: {
  }
 }
 dps_results: {
- key: "TestDpsWarrior-AllItems-DarkmantleArmor"
- value: {
-  dps: 548.83312
-  tps: 321.57598
-  dtps: 3.1134
-  hps: 45.05528
- }
-}
-dps_results: {
  key: "TestDpsWarrior-AllItems-DarkmoonCard:BlueDragon-19288"
  value: {
   dps: 479.54196
@@ -249,15 +240,6 @@ dps_results: {
   tps: 289.74787
   dtps: 3.05866
   hps: 43.05583
- }
-}
-dps_results: {
- key: "TestDpsWarrior-AllItems-DeathmistRaiment"
- value: {
-  dps: 454.10681
-  tps: 267.30323
-  dtps: 3.1134
-  hps: 43.68278
  }
 }
 dps_results: {
@@ -519,15 +501,6 @@ dps_results: {
   tps: 281.83589
   dtps: 3.05866
   hps: 43.14056
- }
-}
-dps_results: {
- key: "TestDpsWarrior-AllItems-FeralheartRaiment"
- value: {
-  dps: 506.61873
-  tps: 297.60529
-  dtps: 3.1134
-  hps: 43.05583
  }
 }
 dps_results: {
@@ -1026,15 +999,6 @@ dps_results: {
  }
 }
 dps_results: {
- key: "TestDpsWarrior-AllItems-Sorcerer'sRegalia"
- value: {
-  dps: 456.29181
-  tps: 268.96231
-  dtps: 3.1623
-  hps: 43.58111
- }
-}
-dps_results: {
  key: "TestDpsWarrior-AllItems-Sulfuras,HandofRagnaros-17182"
  value: {
   dps: 479.54196
@@ -1185,15 +1149,6 @@ dps_results: {
   tps: 259.36845
   dtps: 3.1134
   hps: 42.64917
- }
-}
-dps_results: {
- key: "TestDpsWarrior-AllItems-VestmentsoftheVirtuous"
- value: {
-  dps: 448.05486
-  tps: 264.12638
-  dtps: 3.1134
-  hps: 42.98806
  }
 }
 dps_results: {
