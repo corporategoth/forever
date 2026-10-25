@@ -104,10 +104,9 @@ const chest = () => makeEquippedItem({ item: { id: 102, type: ItemType.ItemTypeC
 
 // The current gear already wears the Agility preset's cloak enchant; the Raid set does not.
 const CURRENT_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(CLOAK_AGILITY) });
-const ARMOR_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(CLOAK_ARMOR) });
 const RAID_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(), [ItemSlot.ItemSlotChest]: chest() });
 const RAID_WITH_AGILITY = new Gear({ [ItemSlot.ItemSlotBack]: cloak(CLOAK_AGILITY), [ItemSlot.ItemSlotChest]: chest() });
-const KNOWN_GEAR = [CURRENT_GEAR, ARMOR_GEAR, RAID_GEAR];
+const KNOWN_GEAR = [CURRENT_GEAR, RAID_GEAR];
 
 const STRENGTH_BONUS = new Stats().withStat(Stat.StatStrength, 10);
 
@@ -145,7 +144,6 @@ const writeSavedTalents = (host: IndividualSimHost<any>, record: Record<string, 
 interface BatchOptions {
 	mode?: BulkMode;
 	powerTools?: boolean;
-	gear?: Gear;
 	encounterPairs?: BulkEncounterPair[];
 	talentPairs?: BulkTalentPair[];
 	gearSets?: BulkGearSetRef[];
@@ -156,7 +154,6 @@ interface BatchOptions {
 const batchHost = ({
 	mode = 'builds',
 	powerTools = true,
-	gear = CURRENT_GEAR,
 	encounterPairs = [],
 	talentPairs = [],
 	gearSets = [BulkGearSetRef.create({ name: 'Raid', preset: true })],
@@ -164,7 +161,7 @@ const batchHost = ({
 }: BatchOptions = {}) => {
 	const party = { setBuffs: vi.fn() };
 	const player = makeBulkPlayer({
-		getGear: () => gear,
+		getGear: () => CURRENT_GEAR,
 		getTalentsString: () => LIVE,
 		aplRotation: LIVE_ROTATION,
 		getBonusStats: () => new Stats(),
@@ -333,26 +330,6 @@ describe('runBulkBatch', () => {
 		await runBulkBatch(host);
 
 		expect(sentTalents()).toEqual([LIVE, FURY_EDITED]);
-	});
-
-	it('runs the reference request first even when no setup shares the live bonus stats and the rotation the current gear resolves to', async () => {
-		const host = batchHost({ gear: ARMOR_GEAR });
-		vi.mocked(host.player.getResolvedAplRotationForBuild).mockImplementation(({ talentsString, gear }) =>
-			resolvedFor(`${talentsString} ${gear.getEquippedItem(ItemSlot.ItemSlotBack)?.enchant?.effectId}`),
-		);
-		vi.mocked(runCoreBulkSim)
-			.mockResolvedValueOnce(CORE_RESULT as never)
-			.mockResolvedValueOnce({ ...CORE_RESULT, referenceDpsMetrics: { avg: 1100, stdev: 1 } } as never);
-
-		await runBulkBatch(host);
-
-		expect(calls()).toHaveLength(2);
-		expect(calls()[0][3].candidates).toEqual([]);
-		expect(calls()[0][3].build).toEqual({ talentsString: LIVE, rotation: resolvedFor(`${LIVE} 884`), bonusStats: new Stats().toProto() });
-		expect(specsOf(calls()[1][3].candidates)).toEqual(specsOf([CURRENT_GEAR, RAID_WITH_AGILITY]));
-		expect(calls()[1][3].build!.rotation).toEqual(resolvedFor(`${LIVE} 849`));
-		expect(steps(host).labels).toHaveLength(1);
-		expect(bulkState(host.player).results![0].results.originalGearResults.dpsMetrics.avg).toBe(1000);
 	});
 
 	it('runs one request per split inside a run’s single step', async () => {

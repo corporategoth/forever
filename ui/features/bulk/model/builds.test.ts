@@ -226,6 +226,36 @@ describe('bulkBuildRuns', () => {
 			{ candidates: [setups[0]], baselineSetup: setups[1] },
 		]);
 	});
+
+	it('resolves a rotation once per talents, pick and items, whatever the enchants and the encounter pairs', () => {
+		const setups = [
+			setupOf('', gearOf(1, 2, RING_STAMINA), NO_BONUS, 'Stamina'),
+			setupOf('', gearOf(1, 2, RING_AGILITY), NO_BONUS, 'Agility'),
+			setupOf('Two-hand', TWO_HAND_GEAR),
+		];
+		const counted = vi.fn<ResolveBuildRotation>(resolve);
+
+		const runs = bulkBuildRuns(setups, referenceOf(), [CURRENT_PAIR, RAID_PAIR], [CURRENT_TALENT_PAIR, ARMS_CUSTOM], counted);
+
+		const calls = counted.mock.calls.map(([{ talentsString, rotation, gear }]) => [
+			talentsString,
+			rotation.type,
+			gear.getEquippedItem(ItemSlot.ItemSlotMainHand)?.id,
+		]);
+		expect(calls).toEqual([
+			['111', APLRotationType.TypeAuto, 1],
+			['111', APLRotationType.TypeAuto, 3],
+			['111', APLRotationType.TypeAuto, 1],
+			['222', APLRotationType.TypeAPL, 1],
+			['222', APLRotationType.TypeAPL, 3],
+		]);
+		expect(runs.map(run => run.requests.map(request => request.candidates))).toEqual([
+			[[setups[0], setups[1]], [setups[2]]],
+			[[setups[0], setups[1], setups[2]]],
+			[[setups[0], setups[1]], [setups[2]]],
+			[[setups[0], setups[1], setups[2]]],
+		]);
+	});
 });
 
 describe('bulkBuildsCount', () => {

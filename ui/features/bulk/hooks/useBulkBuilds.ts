@@ -32,22 +32,23 @@ export const useBulkBuilds = (): BulkBuildsCount => {
 	const profession1 = usePlayerStore('profession1');
 	const profession2 = usePlayerStore('profession2');
 
-	return useMemo(() => {
+	// Apart from the runs, so checking an encounter or talent pair does not build the setups again.
+	const setups = useMemo(() => {
+		if (!ready) return [];
 		const gearSetRuns = bulkGearSetRuns(current, gearSetEntries, checkedGearSets);
-		const setups = ready ? bulkGearSetups(player, gearSetRuns, bulkEnchantPickRuns(enchantPickEntries, checkedEnchantPicks)) : [];
+		return bulkGearSetups(player, gearSetRuns, bulkEnchantPickRuns(enchantPickEntries, checkedEnchantPicks));
+	}, [ready, player, current, gearSetEntries, checkedGearSets, enchantPickEntries, checkedEnchantPicks]);
+
+	return useMemo(() => {
 		const encounterRuns = bulkEncounterPairRuns(Encounter.create(encounter), encounters, settings, encounterPairs);
 		const talentRuns = bulkTalentPairRuns({ talentsString, rotation }, talents, rotations, talentPairs);
 		const reference = { ...current, isEnchanter: profession1 === Profession.Enchanting || profession2 === Profession.Enchanting };
 		const runs = bulkBuildRuns(setups, reference, encounterRuns, talentRuns, build => player.getResolvedAplRotationForBuild(build));
 		return bulkBuildsCount(setups, runs, encounterRuns.length, talentRuns.length);
 	}, [
-		ready,
+		setups,
 		player,
 		current,
-		gearSetEntries,
-		checkedGearSets,
-		enchantPickEntries,
-		checkedEnchantPicks,
 		encounter,
 		encounters,
 		settings,

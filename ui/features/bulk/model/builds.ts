@@ -53,6 +53,26 @@ interface BuildGroup {
 	resolved: APLRotation;
 }
 
+interface ResolvedRotation {
+	rotation: APLRotation;
+	simmedKey: string;
+}
+
+// The keys of one plan, each worked out once: a plan reads them per setup, talent pair and encounter pair.
+interface PlanKeys {
+	resolve: (talentsString: string, gear: Gear, rotation: APLRotation) => ResolvedRotation;
+	identityOf: (setup: BulkGearSetup) => string;
+	bonusKeyOf: (bonusStats: Stats) => string;
+}
+
+const cached = <K, V>(compute: (key: K) => V): ((key: K) => V) => {
+	const values = new Map<K, V>();
+	return key => {
+		if (!values.has(key)) values.set(key, compute(key));
+		return values.get(key)!;
+	};
+};
+
 const gearIdentity = (gear: Gear): string => getGearIdentityKey(gear.asSpec());
 
 // What the sim reads of a resolved rotation: the type and Simple settings a resolved rotation keeps from its pick and
@@ -60,7 +80,41 @@ const gearIdentity = (gear: Gear): string => getGearIdentityKey(gear.asSpec());
 const simmedRotationKey = (rotation: APLRotation): string =>
 	APLRotation.toJsonString({ ...omitDeep(rotation, ['uuid']), type: APLRotationType.TypeUnknown, simple: undefined });
 
-const groupKey = (bonusStats: Stats, resolved: APLRotation): string => `${bonusStatsKey(bonusStats)}|${simmedRotationKey(resolved)}`;
+// The rotation generators read the talents and the main hand's hand type, never an enchant, so gear that holds the same
+// items in the same slots resolves alike whatever its enchants. A generator that reads an enchant needs the enchants in
+// this key.
+const generatorGearKey = (gear: Gear): string =>
+	gear
+		.asArray()
+		.map(item => (item ? `${item.id}:${item.randomSuffix?.id ?? 0}` : ''))
+		.join(',');
+
+// Resolving and keying a generated rotation take milliseconds each, which every enchant variant of a gear set under
+// every encounter pair would pay again.
+const resolveOnceWith = (resolve: ResolveBuildRotation): PlanKeys['resolve'] => {
+	const gearKeyOf = cached(generatorGearKey);
+	// A short stand-in for each distinct key, which is a whole rotation as JSON and would be hashed again per setup.
+	const simmedIds = new Map<string, string>();
+	const simmedIdOf = (json: string): string => {
+		if (!simmedIds.has(json)) simmedIds.set(json, String(simmedIds.size));
+		return simmedIds.get(json)!;
+	};
+	const byPick = new Map<APLRotation, Map<string, ResolvedRotation>>();
+	return (talentsString, gear, rotation) => {
+		const byBuild = byPick.get(rotation) ?? new Map<string, ResolvedRotation>();
+		byPick.set(rotation, byBuild);
+		const key = `${talentsString}|${gearKeyOf(gear)}`;
+		let resolved = byBuild.get(key);
+		if (!resolved) {
+			const resolvedRotation = resolve({ talentsString, gear, rotation });
+			resolved = { rotation: resolvedRotation, simmedKey: simmedIdOf(simmedRotationKey(resolvedRotation)) };
+			byBuild.set(key, resolved);
+		}
+		return resolved;
+	};
+};
+
+const groupKey = (keys: PlanKeys, bonusStats: Stats, resolved: ResolvedRotation): string => `${keys.bonusKeyOf(bonusStats)}|${resolved.simmedKey}`;
 
 // A settings entry sends its own professions; the current settings send the live ones.
 const pairIsEnchanter = (encounterPair: BulkEncounterPairSetup, reference: BulkBuildReference): boolean =>
@@ -71,19 +125,19 @@ const pairIsEnchanter = (encounterPair: BulkEncounterPairSetup, reference: BulkB
 const buildGroups = (
 	setups: readonly BulkGearSetup[],
 	{ talents, rotation }: BulkTalentPairSetup,
-	resolve: ResolveBuildRotation,
+	keys: PlanKeys,
 	simmed: Set<string>,
 ): Map<string, BuildGroup> => {
 	const groups = new Map<string, BuildGroup>();
 	for (const setup of setups) {
-		const resolved = resolve({ talentsString: talents.talentsString, gear: setup.gear, rotation: rotation.rotation });
-		const key = groupKey(setup.bonusStats, resolved);
-		const simKey = `${gearIdentity(setup.gear)}|${key}`;
+		const resolved = keys.resolve(talents.talentsString, setup.gear, rotation.rotation);
+		const key = groupKey(keys, setup.bonusStats, resolved);
+		const simKey = `${keys.identityOf(setup)}|${key}`;
 		if (simmed.has(simKey)) continue;
 		simmed.add(simKey);
 		const group = groups.get(key);
 		if (group) group.setups.push(setup);
-		else groups.set(key, { setups: [setup], bonusStats: setup.bonusStats, resolved });
+		else groups.set(key, { setups: [setup], bonusStats: setup.bonusStats, resolved: resolved.rotation });
 	}
 	return groups;
 };
@@ -100,9 +154,15 @@ export const bulkBuildRuns = (
 	resolve: ResolveBuildRotation,
 ): BulkBuildRun[] => {
 	if (!setups.length) return [];
+	const keys: PlanKeys = {
+		resolve: resolveOnceWith(resolve),
+		identityOf: cached((setup: BulkGearSetup) => gearIdentity(setup.gear)),
+		bonusKeyOf: cached(bonusStatsKey),
+	};
+	const sentWith = cached((isEnchanter: boolean) => gearSetupsSentWith(setups, isEnchanter));
 	return encounterPairs.flatMap(encounterPair => {
 		const isEnchanter = pairIsEnchanter(encounterPair, reference);
-		const sent = gearSetupsSentWith(setups, isEnchanter);
+		const sent = sentWith(isEnchanter);
 		const referenceGear = isEnchanter ? reference.gear : reference.gear.withoutEnchanting();
 		const referenceIdentity = gearIdentity(referenceGear);
 		const simmedByTalents = new Map<string, Set<string>>();
@@ -110,17 +170,17 @@ export const bulkBuildRuns = (
 			const { talentsString } = talentPair.talents;
 			const simmed = simmedByTalents.get(talentsString) ?? new Set<string>();
 			simmedByTalents.set(talentsString, simmed);
-			const groups = buildGroups(sent, talentPair, resolve, simmed);
+			const groups = buildGroups(sent, talentPair, keys, simmed);
 			let ordered = [...groups.values()];
 			if (index === 0) {
-				const resolved = resolve({ talentsString, gear: referenceGear, rotation: talentPair.rotation.rotation });
-				const key = groupKey(reference.bonusStats, resolved);
-				const lead = groups.get(key) ?? { setups: [], bonusStats: reference.bonusStats, resolved };
+				const resolved = keys.resolve(talentsString, referenceGear, talentPair.rotation.rotation);
+				const key = groupKey(keys, reference.bonusStats, resolved);
+				const lead = groups.get(key) ?? { setups: [], bonusStats: reference.bonusStats, resolved: resolved.rotation };
 				ordered = [lead, ...ordered.filter(group => group !== lead)];
 			}
 			const requests = ordered.map((group): BulkBuildRequest => ({
-				candidates: group.setups.filter(setup => gearIdentity(setup.gear) !== referenceIdentity),
-				baselineSetup: group.setups.find(setup => gearIdentity(setup.gear) === referenceIdentity) ?? null,
+				candidates: group.setups.filter(setup => keys.identityOf(setup) !== referenceIdentity),
+				baselineSetup: group.setups.find(setup => keys.identityOf(setup) === referenceIdentity) ?? null,
 				override: { talentsString, rotation: group.resolved, bonusStats: group.bonusStats.toProto() },
 			}));
 			return requests.length ? [{ encounterPair, talentPair, requests }] : [];
