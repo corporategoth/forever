@@ -3,8 +3,11 @@ import { BULK_SIM_ITEM_SLOT_TO_ITEM_SLOT_PAIRS, BulkSimItemSlot } from '@sim/bul
 import type { Player } from '@sim/player/player';
 import type { EquippedItem } from '@sim/proto/equipped_item';
 import {
+	loadStoredBulkBuildEnchantPresets,
 	loadStoredBulkEncounters,
+	loadStoredBulkGearSets,
 	loadStoredBulkMode,
+	loadStoredBulkRotations,
 	loadStoredBulkSettings,
 	loadStoredBulkTalents,
 	loadStoredEnchantPresets,
@@ -56,6 +59,21 @@ const loadSettings = (player: Player<any>) => {
 	const talents = loadStoredBulkTalents(player);
 	if (talents != null) {
 		patchBulkState(player, { talents: talents.talents });
+	}
+
+	const gearSets = loadStoredBulkGearSets(player);
+	if (gearSets != null) {
+		patchBulkState(player, { gearSets: gearSets.gearSets });
+	}
+
+	const buildEnchantPresets = loadStoredBulkBuildEnchantPresets(player);
+	if (buildEnchantPresets != null) {
+		patchBulkState(player, { buildEnchantPresets: buildEnchantPresets.names });
+	}
+
+	const rotations = loadStoredBulkRotations(player);
+	if (rotations != null) {
+		patchBulkState(player, { rotations: rotations.rotations });
 	}
 
 	const mode = loadStoredBulkMode(player);

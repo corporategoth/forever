@@ -48,6 +48,14 @@ export interface BulkTalentSetup {
 	isCurrent: boolean;
 }
 
+export interface BulkRotationSetup {
+	/** Empty for the current rotation, which the views label themselves. */
+	name: string;
+	isCurrent: boolean;
+	/** As picked, before a Simple or Auto rotation is resolved for a gear set and talents. */
+	rotation: APLRotation;
+}
+
 export interface BulkBuildOverride {
 	talentsString: string;
 	rotation: APLRotation;

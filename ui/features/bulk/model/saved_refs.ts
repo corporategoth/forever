@@ -1,4 +1,4 @@
-import type { IMessageType } from '@protobuf-ts/runtime';
+import type { IMessageType, JsonReadOptions } from '@protobuf-ts/runtime';
 import type { IndividualSimHost } from '@sim/sim_host';
 import { savedDataEntries } from '@ui-kit/hooks/useSavedData';
 
@@ -35,13 +35,18 @@ export const checkedRefList = <E extends { ref: SavedRef }>(
 export const checkedRefsAfter = <R extends SavedRef>(stored: readonly R[], ref: R, checked: boolean, pickable: readonly R[]): R[] =>
 	pickable.filter(item => (sameRef(item, ref) ? checked : isRefChecked(stored, item)));
 
-// The record a Saved panel writes under `key`, read as that panel reads it.
-export const storedSavedData = <T extends object>(host: IndividualSimHost<any>, key: string, type: IMessageType<T>): Array<{ name: string; data: T }> => {
+// The record a Saved panel writes under `key`, read as that panel reads it, with the read options it passes.
+export const storedSavedData = <T extends object>(
+	host: IndividualSimHost<any>,
+	key: string,
+	type: IMessageType<T>,
+	readOptions?: Partial<JsonReadOptions>,
+): Array<{ name: string; data: T }> => {
 	let record: unknown;
 	try {
 		record = JSON.parse(host.sim.env.storage.getItem(key) ?? '{}');
 	} catch {
 		return [];
 	}
-	return savedDataEntries(record, type);
+	return savedDataEntries(record, { toJson: data => type.toJson(data), fromJson: json => type.fromJson(json, readOptions) });
 };

@@ -460,6 +460,37 @@ message BulkTalentRef {
 	bool preset = 2;
 }
 
+// Local storage data for the gear sets the bulk sim also runs in Builds mode. The current gear always runs first and is
+// not stored here.
+message BulkGearSetSelection {
+	repeated BulkGearSetRef gear_sets = 1;
+}
+
+// A spec preset gear set or a user-saved one, by name.
+message BulkGearSetRef {
+	string name = 1;
+	bool preset = 2;
+}
+
+// Local storage data for the enchant presets the bulk sim also runs every gear set with in Builds mode, by name. Each
+// set's own enchants always run first and are not stored here. Separate from BulkEnchantPreset.checked, which picks the
+// enchants Gear mode tries.
+message BulkEnchantPresetSelection {
+	repeated string names = 1;
+}
+
+// Local storage data for the rotations the bulk sim also runs in Builds mode. The current rotation always runs first and
+// is not stored here.
+message BulkRotationSelection {
+	repeated BulkRotationRef rotations = 1;
+}
+
+// A spec preset rotation or a user-saved one, by name.
+message BulkRotationRef {
+	string name = 1;
+	bool preset = 2;
+}
+
 // Local storage data for a saved encounter.
 message SavedEncounter {
 	Encounter encounter = 1;

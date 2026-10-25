@@ -4342,6 +4342,41 @@
 							"additionalProperties": false,
 							"required": ["description", "current", "presets", "saved", "empty", "duplicate", "no_points"]
 						},
+						"gear_sets": {
+							"type": "object",
+							"properties": {
+								"items": {
+									"type": "string"
+								},
+								"items_one": {
+									"type": "string"
+								},
+								"items_other": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": false,
+							"required": ["items", "items_one", "items_other"]
+						},
+						"enchant_picks": {
+							"type": "object",
+							"properties": {
+								"current": {
+									"type": "string"
+								},
+								"slots": {
+									"type": "string"
+								},
+								"slots_one": {
+									"type": "string"
+								},
+								"slots_other": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": false,
+							"required": ["current", "slots", "slots_one", "slots_other"]
+						},
 						"runs": {
 							"type": "object",
 							"properties": {
@@ -4525,6 +4560,8 @@
 						"groups",
 						"encounters",
 						"talents",
+						"gear_sets",
+						"enchant_picks",
 						"runs",
 						"iterations",
 						"freeze_ring",
@@ -4689,6 +4726,9 @@
 						"current_talents": {
 							"type": "string"
 						},
+						"current_rotation": {
+							"type": "string"
+						},
 						"talent_preset": {
 							"type": "string"
 						},
@@ -4710,6 +4750,7 @@
 						"encounters_caption",
 						"current",
 						"current_talents",
+						"current_rotation",
 						"talent_preset",
 						"export_csv"
 					]

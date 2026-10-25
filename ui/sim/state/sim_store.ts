@@ -19,7 +19,14 @@ import {
 	type WeaponSkillValue,
 	type WeaponType,
 } from '@generated/proto/common';
-import { type BulkEnchantPreset, type BulkEncounterRef, type BulkTalentRef, DatabaseFilters } from '@generated/proto/ui';
+import {
+	type BulkEnchantPreset,
+	type BulkEncounterRef,
+	type BulkGearSetRef,
+	type BulkRotationRef,
+	type BulkTalentRef,
+	DatabaseFilters,
+} from '@generated/proto/ui';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
@@ -241,6 +248,12 @@ export interface BulkSlice {
 	encounters: readonly BulkEncounterRef[];
 	// The checked saved talent setups, in list order; the current talents are read live and never stored here.
 	talents: readonly BulkTalentRef[];
+	// The checked gear sets Builds mode runs, in list order; the current gear is read live and never stored here.
+	gearSets: readonly BulkGearSetRef[];
+	// The names of the enchant presets Builds mode runs every gear set with, in list order; not the Gear mode's checked ones.
+	buildEnchantPresets: readonly string[];
+	// The checked rotations Builds mode runs, in list order; the current rotation is read live and never stored here.
+	rotations: readonly BulkRotationRef[];
 	// Picked in the top navigation; Builds counts only with power tools on.
 	mode: BulkMode;
 	combinations: number;

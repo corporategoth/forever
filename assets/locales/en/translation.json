@@ -1213,6 +1213,17 @@
 				"duplicate": "Same as another talent setup, skipped",
 				"no_points": "No talent points"
 			},
+			"gear_sets": {
+				"items": "{{count}} items",
+				"items_one": "{{count}} item",
+				"items_other": "{{count}} items"
+			},
+			"enchant_picks": {
+				"current": "Current enchants",
+				"slots": "{{count}} slots",
+				"slots_one": "{{count}} slot",
+				"slots_other": "{{count}} slots"
+			},
 			"runs": {
 				"encounters": "{{count}} encounters",
 				"encounters_one": "{{count}} encounter",
@@ -1307,6 +1318,7 @@
 			"encounters_caption": "The best set's DPS and its gain over your current gear, per encounter. Pick one to see its ranking.",
 			"current": "Current",
 			"current_talents": "Current talents",
+			"current_rotation": "Current rotation",
 			"talent_preset": "Talent preset: {{name}}",
 			"export_csv": "Export CSV"
 		},
