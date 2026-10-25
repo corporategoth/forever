@@ -80,16 +80,16 @@ export const bulkEncounterList = (current: Encounter, entries: readonly BulkEnco
 		(a, b) => sameEncounter(a.encounter, b.encounter),
 	);
 
-// The current encounter runs first, unnamed, then every checked row the list neither leaves out nor flags. Without power
-// tools the current one runs alone; the checked ones stay stored for when they are back on.
+// The current encounter runs first, unnamed, then every checked row the list neither leaves out nor flags. Outside Builds
+// mode (`bulkRunsBuilds`) the current one runs alone; the checked ones stay stored for when it is back.
 export const bulkEncounterRuns = (
 	current: Encounter,
 	entries: readonly BulkEncounterEntry[],
 	checked: readonly BulkEncounterRef[],
-	powerTools: boolean,
+	builds: boolean,
 ): BulkEncounterRun[] => [
 	{ name: '', encounter: current, isCurrent: true },
-	...(powerTools
+	...(builds
 		? bulkEncounterList(current, entries, checked)
 				.filter(item => item.checked && !item.duplicate)
 				.map(({ name, encounter }) => ({ name, encounter, isCurrent: false }))

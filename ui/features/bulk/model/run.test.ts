@@ -10,6 +10,7 @@ import { makeBulkPlayer } from '@testing/sim/bulk_player';
 import { beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 
 import { runCoreBulkSim } from './core_sim';
+import { setBulkMode } from './mode';
 import { bulkProgress, cancelBulkBatch, refreshBulkCombinations, runBulkBatch } from './run';
 
 vi.mock('./core_sim', () => ({ runCoreBulkSim: vi.fn() }));
@@ -83,7 +84,7 @@ const batchHost = (
 			Object.fromEntries(Object.entries(saved).map(([name, encounter]) => [name, SavedEncounter.toJson(SavedEncounter.create({ encounter }))])),
 		),
 	);
-	patchBulkState(player, { encounters: checked, talents: checkedTalents });
+	patchBulkState(player, { encounters: checked, talents: checkedTalents, mode: 'builds' });
 	const host = {
 		player,
 		sim: {
@@ -170,6 +171,28 @@ describe('runBulkBatch', () => {
 		await runBulkBatch(host);
 
 		expect(overrides()).toEqual([CURRENT, PATCHWERK, COUNCIL]);
+	});
+
+	it('runs only the current encounter and talents in Gear mode with power tools on, keeping the checked ones for Builds', async () => {
+		const checked = [ref('Patchwerk', true), ref('Council')];
+		const checkedTalents = [tref('Arms', true)];
+		const host = batchHost(checked, true, checkedTalents);
+		setBulkMode(host.player, 'gear');
+		vi.mocked(runCoreBulkSim).mockResolvedValue(CORE_RESULT as never);
+
+		await runBulkBatch(host);
+
+		expect(overrides()).toEqual([CURRENT]);
+		expect(talentOverrides()).toEqual([undefined]);
+		expect(steps(host).labels).toHaveLength(1);
+		expect(bulkState(host.player).encounters).toEqual(checked);
+		expect(bulkState(host.player).talents).toEqual(checkedTalents);
+
+		vi.mocked(runCoreBulkSim).mockClear();
+		setBulkMode(host.player, 'builds');
+		await runBulkBatch(host);
+
+		expect(overrides()).toEqual([CURRENT, CURRENT, PATCHWERK, PATCHWERK, COUNCIL, COUNCIL]);
 	});
 
 	it('keeps the finished encounters when cancelled', async () => {

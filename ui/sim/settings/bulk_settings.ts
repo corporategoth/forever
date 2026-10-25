@@ -8,7 +8,7 @@ import type { IMessageType } from '@protobuf-ts/runtime';
 
 import { BulkSimItemSlot } from '../bulk/constants_auto_gen';
 import type { Player } from '../player/player';
-import { BulkSlice, patchKeyed, seedKeyed } from '../state/sim_store';
+import { type BulkMode, BulkSlice, patchKeyed, seedKeyed } from '../state/sim_store';
 import { specStorageKey } from '../state/storage_keys';
 
 const BULK_SETTINGS_STORAGE_KEY = 'bulk-settings.v2';
@@ -16,6 +16,7 @@ const LEGACY_BULK_SETTINGS_STORAGE_KEY = 'bulk-settings.v1';
 const BULK_ENCHANT_PRESETS_STORAGE_KEY = 'bulk-enchant-presets.v1';
 const BULK_ENCOUNTERS_STORAGE_KEY = 'bulk-encounters.v1';
 const BULK_TALENTS_STORAGE_KEY = 'bulk-talents.v1';
+const BULK_MODE_STORAGE_KEY = 'bulk-mode.v1';
 
 const initialBulkSlice = (): BulkSlice => ({
 	items: [],
@@ -32,6 +33,7 @@ const initialBulkSlice = (): BulkSlice => ({
 	enchantPresets: [],
 	encounters: [],
 	talents: [],
+	mode: 'gear',
 	combinations: 0,
 	iterations: 0,
 	combinationsPending: false,
@@ -106,3 +108,15 @@ export const loadStoredBulkTalents = (player: Player<any>): BulkTalentSelection 
 
 export const storeBulkTalents = (player: Player<any>, selection: BulkTalentSelection) =>
 	storeProto(player, BULK_TALENTS_STORAGE_KEY, BulkTalentSelection, selection);
+
+// Null when nothing or an unknown mode is stored.
+export const loadStoredBulkMode = (player: Player<any>): BulkMode | null => {
+	const stored = player.sim.env.storage.getItem(specStorageKey(player.getPlayerSpec(), BULK_MODE_STORAGE_KEY));
+	return stored === 'gear' || stored === 'builds' ? stored : null;
+};
+
+export const storeBulkMode = (player: Player<any>, mode: BulkMode) => {
+	try {
+		player.sim.env.storage.setItem(specStorageKey(player.getPlayerSpec(), BULK_MODE_STORAGE_KEY), mode);
+	} catch {}
+};

@@ -4,6 +4,7 @@ import type { Player } from '@sim/player/player';
 import type { EquippedItem } from '@sim/proto/equipped_item';
 import {
 	loadStoredBulkEncounters,
+	loadStoredBulkMode,
 	loadStoredBulkSettings,
 	loadStoredBulkTalents,
 	loadStoredEnchantPresets,
@@ -55,6 +56,11 @@ const loadSettings = (player: Player<any>) => {
 	const talents = loadStoredBulkTalents(player);
 	if (talents != null) {
 		patchBulkState(player, { talents: talents.talents });
+	}
+
+	const mode = loadStoredBulkMode(player);
+	if (mode != null) {
+		patchBulkState(player, { mode });
 	}
 };
 

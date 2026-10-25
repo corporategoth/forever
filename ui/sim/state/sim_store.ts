@@ -223,6 +223,9 @@ export interface StatSweepSlice {
 	v: { settings: number };
 }
 
+// Gear runs the current encounter and talents alone; Builds adds the checked encounters and talent setups.
+export type BulkMode = 'gear' | 'builds';
+
 // Bulk (batch) sim tab, one slice per player. The autosave and the combination
 // count react to the `v` counters, never to the entry: the run fields are
 // written without a bump because the combination count writes them itself.
@@ -238,6 +241,8 @@ export interface BulkSlice {
 	encounters: readonly BulkEncounterRef[];
 	// The checked saved talent setups, in list order; the current talents are read live and never stored here.
 	talents: readonly BulkTalentRef[];
+	// Picked in the top navigation; Builds counts only with power tools on.
+	mode: BulkMode;
 	combinations: number;
 	iterations: number;
 	combinationsPending: boolean;

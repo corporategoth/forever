@@ -2,6 +2,7 @@ import { Encounter, Target } from '@generated/proto/common';
 import { BulkEncounterRef, SavedEncounter } from '@generated/proto/ui';
 import { bulkState, loadStoredBulkEncounters } from '@sim/settings/bulk_settings';
 import type { IndividualSimHost } from '@sim/sim_host';
+import type { BulkMode } from '@sim/state/sim_store';
 import { makeBulkPlayer } from '@testing/sim/bulk_player';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -13,6 +14,7 @@ import {
 	pickableBulkEncounters,
 	setBulkEncounterChecked,
 } from './encounters';
+import { bulkRunsBuilds } from './mode';
 
 vi.mock('@i18n/config', () => ({
 	default: { t: (key: string, options?: { count?: number }) => (options?.count === undefined ? key : `${key}:${options.count}`) },
@@ -77,10 +79,22 @@ describe('bulkEncounterRuns', () => {
 		expect(bulkEncounterRuns(CURRENT, [entry('Council', encounter(90))], [], true)).toEqual([{ name: '', encounter: CURRENT, isCurrent: true }]);
 	});
 
-	it('runs the current encounter alone with power tools off, whatever is checked', () => {
+	it.each<[boolean, BulkMode]>([
+		[false, 'gear'],
+		[false, 'builds'],
+		[true, 'gear'],
+	])('runs the current encounter alone with power tools %s in %s mode, whatever is checked', (powerTools, mode) => {
 		const entries = [entry('Council', encounter(90))];
 
-		expect(bulkEncounterRuns(CURRENT, entries, checkedAll(entries), false)).toEqual([{ name: '', encounter: CURRENT, isCurrent: true }]);
+		expect(bulkEncounterRuns(CURRENT, entries, checkedAll(entries), bulkRunsBuilds(powerTools, mode))).toEqual([
+			{ name: '', encounter: CURRENT, isCurrent: true },
+		]);
+	});
+
+	it('runs the checked encounters with power tools on in Builds mode', () => {
+		const entries = [entry('Council', encounter(90))];
+
+		expect(bulkEncounterRuns(CURRENT, entries, checkedAll(entries), bulkRunsBuilds(true, 'builds')).map(run => run.name)).toEqual(['', 'Council']);
 	});
 });
 

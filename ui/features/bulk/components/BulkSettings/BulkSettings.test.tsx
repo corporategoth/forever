@@ -6,12 +6,13 @@ import type { Player } from '@sim/player/player';
 import { PlayerSpecs } from '@sim/player/specs';
 import type { EquippedItem } from '@sim/proto/equipped_item';
 import { bulkState, loadStoredBulkEncounters, loadStoredBulkTalents, patchBulkState, seedBulkSettings } from '@sim/settings/bulk_settings';
-import { createSimStore, patchKeyed, patchSlice, PLAYER_FIELDS, seedKeyed, zeroVersions } from '@sim/state/sim_store';
+import { type BulkMode, createSimStore, patchKeyed, patchSlice, PLAYER_FIELDS, seedKeyed, zeroVersions } from '@sim/state/sim_store';
 import { memoryEnv } from '@testing/sim/memory_env';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { setBulkMode } from '../../model/mode';
 import type { BulkSettingsViewProps } from './BulkSettings';
 
 vi.mock('@sim/bulk/utils', async () => {
@@ -44,6 +45,7 @@ interface MountOptions {
 	talentsString?: string;
 	iterations?: number;
 	powerTools?: boolean;
+	mode?: BulkMode;
 }
 
 const mount = ({
@@ -57,6 +59,7 @@ const mount = ({
 	talentsString = LIVE,
 	iterations = 0,
 	powerTools = true,
+	mode = 'builds',
 }: MountOptions = {}) => {
 	const record = Object.entries(saved).map(([name, encounter]) => [name, SavedEncounter.toJson(SavedEncounter.create({ encounter }))]);
 	localStorage.setItem(SAVED_ENCOUNTERS_KEY, JSON.stringify(Object.fromEntries(record)));
@@ -74,7 +77,7 @@ const mount = ({
 		getPlayerSpec: () => PlayerSpecs.DpsWarrior,
 	} as unknown as Player<any>;
 	seedBulkSettings(player);
-	patchBulkState(player, { encounters: checked, talents: checkedTalents, iterations });
+	patchBulkState(player, { encounters: checked, talents: checkedTalents, iterations, mode });
 	const host = {
 		player,
 		sim: player.sim,
@@ -152,6 +155,40 @@ describe('BulkSettings', () => {
 			'bulk-settings-group-enchants-trigger',
 			'bulk-settings-group-freezes-trigger',
 		]);
+	});
+
+	it('shows the encounter and talent groups only in Builds mode, keeping what they have checked', () => {
+		const checked = [BulkEncounterRef.create({ name: 'Patchwerk', preset: true })];
+		const checkedTalents = [BulkTalentRef.create({ name: 'Arms', preset: true })];
+		const { player, container } = mount({
+			presets: [{ name: 'Patchwerk', encounter: Encounter.create({ duration: 300, durationVariation: 30, targets: [Target.create()] }) }],
+			checked,
+			talentPresets: [{ name: 'Arms', data: SavedTalents.create({ talentsString: ARMS }) }],
+			checkedTalents,
+			iterations: 100,
+			mode: 'gear',
+		});
+		const groups = () =>
+			[...container.querySelectorAll('[data-testid^="bulk-settings-group-"][data-testid$="-trigger"]')].map(trigger =>
+				trigger.getAttribute('data-testid'),
+			);
+
+		expect(groups()).toEqual(['bulk-settings-group-enchants-trigger', 'bulk-settings-group-freezes-trigger']);
+		expect(screen.queryByTestId('bulk-runs-count')).toBeNull();
+		expect(totalIterations()).toBe('100');
+
+		act(() => setBulkMode(player, 'builds'));
+
+		expect(groups()).toEqual([
+			'bulk-settings-group-encounters-trigger',
+			'bulk-settings-group-talents-trigger',
+			'bulk-settings-group-enchants-trigger',
+			'bulk-settings-group-freezes-trigger',
+		]);
+		expect(screen.getByTestId('bulk-runs-count').textContent).toBe('bulk_tab.settings.runs.total');
+		expect(totalIterations()).toBe('400');
+		expect(bulkState(player).encounters).toEqual(checked);
+		expect(bulkState(player).talents).toEqual(checkedTalents);
 	});
 });
 

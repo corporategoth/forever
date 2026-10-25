@@ -83,12 +83,12 @@ export const CombinationsCount = () => {
 	const pending = useBulkState(slice => slice.combinationsPending);
 	const combinations = useBulkState(slice => slice.combinations);
 	const iterations = useBulkState(slice => slice.iterations);
-	const { current, entries, checked, powerTools } = useBulkEncounters();
-	const encounters = useMemo(() => bulkEncounterRuns(current, entries, checked, powerTools).length, [current, entries, checked, powerTools]);
+	const { current, entries, checked, builds } = useBulkEncounters();
+	const encounters = useMemo(() => bulkEncounterRuns(current, entries, checked, builds).length, [current, entries, checked, builds]);
 	const { playerSpec, current: currentTalents, entries: talentEntries, checked: checkedTalents } = useBulkTalents();
 	const talentSetups = useMemo(
-		() => bulkTalentRuns(playerSpec, currentTalents, talentEntries, checkedTalents, powerTools).length,
-		[playerSpec, currentTalents, talentEntries, checkedTalents, powerTools],
+		() => bulkTalentRuns(playerSpec, currentTalents, talentEntries, checkedTalents, builds).length,
+		[playerSpec, currentTalents, talentEntries, checkedTalents, builds],
 	);
 
 	return (

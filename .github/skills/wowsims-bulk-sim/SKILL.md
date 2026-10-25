@@ -140,15 +140,24 @@ and `ReforgeSettings` share; keep the two apart in request shaping and serializa
   neither leaves out (equal to the current encounter) nor flags (equal to an earlier checked row). Each run replaces
   the whole encounter on the request copy only (the encounter override of `Sim.runBulkSim`). Every encounter and every
   talent setup shares the one content seed (the hash leaves the talents out), and `results` holds one entry per finished encounter, the current one first.
-- The Encounters group, the Talents group and Compare encounters are power tools (`showPowerTools` in the UI slice).
-  With power tools off the groups are hidden, the combination count shows no encounter or talent multiplier (with both
-  on it reads "N encounters × M talent setups = K runs"), and `runBulkBatch` runs the current
-  encounter alone; `bulkEncounterRuns` holds that rule for both. The checked encounters stay stored and count again
-  once power tools are back on. Results already on screen stay as they are.
+- The batch has two modes, Gear (the current encounter and talents only) and Builds (the Encounters and Talents
+  groups too). Picking one is a power tool (`showPowerTools` in the UI slice): with power tools on, the top navigation's
+  batch tab reads "Batch · Gear" or "Batch · Builds" and opens a menu of the two modes on mouseover, or on a tap on a
+  touch screen (`BulkModeMenu`, the kit `Menu` with `openOnHover` that Import and Export use, around the tab through
+  `TabNavTab.renderTab`). Clicking the tab opens the batch tab in the current mode; picking a mode sets it and opens
+  the batch tab. With power tools off the tab is a plain "Batch" and the batch runs in Gear mode. The mode is
+  `BulkSlice.mode`, stored per spec under `bulk-mode.v1` (default Gear), and outlives power tools being turned off.
+- `bulkRunsBuilds` (`ui/features/bulk/model/mode.ts`, power tools on and mode Builds) is the one gate, read by
+  `runBulkBatch` and, through `useBulkMode`, by the combination count and the Setup sidebar; `bulkEncounterRuns` and
+  `bulkTalentRuns` take it as their last argument. Outside Builds the groups are hidden (keeping what they have
+  checked), the combination count shows no encounter or talent multiplier (in Builds it reads "N encounters × M talent
+  setups = K runs"), and `runBulkBatch` runs the current encounter and talents alone. The checked encounters stay
+  stored and count again in Builds. Results already on screen stay as they are
+  whatever the mode, and Compare encounters stays tied to power tools and two or more finished encounters.
 - The Talents group lists the spec's preset talents and the user's saved talents (`ui/features/bulk/model/talents.ts`).
   `bulkTalentRuns` decides the talent setups a batch runs in every encounter, with the same rules as the encounters:
   the current talents first, then every checked row neither left out (equal to the current talents) nor flagged
-  (equal to an earlier checked row), and the current talents alone with power tools off. The current talents run as
+  (equal to an earlier checked row), and the current talents alone outside Builds mode. The current talents run as
   they are; every other setup goes out through the talents override of `Sim.runBulkSim`, which sets the request copy's
   talents and a rotation resolved from those talents (`Player.getResolvedAplRotationForTalents`); a custom APL goes out
   as it is. The setups and their rotations are resolved once at run start, and an encounter's entry is kept only when

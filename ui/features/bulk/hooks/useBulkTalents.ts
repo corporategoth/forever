@@ -1,10 +1,10 @@
 import { useSavedTalents } from '@features/talents/hooks/useSavedTalents';
 import { usePlayer, useSpecPresets } from '@sim/context/SimHostContext';
 import { usePlayerStore } from '@sim/hooks/usePlayerStore';
-import { useUiStore } from '@sim/hooks/useUiStore';
 import { useMemo } from 'react';
 
 import { bulkTalentEntries } from '../model/talents';
+import { useBulkMode } from './useBulkMode';
 import { useBulkState } from './useBulkState';
 
 // The same sources the batch resolves when it starts: the spec's preset talents, the user's saved ones and the live talents.
@@ -13,10 +13,10 @@ export const useBulkTalents = () => {
 	const presets = useSpecPresets().talents;
 	const { entries: saved } = useSavedTalents();
 	const checked = useBulkState(slice => slice.talents);
-	const powerTools = useUiStore('showPowerTools');
+	const { builds } = useBulkMode();
 	const current = usePlayerStore('talentsString');
 
 	const entries = useMemo(() => bulkTalentEntries(presets, saved), [presets, saved]);
 
-	return { playerSpec, current, entries, checked, powerTools };
+	return { playerSpec, current, entries, checked, builds };
 };

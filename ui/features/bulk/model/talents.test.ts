@@ -2,9 +2,11 @@ import { BulkTalentRef, SavedTalents } from '@generated/proto/ui';
 import { PlayerSpecs } from '@sim/player/specs';
 import { bulkState, loadStoredBulkTalents } from '@sim/settings/bulk_settings';
 import type { IndividualSimHost } from '@sim/sim_host';
+import type { BulkMode } from '@sim/state/sim_store';
 import { makeBulkPlayer } from '@testing/sim/bulk_player';
 import { describe, expect, it, vi } from 'vitest';
 
+import { bulkRunsBuilds } from './mode';
 import { bulkTalentEntries, bulkTalentList, bulkTalentRuns, formatTalentsSummary, pickableBulkTalents, setBulkTalentChecked, talentsLabel } from './talents';
 
 vi.mock('@i18n/config', () => ({
@@ -65,8 +67,14 @@ describe('bulkTalentRuns', () => {
 		]);
 	});
 
-	it('runs the current talents alone with power tools off, whatever is checked', () => {
-		expect(bulkTalentRuns(SPEC, LIVE, entries, [ref('Arms', true)], false)).toEqual([{ name: '', talentsString: LIVE, isCurrent: true }]);
+	it.each<[boolean, BulkMode]>([
+		[false, 'gear'],
+		[false, 'builds'],
+		[true, 'gear'],
+	])('runs the current talents alone with power tools %s in %s mode, whatever is checked', (powerTools, mode) => {
+		expect(bulkTalentRuns(SPEC, LIVE, entries, [ref('Arms', true)], bulkRunsBuilds(powerTools, mode))).toEqual([
+			{ name: '', talentsString: LIVE, isCurrent: true },
+		]);
 	});
 
 	it('skips a checked setup equal to an earlier checked one', () => {

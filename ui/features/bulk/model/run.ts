@@ -12,6 +12,7 @@ import { toastManager } from '@ui-kit/Toast';
 import { trackEvent } from '../../../tracking/utils';
 import { type CoreBulkSimResult, runCoreBulkSim as runCoreBulkSimImpl } from './core_sim';
 import { bulkEncounterRuns, encounterLabel, encounterLength, formatEncounterSummary, pickableBulkEncounters } from './encounters';
+import { bulkRunsBuilds } from './mode';
 import { BulkProgress, candidateGearProgress, simProgress } from './progress';
 import { type BulkTalentRun, rankEncounterResults } from './results';
 import { createBulkSettingsProto } from './settings';
@@ -216,19 +217,16 @@ export const runBulkBatch = async (host: IndividualSimHost<any>) => {
 	});
 
 	run.isCancelling = false;
-	const encounterRuns = bulkEncounterRuns(sim.encounter.toProto(), pickableBulkEncounters(host), bulkState(player).encounters, sim.getShowPowerTools());
-	const talentRuns = bulkTalentRuns(
-		player.getPlayerSpec(),
-		player.getTalentsString(),
-		pickableBulkTalents(host),
-		bulkState(player).talents,
-		sim.getShowPowerTools(),
-	).map(talents => ({
-		talents,
-		override: talents.isCurrent
-			? undefined
-			: { talentsString: talents.talentsString, rotation: player.getResolvedAplRotationForTalents(talents.talentsString) },
-	}));
+	const builds = bulkRunsBuilds(sim.getShowPowerTools(), bulkState(player).mode);
+	const encounterRuns = bulkEncounterRuns(sim.encounter.toProto(), pickableBulkEncounters(host), bulkState(player).encounters, builds);
+	const talentRuns = bulkTalentRuns(player.getPlayerSpec(), player.getTalentsString(), pickableBulkTalents(host), bulkState(player).talents, builds).map(
+		talents => ({
+			talents,
+			override: talents.isCurrent
+				? undefined
+				: { talentsString: talents.talentsString, rotation: player.getResolvedAplRotationForTalents(talents.talentsString) },
+		}),
+	);
 	run.steps = {
 		labels: encounterRuns.flatMap(encounterRun =>
 			talentRuns.map(({ talents }) =>

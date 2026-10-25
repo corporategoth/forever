@@ -4,7 +4,6 @@ import i18n from '@i18n/config';
 import { BulkSimItemSlot, getBulkPlayerCanDualWield } from '@sim/bulk/utils';
 import { usePlayer, useSimHost } from '@sim/context/SimHostContext';
 import { usePlayerStore } from '@sim/hooks/usePlayerStore';
-import { useUiStore } from '@sim/hooks/useUiStore';
 import { Accordion, AccordionItem } from '@ui-kit/Accordion';
 import { Box } from '@ui-kit/Box';
 import { Button } from '@ui-kit/Button';
@@ -13,6 +12,7 @@ import { RunCard } from '@ui-kit/RunCard';
 import { TabPanelColumns } from '@ui-kit/TabPanelColumns';
 import { type ReactNode, useEffect } from 'react';
 
+import { useBulkMode } from '../../hooks/useBulkMode';
 import { BULK_SETTINGS_GROUP, useBulkSettingsGroups } from '../../hooks/useBulkSettingsGroups';
 import { useBulkState } from '../../hooks/useBulkState';
 import { bulkCombinationsLimit } from '../../model/limits';
@@ -37,9 +37,9 @@ export interface BulkSettingsViewProps {
 	onRun: () => void;
 	openGroups: string[];
 	onOpenGroupsChange: (groups: string[]) => void;
-	/** Null hides the group, as with power tools off. */
+	/** Null hides the group, as in Gear mode. */
 	encounters: ReactNode;
-	/** Null hides the group, as with power tools off. */
+	/** Null hides the group, as in Gear mode. */
 	talents: ReactNode;
 	enchants: ReactNode;
 	frozenItems: ReadonlyArray<ChoiceFieldProps<number>>;
@@ -160,7 +160,7 @@ export const BulkSettings = () => {
 	const frozenWeaponSlot = useBulkState(slice => slice.frozenWeaponSlot);
 	const canRun = useBulkState(slice => canRunBatch(slice, bulkCombinationsLimit(player.sim.isNative)));
 	const gear = usePlayerStore('gear');
-	const powerTools = useUiStore('showPowerTools');
+	const { builds } = useBulkMode();
 	const [openGroups, setOpenGroups] = useBulkSettingsGroups();
 
 	// Clearing a frozen item whose slot no longer holds it writes to the store; that is not safe
@@ -192,8 +192,8 @@ export const BulkSettings = () => {
 			onRun={() => void runBulkBatch(host)}
 			openGroups={openGroups}
 			onOpenGroupsChange={setOpenGroups}
-			encounters={powerTools ? <Encounters /> : null}
-			talents={powerTools ? <Talents /> : null}
+			encounters={builds ? <Encounters /> : null}
+			talents={builds ? <Talents /> : null}
 			enchants={<EnchantPresets />}
 			frozenItems={FROZEN_PAIRS.map(freezeItemProps)}
 			weaponFreeze={

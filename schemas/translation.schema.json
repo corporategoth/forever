@@ -4143,6 +4143,45 @@
 					"additionalProperties": false,
 					"required": ["setup", "results"]
 				},
+				"modes": {
+					"type": "object",
+					"properties": {
+						"gear": {
+							"type": "object",
+							"properties": {
+								"tab": {
+									"type": "string"
+								},
+								"label": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": false,
+							"required": ["tab", "label", "description"]
+						},
+						"builds": {
+							"type": "object",
+							"properties": {
+								"tab": {
+									"type": "string"
+								},
+								"label": {
+									"type": "string"
+								},
+								"description": {
+									"type": "string"
+								}
+							},
+							"additionalProperties": false,
+							"required": ["tab", "label", "description"]
+						}
+					},
+					"additionalProperties": false,
+					"required": ["gear", "builds"]
+				},
 				"actions": {
 					"type": "object",
 					"properties": {
@@ -4727,6 +4766,7 @@
 				"title",
 				"download_native",
 				"tabs",
+				"modes",
 				"actions",
 				"search",
 				"settings",

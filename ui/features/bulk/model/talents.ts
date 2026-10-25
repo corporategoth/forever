@@ -53,17 +53,17 @@ export const bulkTalentList = (playerSpec: PlayerSpec<any>, current: string, ent
 		(a, b) => sameTalents(playerSpec, a.talentsString, b.talentsString),
 	);
 
-// The current talents run first, unnamed, then every checked row the list neither leaves out nor flags. Without power
-// tools the current ones run alone; the checked ones stay stored for when they are back on.
+// The current talents run first, unnamed, then every checked row the list neither leaves out nor flags. Outside Builds
+// mode (`bulkRunsBuilds`) the current ones run alone; the checked ones stay stored for when it is back.
 export const bulkTalentRuns = (
 	playerSpec: PlayerSpec<any>,
 	current: string,
 	entries: readonly BulkTalentEntry[],
 	checked: readonly BulkTalentRef[],
-	powerTools: boolean,
+	builds: boolean,
 ): BulkTalentSetup[] => [
 	{ name: '', talentsString: current, isCurrent: true },
-	...(powerTools
+	...(builds
 		? bulkTalentList(playerSpec, current, entries, checked)
 				.filter(item => item.checked && !item.duplicate)
 				.map(({ name, talentsString }) => ({ name, talentsString, isCurrent: false }))

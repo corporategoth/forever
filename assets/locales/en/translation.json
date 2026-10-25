@@ -1153,6 +1153,18 @@
 			"setup": "Setup",
 			"results": "Results"
 		},
+		"modes": {
+			"gear": {
+				"tab": "Batch · Gear",
+				"label": "Gear",
+				"description": "Best gear for your current talents and encounter"
+			},
+			"builds": {
+				"tab": "Batch · Builds",
+				"label": "Builds",
+				"description": "Best gear and talents across encounters"
+			}
+		},
 		"actions": {
 			"import_bags": "Import From Bags",
 			"import_favorites": "Import Favorites",
