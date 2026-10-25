@@ -47,7 +47,7 @@ afterAll(() => {
 	i18n.removeResourceBundle('en', 'translation');
 });
 
-vi.mock('@sim/hooks/useSimReady', () => ({ useSimReady: () => false }));
+vi.mock('@sim/hooks/useSimReady', () => ({ useSimReady: () => true }));
 vi.mock('@features/bulk/components/BulkItemSearch', () => ({ BulkItemSearch: () => <div data-testid="bulk-item-search-stub" /> }));
 vi.mock('@features/bulk/components/BulkPickerGroups', () => ({ BulkPickerGroups: () => <div data-testid="bulk-picker-groups-stub" /> }));
 vi.mock('@features/bulk/components/BulkProgress', () => ({ BulkProgressDialog: () => null }));

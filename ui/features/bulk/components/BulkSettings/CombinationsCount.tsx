@@ -13,10 +13,7 @@ import { useBulkState } from '../../hooks/useBulkState';
 import type { BulkBuildsCount } from '../../model/builds';
 import { bulkIterationsLimit } from '../../model/limits';
 
-export type CombinationsCountBuilds = Pick<
-	BulkBuildsCount,
-	'setups' | 'encounterPairs' | 'talentPairs' | 'runs' | 'totalIterations' | 'largestRequestIterations'
->;
+type CombinationsCountBuilds = Pick<BulkBuildsCount, 'setups' | 'encounterPairs' | 'talentPairs' | 'runs' | 'totalIterations' | 'largestRequestIterations'>;
 
 export interface CombinationsCountViewProps {
 	pending: boolean;

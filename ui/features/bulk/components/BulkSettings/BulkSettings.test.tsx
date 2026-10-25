@@ -35,9 +35,25 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 import english from '../../../../../assets/locales/en/translation.json';
 import { setBulkEnchantPickChecked } from '../../model/enchant_picks';
+import { GearSetups } from '../GearSetups';
 import type { BulkSettingsViewProps } from './BulkSettings';
 
 const limits = vi.hoisted(() => ({ iterations: null as number | null }));
+
+// Until the sim is ready the harness's `sim.db` is null, as the real one is; `setReady` lands it.
+const init = vi.hoisted(() => ({ ready: true, listeners: new Set<() => void>() }));
+vi.mock('@sim/hooks/useSimReady', async () => {
+	const { useSyncExternalStore } = await import('react');
+	const subscribe = (listener: () => void) => {
+		init.listeners.add(listener);
+		return () => init.listeners.delete(listener);
+	};
+	return { useSimReady: () => useSyncExternalStore(subscribe, () => init.ready) };
+});
+const setReady = () => {
+	init.ready = true;
+	init.listeners.forEach(listener => listener());
+};
 
 vi.mock('@sim/bulk/utils', async () => {
 	const actual = await vi.importActual<typeof import('@sim/bulk/utils')>('@sim/bulk/utils');
@@ -137,7 +153,13 @@ interface MountOptions {
 	buildEnchantPresets?: string[];
 	encounterPairs?: BulkEncounterPair[];
 	talentPairs?: BulkTalentPair[];
+	gearSetups?: boolean;
 }
+
+const db = {
+	getEnchants: BACK_ENCHANTS,
+	lookupEquipmentSpec: (spec: EquipmentSpec) => KNOWN_GEAR.find(known => getGearIdentityKey(known.asSpec()) === getGearIdentityKey(spec)) ?? new Gear({}),
+};
 
 const mount = ({
 	reforger = null,
@@ -148,6 +170,7 @@ const mount = ({
 	buildEnchantPresets = [],
 	encounterPairs = [],
 	talentPairs = [],
+	gearSetups = false,
 }: MountOptions = {}) => {
 	for (const [kind, key] of Object.entries(KEYS)) localStorage.setItem(key, JSON.stringify(SAVED[kind as keyof typeof KEYS]));
 	const store = createSimStore();
@@ -166,10 +189,8 @@ const mount = ({
 			store,
 			isNative: false,
 			env: memoryEnv(),
-			db: {
-				getEnchants: BACK_ENCHANTS,
-				lookupEquipmentSpec: (spec: EquipmentSpec) =>
-					KNOWN_GEAR.find(known => getGearIdentityKey(known.asSpec()) === getGearIdentityKey(spec)) ?? new Gear({}),
+			get db() {
+				return init.ready ? db : null;
 			},
 		},
 		storeKey: STORE_KEY,
@@ -204,6 +225,7 @@ const mount = ({
 	const { container } = render(
 		<SimHostProvider host={host}>
 			<BulkSettings />
+			{gearSetups && <GearSetups />}
 		</SimHostProvider>,
 	);
 	const pick = async (id: string, index: number) => {
@@ -226,6 +248,7 @@ const simulate = () => screen.getByTestId('bulk-settings-btn') as HTMLButtonElem
 beforeEach(() => {
 	localStorage.clear();
 	limits.iterations = null;
+	init.ready = true;
 });
 
 describe('BulkSettings', () => {
@@ -337,6 +360,35 @@ describe('BulkSettings', () => {
 
 		expect(text('bulk-gear-setups')).toBe('2');
 		expect(screen.queryByTestId('bulk-no-gear-setups')).toBeNull();
+		expect(simulate().disabled).toBe(false);
+	});
+
+	it('keeps Simulate off in Gear mode until the sim is ready', () => {
+		init.ready = false;
+		const { player } = mount();
+		act(() => patchBulkState(player, { combinations: 2 }));
+
+		expect(text('bulk-combinations')).toBe('2');
+		expect(simulate().disabled).toBe(true);
+
+		act(setReady);
+
+		expect(simulate().disabled).toBe(false);
+	});
+
+	it('lists no gear set and counts no gear setup in Builds mode until the sim is ready', () => {
+		init.ready = false;
+		mount({ mode: 'builds', gearSetups: true, gearSets: [gearSet('Raid', true)], buildEnchantPresets: ['Cloaks'] });
+
+		expect(screen.queryAllByTestId('bulk-gear-set')).toHaveLength(0);
+		expect(text('bulk-gear-setups')).toBe('0');
+		expect(simulate().disabled).toBe(true);
+
+		act(setReady);
+
+		// Raid, Two-hand, Raid copy and Dungeon; none wears the current gear.
+		expect(screen.queryAllByTestId('bulk-gear-set')).toHaveLength(4);
+		expect(text('bulk-gear-setups')).toBe('4');
 		expect(simulate().disabled).toBe(false);
 	});
 

@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { type CombinationsCountBuilds, CombinationsCountView } from './CombinationsCount';
+import { CombinationsCountView, type CombinationsCountViewProps } from './CombinationsCount';
 
-const BUILDS: CombinationsCountBuilds = {
+const BUILDS: NonNullable<CombinationsCountViewProps['builds']> = {
 	setups: 6,
 	encounterPairs: 2,
 	talentPairs: 2,

@@ -4,6 +4,7 @@ import i18n from '@i18n/config';
 import { BulkSimItemSlot, getBulkPlayerCanDualWield } from '@sim/bulk/utils';
 import { usePlayer, useSimHost } from '@sim/context/SimHostContext';
 import { usePlayerStore } from '@sim/hooks/usePlayerStore';
+import { useSimReady } from '@sim/hooks/useSimReady';
 import { Accordion, AccordionItem } from '@ui-kit/Accordion';
 import { Box } from '@ui-kit/Box';
 import { Button } from '@ui-kit/Button';
@@ -13,8 +14,10 @@ import { TabPanelColumns } from '@ui-kit/TabPanelColumns';
 import { type ReactNode, useEffect } from 'react';
 
 import { useBulkBuilds } from '../../hooks/useBulkBuilds';
+import { useBulkMode } from '../../hooks/useBulkMode';
 import { BULK_SETTINGS_GROUP, useBulkSettingsGroups } from '../../hooks/useBulkSettingsGroups';
 import { useBulkState } from '../../hooks/useBulkState';
+import type { BulkBuildsCount } from '../../model/builds';
 import { bulkCombinationsLimit } from '../../model/limits';
 import { frozenItemSlot } from '../../model/picker_groups';
 import { runBulkBatch } from '../../model/run';
@@ -134,16 +137,16 @@ const FROZEN_PAIRS: readonly FrozenPair[] = [
 	},
 ];
 
-export const BulkSettings = () => {
+const BulkSettingsContainer = ({ builds }: { builds: BulkBuildsCount | null }) => {
 	const host = useSimHost();
 	const player = usePlayer();
+	const ready = useSimReady();
 	const frozenItems = useBulkState(slice => slice.frozenItems);
 	const frozenWeaponSlot = useBulkState(slice => slice.frozenWeaponSlot);
 	const combinationsLimit = bulkCombinationsLimit(player.sim.isNative);
 	const canRunGear = useBulkState(slice => canRunBatch(slice, combinationsLimit));
 	const isRunning = useBulkState(slice => slice.isRunning);
 	const gear = usePlayerStore('gear');
-	const builds = useBulkBuilds();
 	const [openGroups, setOpenGroups] = useBulkSettingsGroups();
 
 	// Clearing a frozen item whose slot no longer holds it writes to the store; that is not safe
@@ -171,7 +174,7 @@ export const BulkSettings = () => {
 	return (
 		<BulkSettingsView
 			combinationsCount={<CombinationsCount builds={builds} />}
-			canRun={builds ? canRunBuildsBatch(isRunning, builds, combinationsLimit) : canRunGear}
+			canRun={ready && (builds ? canRunBuildsBatch(isRunning, builds, combinationsLimit) : canRunGear)}
 			onRun={() => void runBulkBatch(host)}
 			openGroups={openGroups}
 			onOpenGroupsChange={setOpenGroups}
@@ -195,3 +198,8 @@ export const BulkSettings = () => {
 		/>
 	);
 };
+
+const BuildsBulkSettings = () => <BulkSettingsContainer builds={useBulkBuilds()} />;
+
+// The Builds hooks mount only in Builds mode: they look the gear sets up in the database, which Gear mode never needs.
+export const BulkSettings = () => (useBulkMode().builds ? <BuildsBulkSettings /> : <BulkSettingsContainer builds={null} />);

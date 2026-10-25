@@ -39,7 +39,7 @@ const mount = ({ powerTools }: { powerTools: boolean }) => {
 	const gear = { getEquippedItem: (_slot: ItemSlot) => null };
 	seedKeyed(store, 'players', STORE_KEY, { gear, talentsString: '', v: zeroVersions(PLAYER_FIELDS) } as never);
 	const player = {
-		sim: { store, isNative: false, env: memoryEnv() },
+		sim: { store, isNative: false, env: memoryEnv(), waitForInit: () => Promise.resolve() },
 		storeKey: STORE_KEY,
 		getGear: () => gear,
 		getPlayerSpec: () => PlayerSpecs.DpsWarrior,
