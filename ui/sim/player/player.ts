@@ -461,6 +461,11 @@ export class Player<SpecType extends Spec> {
 			return true;
 		}
 
+		// Balance keeps one ally so Innervate and other helpful spells can land on another unit.
+		if (this.getSpec() === Spec.SpecBalanceDruid) {
+			return true;
+		}
+
 		if (!this.itemSwapSettings.getEnableItemSwap()) {
 			return false;
 		}
