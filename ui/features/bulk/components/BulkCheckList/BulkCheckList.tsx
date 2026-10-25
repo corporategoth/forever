@@ -12,12 +12,13 @@ export interface BulkCheckRow {
 }
 
 export interface BulkCheckListProps {
-	strings: { description: string; current: string; presets: string; saved: string; empty: string; duplicate: string };
-	currentSummary: string;
+	strings: { presets: string; saved: string; empty: string; duplicate: string };
+	/** The locked first row; null for a list with no current entry. */
+	current: { label: string; summary: string } | null;
 	presets: readonly BulkCheckRow[];
 	saved: readonly BulkCheckRow[];
 	onCheckedChange: (ref: SavedRef, checked: boolean) => void;
-	testIds: { list: string; row: string; current: string };
+	testIds: { list: string; row: string; current?: string };
 }
 
 interface CheckRowProps {
@@ -29,7 +30,7 @@ interface CheckRowProps {
 	duplicate?: boolean;
 	duplicateText: string;
 	onChange: (checked: boolean) => void;
-	testId: string;
+	testId?: string;
 }
 
 // The summary shows as the label's hover tooltip; the sr-only copy describes the checkbox for screen readers, which
@@ -60,7 +61,7 @@ const CheckRow = ({ id, label, summary, checked, disabled, duplicate = false, du
 	</>
 );
 
-export const BulkCheckList = ({ strings, currentSummary, presets, saved, onCheckedChange, testIds }: BulkCheckListProps) => {
+export const BulkCheckList = ({ strings, current, presets, saved, onCheckedChange, testIds }: BulkCheckListProps) => {
 	const idPrefix = useId();
 	const group = (preset: boolean, heading: string, rows: readonly BulkCheckRow[]) =>
 		rows.length > 0 && (
@@ -84,17 +85,18 @@ export const BulkCheckList = ({ strings, currentSummary, presets, saved, onCheck
 
 	return (
 		<div className="grid gap-2" data-testid={testIds.list}>
-			<p className="mb-0 text-xs">{strings.description}</p>
-			<CheckRow
-				id={`${idPrefix}-current`}
-				label={strings.current}
-				summary={currentSummary}
-				checked
-				disabled
-				duplicateText={strings.duplicate}
-				onChange={() => {}}
-				testId={testIds.current}
-			/>
+			{current && (
+				<CheckRow
+					id={`${idPrefix}-current`}
+					label={current.label}
+					summary={current.summary}
+					checked
+					disabled
+					duplicateText={strings.duplicate}
+					onChange={() => {}}
+					testId={testIds.current}
+				/>
+			)}
 			{group(true, strings.presets, presets)}
 			{group(false, strings.saved, saved)}
 			{!presets.length && !saved.length && <p className="mb-0 text-sm text-gray-400">{strings.empty}</p>}

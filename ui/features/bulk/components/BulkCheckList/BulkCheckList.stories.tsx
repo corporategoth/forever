@@ -24,9 +24,18 @@ const StatefulCheckList = (props: BulkCheckListProps) => {
 	);
 };
 
-const stringsOf = (group: 'encounters' | 'talents'): BulkCheckListProps['strings'] => {
-	const t = (key: string) => i18n.t(`bulk_tab.settings.${group}.${key}`);
-	return { description: t('description'), current: t('current'), presets: t('presets'), saved: t('saved'), empty: t('empty'), duplicate: t('duplicate') };
+const gearSetStrings: BulkCheckListProps['strings'] = {
+	presets: i18n.t('bulk_tab.settings.gear_sets.presets'),
+	saved: i18n.t('bulk_tab.settings.gear_sets.saved'),
+	empty: i18n.t('bulk_tab.settings.gear_sets.empty'),
+	duplicate: i18n.t('bulk_tab.settings.gear_sets.duplicate'),
+};
+
+const enchantPickStrings: BulkCheckListProps['strings'] = {
+	presets: i18n.t('bulk_tab.settings.gear_sets.presets'),
+	saved: i18n.t('bulk_tab.settings.enchant_picks.saved'),
+	empty: i18n.t('bulk_tab.settings.enchant_picks.empty'),
+	duplicate: i18n.t('bulk_tab.settings.enchant_picks.duplicate'),
 };
 
 const rowOf =
@@ -47,12 +56,12 @@ const meta = {
 	tags: ['autodocs'],
 	render: args => <StatefulCheckList {...args} />,
 	args: {
-		strings: stringsOf('encounters'),
-		currentSummary: '3:00 ±5s · 1 target',
-		presets: [presetRow('Patchwerk', '5:00 ±30s · 1 target', true)],
-		saved: [savedRow('Council', '4:00 ±10s · 3 targets', true), savedRow('Execute test', 'Health · 1 target')],
+		strings: gearSetStrings,
+		current: { label: i18n.t('bulk_tab.settings.gear_sets.current'), summary: '16 items' },
+		presets: [presetRow('P1 Fury', '17 items', true), presetRow('Pre-BiS', '17 items')],
+		saved: [savedRow('My raid set', '16 items', true)],
 		onCheckedChange: fn(),
-		testIds: { list: 'bulk-encounters', row: 'bulk-encounter', current: 'bulk-encounter-current' },
+		testIds: { list: 'bulk-gear-sets', row: 'bulk-gear-set', current: 'bulk-gear-set-current' },
 	},
 	argTypes: {
 		strings: { control: false },
@@ -70,25 +79,21 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Encounters: Story = {};
+export const GearSets: Story = {};
 
-export const Talents: Story = {
+export const WithoutCurrentRow: Story = {
 	args: {
-		strings: stringsOf('talents'),
-		currentSummary: '30305001302',
-		presets: [presetRow('Arms', '3030500130', true), presetRow('Fury', '-0505000540501')],
-		saved: [savedRow('Arms, deep Cruelty', '3030500130-05')],
-		testIds: { list: 'bulk-talents', row: 'bulk-talent', current: 'bulk-talent-current' },
+		strings: enchantPickStrings,
+		current: null,
+		presets: [],
+		saved: [savedRow('Agility cloak', '1 slot', true), savedRow('Crusader weapons', '2 slots')],
+		testIds: { list: 'bulk-enchant-picks', row: 'bulk-enchant-pick' },
 	},
 };
 
 export const Duplicate: Story = {
 	args: {
-		saved: [
-			savedRow('Council', '4:00 ±10s · 3 targets', true),
-			savedRow('Council, saved twice', '4:00 ±10s · 3 targets', true, true),
-			savedRow('Execute test', 'Health · 1 target'),
-		],
+		saved: [savedRow('My raid set', '16 items', true), savedRow('My raid set, saved twice', '16 items', true, true), savedRow('Old set', '15 items')],
 	},
 };
 

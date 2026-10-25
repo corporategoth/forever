@@ -23,27 +23,28 @@ export const Encounters = () => {
 	}, [current, entries, checked]);
 
 	return (
-		<BulkCheckList
-			strings={{
-				description: t('description'),
-				current: t('current'),
-				presets: t('presets'),
-				saved: t('saved'),
-				empty: t('empty'),
-				duplicate: t('duplicate'),
-			}}
-			currentSummary={formatEncounterSummary(current)}
-			presets={rows.presets}
-			saved={rows.saved}
-			onCheckedChange={(ref, value) =>
-				setBulkEncounterChecked(
-					player,
-					ref,
-					value,
-					entries.map(entry => entry.ref),
-				)
-			}
-			testIds={{ list: 'bulk-encounters', row: 'bulk-encounter', current: 'bulk-encounter-current' }}
-		/>
+		<div className="grid gap-2">
+			<p className="mb-0 text-xs">{t('description')}</p>
+			<BulkCheckList
+				strings={{
+					presets: t('presets'),
+					saved: t('saved'),
+					empty: t('empty'),
+					duplicate: t('duplicate'),
+				}}
+				current={{ label: t('current'), summary: formatEncounterSummary(current) }}
+				presets={rows.presets}
+				saved={rows.saved}
+				onCheckedChange={(ref, value) =>
+					setBulkEncounterChecked(
+						player,
+						ref,
+						value,
+						entries.map(entry => entry.ref),
+					)
+				}
+				testIds={{ list: 'bulk-encounters', row: 'bulk-encounter', current: 'bulk-encounter-current' }}
+			/>
+		</div>
 	);
 };
