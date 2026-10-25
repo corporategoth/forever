@@ -173,7 +173,7 @@ const BulkSettingsContainer = ({ builds }: { builds: BulkBuildsCount | null }) =
 
 	return (
 		<BulkSettingsView
-			combinationsCount={<CombinationsCount builds={builds} />}
+			combinationsCount={<CombinationsCount builds={builds} ready={ready} />}
 			canRun={ready && (builds ? canRunBuildsBatch(isRunning, builds, combinationsLimit) : canRunGear)}
 			onRun={() => void runBulkBatch(host)}
 			openGroups={openGroups}

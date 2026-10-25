@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { Menu } from './Menu';
 import { MenuItem } from './MenuItem';
 import { MenuLinkItem } from './MenuLinkItem';
+import { MenuRadioGroup, MenuRadioItem } from './MenuRadioItem';
 
 const ITEMS = (
 	<>
@@ -79,6 +81,27 @@ export const BareItems: Story = {
 				Bare link
 			</MenuLinkItem>
 		),
+	},
+};
+
+const RadioItems = () => {
+	const [value, setValue] = useState('gear');
+	return (
+		<MenuRadioGroup value={value} onValueChange={setValue}>
+			<MenuRadioItem value="gear">Gear</MenuRadioItem>
+			<MenuRadioItem value="builds">Builds</MenuRadioItem>
+		</MenuRadioGroup>
+	);
+};
+
+export const RadioGroup: Story = {
+	args: { popupRender: <div />, children: <RadioItems /> },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(canvas.getByRole('button', { name: 'Open menu' }));
+		const menu = await canvas.findByRole('menu');
+		await expect(within(menu).getByRole('menuitemradio', { name: 'Gear' }).getAttribute('aria-checked')).toBe('true');
+		await expect(within(menu).getByRole('menuitemradio', { name: 'Builds' }).getAttribute('aria-checked')).toBe('false');
 	},
 };
 

@@ -8,9 +8,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('./BulkResultRow', () => ({
-	BulkResultRow: ({ iterations, showTalents }: { iterations: number; showTalents: boolean }) => (
-		<div data-testid="row" data-iterations={iterations} data-show-talents={String(showTalents)} />
-	),
+	BulkResultRow: ({ iterations }: { iterations: number }) => <div data-testid="row" data-iterations={iterations} />,
 }));
 
 const { BulkResults } = await import('./BulkResults');
@@ -21,7 +19,7 @@ const RUN_ITERATIONS = 30000;
 const result = (avg: number) =>
 	({ gear: {}, dpsMetrics: { avg, stdev: 1 }, talents: CURRENT_TALENT_SETUP, rotation: CURRENT_ROTATION_SETUP }) as unknown as BulkRankedResult;
 
-const entry = (iterations: number, talentPairs = 1): BulkEncounterResults => {
+const entry = (iterations: number): BulkEncounterResults => {
 	const baseline = result(1000);
 	return {
 		name: '',
@@ -29,7 +27,7 @@ const entry = (iterations: number, talentPairs = 1): BulkEncounterResults => {
 		duration: 180,
 		durationVariation: 5,
 		settings: null,
-		results: { chains: [[result(1100)], [baseline]], originalGearResults: baseline, iterations, talentPairs },
+		results: { chains: [[result(1100)], [baseline]], originalGearResults: baseline, iterations, talentPairs: 1 },
 	};
 };
 
@@ -52,14 +50,5 @@ describe('BulkResults', () => {
 	it('gives every row the iteration count the run was scored with, not the sidebar value', () => {
 		mount([entry(RUN_ITERATIONS)]);
 		expect(rowIterations()).toEqual([String(RUN_ITERATIONS), String(RUN_ITERATIONS)]);
-	});
-
-	it.each([
-		[1, 'false'],
-		[2, 'true'],
-	])('has the rows name their talent pair only when the encounter pair ran more than one (%i pairs)', (talentPairs, shown) => {
-		mount([entry(RUN_ITERATIONS, talentPairs)]);
-
-		expect(screen.getAllByTestId('row').map(row => row.getAttribute('data-show-talents'))).toEqual([shown, shown]);
 	});
 });

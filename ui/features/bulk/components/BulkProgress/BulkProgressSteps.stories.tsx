@@ -6,17 +6,19 @@ import { BulkProgressSteps } from './BulkProgressSteps';
 
 const CURRENT = {
 	encounter: i18n.t('bulk_tab.builds.pairs.current_encounter'),
+	encounterSummary: '3:00 ±5s · 1 target',
 	settings: i18n.t('bulk_tab.builds.pairs.current_settings'),
 	talents: i18n.t('bulk_tab.results.current_talents'),
 	rotation: i18n.t('bulk_tab.results.current_rotation'),
 };
+const DEFAULT_60 = { encounter: 'Default - 60', encounterSummary: '5:00 ±30s · 3 targets', settings: 'Defaults' };
 const ROWS = [
 	CURRENT,
 	{ ...CURRENT, talents: 'Fury', rotation: 'Fury' },
 	{ ...CURRENT, talents: 'Fury', rotation: 'Fury - Autocast on use' },
-	{ ...CURRENT, encounter: 'Default - 60', settings: 'Defaults' },
-	{ encounter: 'Default - 60', settings: 'Defaults', talents: 'Fury', rotation: 'Fury' },
-	{ encounter: 'Default - 60', settings: 'Defaults', talents: 'Fury', rotation: 'Fury - Autocast on use' },
+	{ ...CURRENT, ...DEFAULT_60 },
+	{ ...DEFAULT_60, talents: 'Fury', rotation: 'Fury' },
+	{ ...DEFAULT_60, talents: 'Fury', rotation: 'Fury - Autocast on use' },
 ];
 
 const pushProgress = (handle: ProgressTrackerHandle | null) =>

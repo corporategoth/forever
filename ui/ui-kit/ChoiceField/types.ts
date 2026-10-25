@@ -51,6 +51,8 @@ export interface ChoiceFieldProps<V> extends FieldFrameProps, ControlledProps<V>
 	renderValue?(selected: ChoiceOption<V>): ReactNode;
 	/** Names a trigger that has no `label`. */
 	ariaLabel?: string;
+	/** Ids of extra text that describes the trigger, such as a message under it; a field `description` is added to them. */
+	'aria-describedby'?: string;
 	side?: Select.Positioner.Props['side'];
 	/**
 	 * `'fixed'` takes the list out of flow so an overflow-clipped ancestor cannot cut it off. It only

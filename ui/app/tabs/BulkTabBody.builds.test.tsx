@@ -300,7 +300,7 @@ describe('BulkTabBody in Builds mode', () => {
 	it.each<[string, string, string]>([
 		['the current pair', 'Current encounter', 'Current settings'],
 		['a stored pair', 'Patchwerk', 'Current settings'],
-	])('blocks adding %s: both selects invalid, "Already in the list", Add disabled', async (_case, encounterName, settingsName) => {
+	])('blocks adding %s: both selects invalid and described by "Already in the list", Add disabled', async (_case, encounterName, settingsName) => {
 		const player = mount();
 		const encounters = column('encounters');
 
@@ -308,12 +308,10 @@ describe('BulkTabBody in Builds mode', () => {
 		expect(within(encounters).queryByText('Already in the list')).toBeNull();
 		await pick(encounters, 'Settings', settingsName);
 
-		expect(
-			within(encounters)
-				.getAllByRole('combobox')
-				.map(select => select.getAttribute('aria-invalid')),
-		).toEqual(['true', 'true']);
-		expect(within(encounters).getByText('Already in the list')).toBeTruthy();
+		const selects = within(encounters).getAllByRole('combobox');
+		expect(selects.map(select => select.getAttribute('aria-invalid'))).toEqual(['true', 'true']);
+		const message = within(encounters).getByText('Already in the list');
+		expect(selects.map(select => select.getAttribute('aria-describedby'))).toEqual([message.id, message.id]);
 		expect(addButton(encounters).disabled).toBe(true);
 		expect(bulkState(player).encounterPairs).toHaveLength(1);
 	});

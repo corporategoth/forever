@@ -55,8 +55,8 @@ const tableProps = (entries: readonly BulkEncounterResults[], canDualWield: bool
 		rows: rows.map(({ key, set, talents, rotation, cells }) => ({
 			key,
 			label: set ? shortLabel(set.number) : currentLabel(),
-			talents: showTalents ? talentsLabel(talents) : null,
-			rotation: showRotation ? rotationLabel(rotation) : null,
+			talents: !showTalents ? null : talents.isCurrent ? talentsLabel(talents) : i18n.t('bulk_tab.results.talent_preset', { name: talents.name }),
+			rotation: !showRotation ? null : rotation.isCurrent ? rotationLabel(rotation) : i18n.t('bulk_tab.results.rotation', { name: rotation.name }),
 			changes: set?.gearSetup ? [gearSetupLabel(set.gearSetup)] : set && current ? changesOf(set.gear, current, canDualWield) : [],
 			cells: cells.map(
 				(cell, index) =>

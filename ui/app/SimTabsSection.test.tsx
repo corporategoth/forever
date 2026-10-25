@@ -7,7 +7,7 @@ import { PlayerSpecs } from '@sim/player/specs';
 import { bulkState, loadStoredBulkMode, patchBulkState, seedBulkSettings } from '@sim/settings/bulk_settings';
 import { createSimStore, patchSlice, PLAYER_FIELDS, seedKeyed, zeroVersions } from '@sim/state/sim_store';
 import { memoryEnv } from '@testing/sim/memory_env';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SimHostObject } from './individual_sim_ui';
@@ -77,7 +77,12 @@ const mount = ({ powerTools }: { powerTools: boolean }) => {
 
 const batchTab = () => within(document.querySelector('header')!).getByTestId(BULK_TAB_ID);
 const click = (element: HTMLElement) => act(() => void fireEvent.click(element));
-const modeItems = () => screen.queryAllByRole('menuitem').map(item => item.getAttribute('data-testid'));
+const modeItems = () => screen.queryAllByRole('menuitemradio').map(item => item.getAttribute('data-testid'));
+const checkedMode = () =>
+	screen
+		.getAllByRole('menuitemradio')
+		.find(item => item.getAttribute('aria-checked') === 'true')
+		?.getAttribute('data-testid');
 const groups = () =>
 	[...document.querySelectorAll('[data-testid^="bulk-settings-group-"][data-testid$="-trigger"]')].map(trigger => trigger.getAttribute('data-testid'));
 
@@ -99,7 +104,21 @@ describe('SimTabsSection batch tab', () => {
 		expect(groups()).toEqual(['bulk-settings-group-enchants-trigger', 'bulk-settings-group-freezes-trigger']);
 	});
 
-	it('shows the mode on the tab and lists both modes under it with power tools on', async () => {
+	it('moves along the tab strip with ArrowLeft and ArrowRight onto and off the batch tab and its mode menu', async () => {
+		mount({ powerTools: true });
+		const gear = within(document.querySelector('header')!).getByTestId('gear-tab');
+
+		// The strip loops: left of the first tab is the batch tab, the last one.
+		fireEvent.keyDown(gear, { key: 'ArrowLeft' });
+		await waitFor(() => expect(document.activeElement).toBe(batchTab()));
+		expect(batchTab().getAttribute('aria-selected')).toBe('true');
+
+		fireEvent.keyDown(batchTab(), { key: 'ArrowRight' });
+		await waitFor(() => expect(document.activeElement).toBe(gear));
+		expect(gear.getAttribute('aria-selected')).toBe('true');
+	});
+
+	it('shows the mode on the tab and lists both modes under it, the current one checked, with power tools on', async () => {
 		mount({ powerTools: true });
 
 		expect(batchTab().textContent).toBe('bulk_tab.modes.gear.tab');
@@ -108,6 +127,7 @@ describe('SimTabsSection batch tab', () => {
 		await click(batchTab());
 
 		expect(modeItems()).toEqual(['bulk-mode-gear', 'bulk-mode-builds']);
+		expect(checkedMode()).toBe('bulk-mode-gear');
 		expect(batchTab().getAttribute('aria-selected')).toBe('true');
 	});
 

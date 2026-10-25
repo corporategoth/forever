@@ -134,8 +134,8 @@ const TALENT_ROWS = [
 		GAIN_COLUMNS.map(() => cell(0)),
 		'Current talents',
 	),
-	row('set-1', 'S1', ['Slayer’s Crest'], [cell(9.4, true), cell(7.9, true), cell(6.8, true), cell(7.2, true)], 'Arms'),
-	row('set-2', 'S2', ['No gear changes'], [cell(3.1), cell(2.6), cell(2.2), cell(2.5)], 'Arms'),
+	row('set-1', 'S1', ['Slayer’s Crest'], [cell(9.4, true), cell(7.9, true), cell(6.8, true), cell(7.2, true)], 'Talent preset: Arms'),
+	row('set-2', 'S2', ['No gear changes'], [cell(3.1), cell(2.6), cell(2.2), cell(2.5)], 'Talent preset: Arms'),
 	row('set-3', 'S3', ['Slayer’s Crest'], [cell(6.07), cell(4.85), cell(4.29), cell(4.63)], 'Current talents'),
 ];
 
@@ -158,8 +158,8 @@ const BUILD_ROWS = [
 		'Current talents',
 		'Current rotation',
 	),
-	row('set-1', 'S1', ['P1 Fury · Agility cloak'], [cell(6.4, true), cell(5.1, true), cell(4.8, true)], 'Fury', 'Fury'),
-	row('set-2', 'S2', ['P1 Fury · Agility cloak'], [cell(5.2), cell(4.4), null], 'Fury', 'My APL'),
+	row('set-1', 'S1', ['P1 Fury · Agility cloak'], [cell(6.4, true), cell(5.1, true), cell(4.8, true)], 'Talent preset: Fury', 'Rotation: Fury'),
+	row('set-2', 'S2', ['P1 Fury · Agility cloak'], [cell(5.2), cell(4.4), null], 'Talent preset: Fury', 'Rotation: My APL'),
 	row('set-3', 'S3', ['Current gear · Crusader weapons'], [cell(1.9), cell(2.3), cell(2.6)], 'Current talents', 'Current rotation'),
 ];
 

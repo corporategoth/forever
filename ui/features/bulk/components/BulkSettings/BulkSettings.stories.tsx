@@ -51,7 +51,7 @@ const meta = {
 	tags: ['autodocs'],
 	render: args => <StatefulBulkSettings {...args} />,
 	args: {
-		combinationsCount: <CombinationsCountView pending={false} combinations={48} iterations={96000} iterationsLimit={1000000} builds={null} />,
+		combinationsCount: <CombinationsCountView pending={false} ready combinations={48} iterations={96000} iterationsLimit={1000000} builds={null} />,
 		canRun: true,
 		onRun: fn(),
 		openGroups: ['freezes'],
@@ -100,6 +100,7 @@ export const Builds: Story = {
 		combinationsCount: (
 			<CombinationsCountView
 				pending={false}
+				ready
 				combinations={0}
 				iterations={0}
 				iterationsLimit={1000000}

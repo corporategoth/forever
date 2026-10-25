@@ -8,6 +8,7 @@ import { omitDeep } from '@sim/utils/collections';
 import { estimateBulkSimIterations } from '@sim/wasm/bulk_sim/estimate';
 
 import { encounterSideLabel, settingsSideLabel } from './encounter_pairs';
+import { type EncounterSummaryFields, formatEncounterSummary } from './encounters';
 import { bonusStatsKey, gearSetupsSentWith } from './gear_setups';
 import type { PairSide } from './pairs';
 import { rotationLabel } from './rotations';
@@ -210,6 +211,7 @@ export const bulkBuildsCount = (
 
 export interface BulkBuildStep {
 	encounter: string;
+	encounterSummary: string;
 	settings: string;
 	talents: string;
 	rotation: string;
@@ -219,10 +221,11 @@ export const bulkBuildStep = ({
 	encounterPair,
 	talentPair,
 }: {
-	encounterPair: Record<'encounter' | 'settings', PairSide>;
+	encounterPair: { encounter: PairSide & { encounter: EncounterSummaryFields }; settings: PairSide };
 	talentPair: Record<'talents' | 'rotation', PairSide>;
 }): BulkBuildStep => ({
 	encounter: encounterSideLabel(encounterPair.encounter),
+	encounterSummary: formatEncounterSummary(encounterPair.encounter.encounter),
 	settings: settingsSideLabel(encounterPair.settings),
 	talents: talentsLabel(talentPair.talents),
 	rotation: rotationLabel(talentPair.rotation),

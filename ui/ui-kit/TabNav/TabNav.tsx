@@ -12,7 +12,7 @@ export interface TabNavTab {
 	ariaControls?: string;
 	dataLabel?: string;
 	buttonClassName?: string;
-	/** Places the built tab, e.g. as a menu's trigger; returning it unchanged leaves a plain tab. */
+	/** The `sim` variant places the built tab through it, e.g. as a menu's trigger; returning it unchanged leaves a plain tab. */
 	renderTab?: (tab: ReactElement) => ReactNode;
 }
 
@@ -55,18 +55,15 @@ export const TabNav = ({ tabs, className, variant = 'nav-tabs', tabItemClassName
 			render={<ul />}>
 			{tabs.map(tab => (
 				<li key={tab.id} className={clsx('flex items-center', tabItemClassName, tab.className)} role="presentation">
-					{placeTab(
-						tab,
-						<Tabs.Tab
-							value={tab.id}
-							id={tab.tabId}
-							aria-controls={tab.ariaControls ?? tab.id}
-							data-label={tab.dataLabel}
-							className={clsx('ui-tab ui-tab-nav', tab.buttonClassName)}>
-							{tab.label}
-							<TabBadge label={tab.badge} />
-						</Tabs.Tab>,
-					)}
+					<Tabs.Tab
+						value={tab.id}
+						id={tab.tabId}
+						aria-controls={tab.ariaControls ?? tab.id}
+						data-label={tab.dataLabel}
+						className={clsx('ui-tab ui-tab-nav', tab.buttonClassName)}>
+						{tab.label}
+						<TabBadge label={tab.badge} />
+					</Tabs.Tab>
 				</li>
 			))}
 		</Tabs.List>

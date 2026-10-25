@@ -39,12 +39,7 @@ export const GearSetupsView = ({ currentGearSummary, gearSets, enchantPicks, onG
 		<div className="grid gap-2">
 			<h6 className="mb-0">{enchantPicksText('heading')}</h6>
 			<BulkCheckList
-				strings={{
-					presets: gearSetsText('presets'),
-					saved: enchantPicksText('saved'),
-					empty: enchantPicksText('empty'),
-					duplicate: enchantPicksText('duplicate'),
-				}}
+				strings={{ saved: enchantPicksText('saved'), empty: enchantPicksText('empty'), duplicate: enchantPicksText('duplicate') }}
 				current={null}
 				presets={[]}
 				saved={enchantPicks}

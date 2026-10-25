@@ -15,7 +15,7 @@ const meta = {
 	title: 'Features/Bulk/BulkSettings/Components/CombinationsCount',
 	component: CombinationsCountView,
 	tags: ['autodocs'],
-	args: { pending: false, combinations: 48, iterations: 96000, iterationsLimit: 1000000, builds: null },
+	args: { pending: false, ready: true, combinations: 48, iterations: 96000, iterationsLimit: 1000000, builds: null },
 } satisfies Meta<typeof CombinationsCountView>;
 
 export default meta;
@@ -30,6 +30,10 @@ export const Pending: Story = { args: { pending: true } };
 export const OverTheLimit: Story = { args: { combinations: 1200, iterations: 2400000 } };
 
 export const Builds: Story = { args: { builds: BUILDS } };
+
+export const BuildsBeforeTheSimIsReady: Story = {
+	args: { ready: false, builds: { setups: 0, encounterPairs: 1, talentPairs: 1, runs: 0, totalIterations: 0, largestRequestIterations: 0 } },
+};
 
 export const BuildsWithoutGearSetups: Story = {
 	args: { builds: { setups: 0, encounterPairs: 2, talentPairs: 2, runs: 0, totalIterations: 0, largestRequestIterations: 0 } },

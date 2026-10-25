@@ -132,8 +132,8 @@ describe('BulkCompareDialog', () => {
 		const rows = bodyRows();
 		expect(rows.map(row => within(row).getByRole('rowheader').textContent)).toEqual([
 			'bulk_tab.results.current_gearbulk_tab.results.current_talents',
-			'bulk_tab.compare.short_setArmsHelm 2',
-			'bulk_tab.compare.short_setArmsbulk_tab.results.gear_unchanged',
+			'bulk_tab.compare.short_setbulk_tab.results.talent_presetHelm 2',
+			'bulk_tab.compare.short_setbulk_tab.results.talent_presetbulk_tab.results.gear_unchanged',
 			'bulk_tab.compare.short_setbulk_tab.results.current_talentsHelm 3',
 		]);
 		expect(shown(rows[2])).toEqual(['+3.00%', 'gap']);
@@ -151,7 +151,7 @@ describe('BulkCompareDialog', () => {
 		const rowHeaders = () => bodyRows().map(row => within(row).getByRole('rowheader').textContent);
 		expect(rowHeaders()).toEqual([
 			'bulk_tab.results.current_gearbulk_tab.results.current_talentsbulk_tab.results.current_rotation',
-			'bulk_tab.compare.short_setArmsOpenerRaid · Undead',
+			'bulk_tab.compare.short_setbulk_tab.results.talent_presetbulk_tab.results.rotationRaid · Undead',
 			'bulk_tab.compare.short_setbulk_tab.results.current_talentsbulk_tab.results.current_rotationbulk_tab.results.current_gear · Undead',
 			'bulk_tab.compare.short_setbulk_tab.results.current_talentsbulk_tab.results.current_rotationRaid · Undead',
 		]);

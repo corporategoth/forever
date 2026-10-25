@@ -137,6 +137,21 @@ describe('BulkResults in Builds', () => {
 		expect(screen.getByText('bulk_tab.results.current_gear · Undead')).toBeTruthy();
 	});
 
+	it('says the gear is unchanged on a row that wears the current gear with another talent pair, and offers Equip', async () => {
+		const { sim, player } = await makeIndividualSim();
+		seedBulkSettings(player);
+		const base = ranked(1000, { gear: compareGearSet(1), talents: CURRENT_TALENT_SETUP, rotation: CURRENT_ROTATION_SETUP, gearSetup: null });
+		const arms = ranked(1100, { gear: compareGearSet(1), talents: ARMS, rotation: CURRENT_ROTATION_SETUP, gearSetup: null });
+		const results = { chains: [[arms], [base]], originalGearResults: base, iterations: 100, talentPairs: 2 };
+		patchBulkState(player, { started: true, results: [{ ...entry(2, HEALER), results }] });
+		renderWithHost(<BulkResults onActivateTab={vi.fn()} selected={0} />, { sim, player });
+
+		const [armsRow, reference] = rows();
+		expect(within(armsRow).getByTestId('bulk-result-gear-unchanged').textContent).toBe('bulk_tab.results.gear_unchanged');
+		expect(within(armsRow).getByTestId('bulk-equip-btn').hasAttribute('data-hidden')).toBe(false);
+		expect(within(reference).queryByTestId('bulk-result-gear-unchanged')).toBeNull();
+	});
+
 	it('equips the row’s gear setup, talents, rotation and the pair’s settings with one build toast', async () => {
 		const { sim, player, onActivateTab } = await mount(2);
 		player.setRace(Race.RaceOrc);

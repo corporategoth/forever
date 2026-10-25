@@ -12,7 +12,8 @@ export interface BulkCheckRow {
 }
 
 export interface BulkCheckListProps {
-	strings: { presets: string; saved: string; empty: string; duplicate: string };
+	/** `presets` heads the ungrouped presets; a list with no presets leaves it out. */
+	strings: { presets?: string; saved: string; empty: string; duplicate: string };
 	/** The locked first row; null for a list with no current entry. */
 	current: { label: string; summary: string } | null;
 	presets: readonly BulkCheckRow[];
@@ -51,7 +52,7 @@ const CheckRow = ({ id, label, summary, checked, disabled, duplicate = false, du
 			testId={testId}
 		/>
 		<span id={`${id}-summary`} className="sr-only">
-			{summary}.
+			{summary}
 		</span>
 		{duplicate && (
 			<span id={`${id}-duplicate`} className="sr-only">
@@ -112,7 +113,7 @@ export const BulkCheckList = ({ strings, current, presets, saved, onCheckedChang
 					testId={testIds.current}
 				/>
 			)}
-			{presetGroups(strings.presets, presets).map(({ heading, rows }, index) => group(`preset-${index}`, heading, rows))}
+			{presetGroups(strings.presets ?? '', presets).map(({ heading, rows }, index) => group(`preset-${index}`, heading, rows))}
 			{group('saved', strings.saved, saved)}
 			{!presets.length && !saved.length && <p className="mb-0 text-sm text-gray-400">{strings.empty}</p>}
 		</div>

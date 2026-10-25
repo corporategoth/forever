@@ -137,8 +137,6 @@ const equippedToast = (equipped: BulkEquipped): string => {
 	switch (equipped) {
 		case 'build':
 			return i18n.t('bulk_tab.results.build_equipped');
-		case 'gear_talents':
-			return i18n.t('bulk_tab.results.gear_talents_equipped');
 		case 'gear':
 			return i18n.t('bulk_tab.results.gear_equipped');
 	}

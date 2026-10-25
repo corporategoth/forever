@@ -29,7 +29,7 @@ export interface BulkCompareTableRow {
 	label: string;
 	/** The set's talent setup, named when some encounter ran more than one; null shows none. */
 	talents: string | null;
-	/** The set's rotation, named with its talents; null shows none. */
+	/** The set's rotation, named when the rows differ in rotation; null shows none. */
 	rotation: string | null;
 	/** The items the set wears where the current gear wears something else, or a Builds set's gear setup. */
 	changes: readonly string[];

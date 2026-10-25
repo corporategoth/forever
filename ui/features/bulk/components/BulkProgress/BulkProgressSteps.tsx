@@ -19,7 +19,7 @@ const COLUMNS = ['encounter', 'settings', 'talents', 'rotation'] as const;
 // wrapper scrolls sideways when the cells cannot wrap to the dialog's width.
 export const BulkProgressSteps = ({ rows, running }: BulkProgressStepsProps) => (
 	<div className="w-full overflow-x-auto text-left">
-		<Table dense testId="bulk-progress-steps">
+		<Table dense variant="rows" testId="bulk-progress-steps">
 			<thead>
 				<TableRow>
 					{COLUMNS.map(column => (
@@ -43,11 +43,20 @@ export const BulkProgressSteps = ({ rows, running }: BulkProgressStepsProps) => 
 							aria-current={state === 'running' ? 'step' : undefined}
 							testId="progress-step">
 							{COLUMNS.map(column => (
-								<TableCell key={column}>{row[column]}</TableCell>
+								<TableCell key={column}>
+									{row[column]}
+									{column === 'encounter' && (
+										<span className="block text-xs font-normal text-muted" data-testid="progress-step-encounter-summary">
+											{row.encounterSummary}
+										</span>
+									)}
+								</TableCell>
 							))}
 							<TableCell className="w-4">
-								{state === 'done' && <Icon name="circle-check" className="text-success" />}
-								{state === 'running' && <Spinner size="xs" testId="progress-step-spinner" />}
+								{state === 'done' && <Icon name="circle-check" className="text-success" title={i18n.t('bulk_tab.progress.done')} />}
+								{state === 'running' && (
+									<Spinner size="xs" tone="strong" label={i18n.t('bulk_tab.progress.running')} testId="progress-step-spinner" />
+								)}
 							</TableCell>
 						</TableRow>
 					);

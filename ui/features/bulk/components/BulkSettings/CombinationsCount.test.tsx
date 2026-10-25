@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { CombinationsCountView, type CombinationsCountViewProps } from './CombinationsCount';
 
 const renderCount = (props: Partial<CombinationsCountViewProps> = {}) =>
-	render(<CombinationsCountView pending={false} combinations={12} iterations={24000} iterationsLimit={50000} builds={null} {...props} />);
+	render(<CombinationsCountView pending={false} ready combinations={12} iterations={24000} iterationsLimit={50000} builds={null} {...props} />);
 
 describe('CombinationsCountView', () => {
 	it('says why the selection gives no combination, once the count is in', () => {

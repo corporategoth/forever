@@ -4425,10 +4425,19 @@
 							"properties": {
 								"health_summary": {
 									"type": "string"
+								},
+								"targets": {
+									"type": "string"
+								},
+								"targets_one": {
+									"type": "string"
+								},
+								"targets_other": {
+									"type": "string"
 								}
 							},
 							"additionalProperties": false,
-							"required": ["health_summary"]
+							"required": ["health_summary", "targets", "targets_one", "targets_other"]
 						},
 						"talents": {
 							"type": "object",
@@ -4505,6 +4514,9 @@
 						"runs": {
 							"type": "object",
 							"properties": {
+								"pairs": {
+									"type": "string"
+								},
 								"encounters": {
 									"type": "string"
 								},
@@ -4535,6 +4547,7 @@
 							},
 							"additionalProperties": false,
 							"required": [
+								"pairs",
 								"encounters",
 								"encounters_one",
 								"encounters_other",
@@ -4739,6 +4752,12 @@
 						},
 						"status": {
 							"type": "string"
+						},
+						"done": {
+							"type": "string"
+						},
+						"running": {
+							"type": "string"
 						}
 					},
 					"additionalProperties": false,
@@ -4755,7 +4774,9 @@
 						"seconds_remaining",
 						"time_remaining",
 						"title",
-						"status"
+						"status",
+						"done",
+						"running"
 					]
 				},
 				"notifications": {
@@ -4830,9 +4851,6 @@
 						"gear_equipped": {
 							"type": "string"
 						},
-						"gear_talents_equipped": {
-							"type": "string"
-						},
 						"build_equipped": {
 							"type": "string"
 						},
@@ -4878,7 +4896,6 @@
 						"run_simulation",
 						"equip_button",
 						"gear_equipped",
-						"gear_talents_equipped",
 						"build_equipped",
 						"gear_unchanged",
 						"current_gear",
