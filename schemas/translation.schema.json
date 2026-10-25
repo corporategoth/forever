@@ -4395,6 +4395,12 @@
 						"combinations": {
 							"type": "string"
 						},
+						"gear_setups": {
+							"type": "string"
+						},
+						"no_gear_setups": {
+							"type": "string"
+						},
 						"total_iterations": {
 							"type": "string"
 						},
@@ -4407,40 +4413,16 @@
 								"enchants": {
 									"type": "string"
 								},
-								"encounters": {
-									"type": "string"
-								},
-								"talents": {
-									"type": "string"
-								},
 								"frozen_slots": {
 									"type": "string"
 								}
 							},
 							"additionalProperties": false,
-							"required": ["encounters", "talents", "enchants", "frozen_slots"]
+							"required": ["enchants", "frozen_slots"]
 						},
 						"encounters": {
 							"type": "object",
 							"properties": {
-								"description": {
-									"type": "string"
-								},
-								"current": {
-									"type": "string"
-								},
-								"presets": {
-									"type": "string"
-								},
-								"saved": {
-									"type": "string"
-								},
-								"empty": {
-									"type": "string"
-								},
-								"duplicate": {
-									"type": "string"
-								},
 								"health_summary": {
 									"type": "string"
 								},
@@ -4452,35 +4434,17 @@
 								}
 							},
 							"additionalProperties": false,
-							"required": ["description", "current", "presets", "saved", "empty", "duplicate", "health_summary", "targets_one", "targets_other"]
+							"required": ["health_summary", "targets_one", "targets_other"]
 						},
 						"talents": {
 							"type": "object",
 							"properties": {
-								"description": {
-									"type": "string"
-								},
-								"current": {
-									"type": "string"
-								},
-								"presets": {
-									"type": "string"
-								},
-								"saved": {
-									"type": "string"
-								},
-								"empty": {
-									"type": "string"
-								},
-								"duplicate": {
-									"type": "string"
-								},
 								"no_points": {
 									"type": "string"
 								}
 							},
 							"additionalProperties": false,
-							"required": ["description", "current", "presets", "saved", "empty", "duplicate", "no_points"]
+							"required": ["no_points"]
 						},
 						"gear_sets": {
 							"type": "object",
@@ -4722,6 +4686,8 @@
 					"additionalProperties": false,
 					"required": [
 						"combinations",
+						"gear_setups",
+						"no_gear_setups",
 						"total_iterations",
 						"total_iterations_tooltip",
 						"groups",

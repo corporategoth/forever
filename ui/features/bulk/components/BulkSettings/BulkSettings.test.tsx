@@ -1,92 +1,205 @@
-import { Encounter, ItemSlot, Target } from '@generated/proto/common';
-import { BulkEncounterRef, BulkTalentRef, SavedEncounter, SavedTalents } from '@generated/proto/ui';
+import { BulkEnchantSlotOptions } from '@generated/proto/api';
+import { APLListItem, APLRotation, APLRotation_Type as APLRotationType } from '@generated/proto/apl';
+import { Encounter, type EquipmentSpec, HandType, ItemSlot, ItemType, Target } from '@generated/proto/common';
+import {
+	BulkEnchantPreset,
+	BulkEncounterPair,
+	BulkEncounterRef,
+	BulkGearSetRef,
+	BulkRotationRef,
+	BulkSettingsRef,
+	BulkTalentPair,
+	BulkTalentRef,
+	SavedEncounter,
+	SavedGearSet,
+	SavedRotation,
+	SavedTalents,
+	type UIEnchant,
+} from '@generated/proto/ui';
+import i18n from '@i18n/config';
 import { BulkSimItemSlot } from '@sim/bulk/constants_auto_gen';
 import { SimHostProvider } from '@sim/context/SimHostContext';
 import type { Player } from '@sim/player/player';
 import { PlayerSpecs } from '@sim/player/specs';
-import type { EquippedItem } from '@sim/proto/equipped_item';
-import { bulkState, loadStoredBulkEncounters, loadStoredBulkTalents, patchBulkState, seedBulkSettings } from '@sim/settings/bulk_settings';
-import { type BulkMode, createSimStore, patchKeyed, patchSlice, PLAYER_FIELDS, seedKeyed, zeroVersions } from '@sim/state/sim_store';
+import { Gear } from '@sim/proto/gear';
+import { getGearIdentityKey } from '@sim/proto/items';
+import { Stats } from '@sim/proto/stats';
+import { bulkState, patchBulkState, seedBulkSettings } from '@sim/settings/bulk_settings';
+import { type BulkMode, createSimStore, patchSlice, PLAYER_FIELDS, seedKeyed, zeroVersions } from '@sim/state/sim_store';
 import { memoryEnv } from '@testing/sim/memory_env';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { makeEquippedItem } from '@testing/storybook/fixtures/gear';
+import { makeUIEnchant } from '@testing/storybook/fixtures/protos';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { setBulkMode } from '../../model/mode';
+import english from '../../../../../assets/locales/en/translation.json';
+import { setBulkEnchantPickChecked } from '../../model/enchant_picks';
 import type { BulkSettingsViewProps } from './BulkSettings';
+
+const limits = vi.hoisted(() => ({ iterations: null as number | null }));
 
 vi.mock('@sim/bulk/utils', async () => {
 	const actual = await vi.importActual<typeof import('@sim/bulk/utils')>('@sim/bulk/utils');
 	return { ...actual, getBulkPlayerCanDualWield: () => true, getBulkFreezeWeaponTypes: () => [] };
 });
 vi.mock('../../model/run', () => ({ runBulkBatch: vi.fn() }));
+// Passing the web limit takes some hundred candidates in one run, so the warning case sets a limit of its own.
+vi.mock('../../model/limits', async () => {
+	const actual = await vi.importActual<typeof import('../../model/limits')>('../../model/limits');
+	return { ...actual, bulkIterationsLimit: (isNative: boolean | undefined) => limits.iterations ?? actual.bulkIterationsLimit(isNative) };
+});
 
 const { BulkSettings, BulkSettingsView } = await import('./BulkSettings');
 
+// No i18n mock: the card shows the real copy, and the test setup loads no locale, so this suite loads the English one.
+beforeAll(() => {
+	i18n.addResourceBundle('en', 'translation', english, true, true);
+});
+afterAll(() => {
+	i18n.removeResourceBundle('en', 'translation');
+});
+
 const STORE_KEY = 5;
-const RING = { id: 1, equals: () => false } as unknown as EquippedItem;
-
-const SAVED_ENCOUNTERS_KEY = 'test-saved-encounters';
-const CURRENT = { duration: 180, durationVariation: 5, targets: [Target.create()] };
-
-const SAVED_TALENTS_KEY = 'test-saved-talents';
+const KEYS = {
+	gear: 'test-saved-gear',
+	encounters: 'test-saved-encounters',
+	settings: 'test-saved-settings',
+	talents: 'test-saved-talents',
+	rotations: 'test-saved-rotations',
+};
 const LIVE = '30305001302';
 const ARMS = '3030500130';
-const FURY = '-0505000540501';
+
+const CLOAK_AGILITY = makeUIEnchant({ effectId: 849, name: 'Cloak agility', type: ItemType.ItemTypeBack });
+const CLOAK_ARMOR = makeUIEnchant({ effectId: 884, name: 'Cloak armor', type: ItemType.ItemTypeBack });
+const BACK_ENCHANTS = (slot: ItemSlot) => (slot === ItemSlot.ItemSlotBack ? [CLOAK_AGILITY, CLOAK_ARMOR] : []);
+
+const cloak = (enchant?: UIEnchant) => makeEquippedItem({ item: { id: 101, type: ItemType.ItemTypeBack, unique: false }, enchant });
+const chest = (id: number) => makeEquippedItem({ item: { id, type: ItemType.ItemTypeChest, unique: false } });
+const RING = makeEquippedItem({ item: { id: 102, type: ItemType.ItemTypeFinger, unique: false } });
+const TWO_HANDER = makeEquippedItem({ item: { id: 104, handType: HandType.HandTypeTwoHand, unique: false } });
+
+// The current gear already wears the Agility cloak enchant; the sets wear none.
+const CURRENT_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(CLOAK_AGILITY), [ItemSlot.ItemSlotFinger1]: RING });
+const RAID_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(), [ItemSlot.ItemSlotChest]: chest(103) });
+const DUNGEON_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(), [ItemSlot.ItemSlotChest]: chest(105) });
+const TWO_HAND_GEAR = new Gear({ [ItemSlot.ItemSlotBack]: cloak(), [ItemSlot.ItemSlotMainHand]: TWO_HANDER });
+const KNOWN_GEAR = [CURRENT_GEAR, RAID_GEAR, DUNGEON_GEAR, TWO_HAND_GEAR];
+
+const enchantPreset = (name: string, effectIds: number[]) =>
+	BulkEnchantPreset.create({ name, slots: [BulkEnchantSlotOptions.create({ slot: ItemSlot.ItemSlotBack, effectIds })] });
+
+const LIVE_ROTATION = APLRotation.create({ type: APLRotationType.TypeAPL, priorityList: [APLListItem.create({ notes: 'live' })] });
+
+// As the player's resolver: an APL goes as it is, and a Simple pick generates its list by whether the gear holds a weapon.
+const resolve = ({ gear, rotation }: { gear: Gear; rotation: APLRotation }) =>
+	rotation.type === APLRotationType.TypeSimple
+		? APLRotation.create({ priorityList: [APLListItem.create({ notes: gear.getEquippedItem(ItemSlot.ItemSlotMainHand) ? 'two-hand' : 'no weapon' })] })
+		: rotation;
+
+const PRESETS = {
+	gear: [
+		{ name: 'Raid', gear: RAID_GEAR.asSpec() },
+		{ name: 'Two-hand', gear: TWO_HAND_GEAR.asSpec() },
+	],
+	encounters: [],
+	talents: [{ name: 'Arms', data: SavedTalents.create({ talentsString: ARMS }) }],
+	rotations: [{ name: 'Simple', rotation: SavedRotation.create({ rotation: APLRotation.create({ type: APLRotationType.TypeSimple }) }) }],
+};
+
+const SAVED: Record<keyof typeof KEYS, Record<string, unknown>> = {
+	gear: {
+		'Raid copy': SavedGearSet.toJson(SavedGearSet.create({ gear: RAID_GEAR.asSpec() })),
+		Dungeon: SavedGearSet.toJson(SavedGearSet.create({ gear: DUNGEON_GEAR.asSpec() })),
+	},
+	encounters: { Council: SavedEncounter.toJson(SavedEncounter.create({ encounter: Encounter.create({ duration: 90, targets: [Target.create()] }) })) },
+	settings: {},
+	talents: {},
+	rotations: {},
+};
+
+const COUNCIL_PAIR = BulkEncounterPair.create({ encounter: BulkEncounterRef.create({ name: 'Council' }), settings: BulkSettingsRef.create(), checked: true });
+const ARMS_SIMPLE_PAIR = BulkTalentPair.create({
+	talents: BulkTalentRef.create({ name: 'Arms', preset: true }),
+	rotation: BulkRotationRef.create({ name: 'Simple', preset: true }),
+	checked: true,
+});
+
+const gearSet = (name: string, preset = false) => BulkGearSetRef.create({ name, preset });
 
 interface MountOptions {
 	reforger?: unknown;
-	presets?: Array<{ name: string; encounter: Encounter }>;
-	saved?: Record<string, Encounter>;
-	checked?: BulkEncounterRef[];
-	talentPresets?: Array<{ name: string; data: SavedTalents }>;
-	savedTalents?: Record<string, string>;
-	checkedTalents?: BulkTalentRef[];
-	talentsString?: string;
-	iterations?: number;
 	powerTools?: boolean;
 	mode?: BulkMode;
+	iterations?: number;
+	gearSets?: BulkGearSetRef[];
+	buildEnchantPresets?: string[];
+	encounterPairs?: BulkEncounterPair[];
+	talentPairs?: BulkTalentPair[];
 }
 
 const mount = ({
 	reforger = null,
-	presets = [],
-	saved = {},
-	checked = [],
-	talentPresets = [],
-	savedTalents = {},
-	checkedTalents = [],
-	talentsString = LIVE,
-	iterations = 0,
 	powerTools = true,
-	mode = 'builds',
+	mode = 'gear',
+	iterations = 0,
+	gearSets = [],
+	buildEnchantPresets = [],
+	encounterPairs = [],
+	talentPairs = [],
 }: MountOptions = {}) => {
-	const record = Object.entries(saved).map(([name, encounter]) => [name, SavedEncounter.toJson(SavedEncounter.create({ encounter }))]);
-	localStorage.setItem(SAVED_ENCOUNTERS_KEY, JSON.stringify(Object.fromEntries(record)));
-	const talentRecord = Object.entries(savedTalents).map(([name, talents]) => [name, SavedTalents.toJson(SavedTalents.create({ talentsString: talents }))]);
-	localStorage.setItem(SAVED_TALENTS_KEY, JSON.stringify(Object.fromEntries(talentRecord)));
+	for (const [kind, key] of Object.entries(KEYS)) localStorage.setItem(key, JSON.stringify(SAVED[kind as keyof typeof KEYS]));
 	const store = createSimStore();
-	patchSlice(store, 'encounter', CURRENT);
+	patchSlice(store, 'encounter', { duration: 180, durationVariation: 5, targets: [Target.create()] });
 	patchSlice(store, 'ui', { showPowerTools: powerTools });
-	const gear = { getEquippedItem: (slot: ItemSlot) => (slot === ItemSlot.ItemSlotFinger1 ? RING : null) };
-	seedKeyed(store, 'players', STORE_KEY, { gear, talentsString, v: zeroVersions(PLAYER_FIELDS) } as never);
+	seedKeyed(store, 'players', STORE_KEY, {
+		gear: CURRENT_GEAR,
+		bonusStats: new Stats(),
+		talentsString: LIVE,
+		profession1: 0,
+		profession2: 0,
+		v: zeroVersions(PLAYER_FIELDS),
+	} as never);
 	const player = {
-		sim: { store, isNative: false, env: memoryEnv() },
+		sim: {
+			store,
+			isNative: false,
+			env: memoryEnv(),
+			db: {
+				getEnchants: BACK_ENCHANTS,
+				lookupEquipmentSpec: (spec: EquipmentSpec) =>
+					KNOWN_GEAR.find(known => getGearIdentityKey(known.asSpec()) === getGearIdentityKey(spec)) ?? new Gear({}),
+			},
+		},
 		storeKey: STORE_KEY,
-		getGear: () => gear,
+		getGear: () => CURRENT_GEAR,
 		getPlayerSpec: () => PlayerSpecs.DpsWarrior,
+		aplRotation: LIVE_ROTATION,
+		getResolvedAplRotationForBuild: resolve,
 	} as unknown as Player<any>;
 	seedBulkSettings(player);
-	patchBulkState(player, { encounters: checked, talents: checkedTalents, iterations, mode });
+	patchBulkState(player, {
+		mode,
+		iterations,
+		gearSets,
+		enchantPresets: [enchantPreset('Agility', [CLOAK_AGILITY.effectId]), enchantPreset('Cloaks', [CLOAK_AGILITY.effectId, CLOAK_ARMOR.effectId])],
+		buildEnchantPresets,
+		encounterPairs,
+		talentPairs,
+	});
 	const host = {
 		player,
 		sim: player.sim,
 		reforger,
 		reforgeOptions: null,
-		individualConfig: { presets: { encounters: presets, talents: talentPresets } },
+		individualConfig: { presets: PRESETS },
 		getStorageKey: (key: string) => `test-${key}`,
-		getSavedEncounterStorageKey: () => SAVED_ENCOUNTERS_KEY,
-		getSavedTalentsStorageKey: () => SAVED_TALENTS_KEY,
+		getSavedGearStorageKey: () => KEYS.gear,
+		getSavedEncounterStorageKey: () => KEYS.encounters,
+		getSavedSettingsStorageKey: () => KEYS.settings,
+		getSavedTalentsStorageKey: () => KEYS.talents,
+		getSavedRotationStorageKey: () => KEYS.rotations,
 	} as never;
 	const { container } = render(
 		<SimHostProvider host={host}>
@@ -102,17 +215,17 @@ const mount = ({
 		return [trigger, label] as const;
 	};
 	const openGroup = (group: string) => fireEvent.click(container.querySelector(`[data-testid="bulk-settings-group-${group}-trigger"]`)!);
-	return { player, container, pick, openGroup };
+	const groups = () =>
+		[...container.querySelectorAll('[data-testid^="bulk-settings-group-"][data-testid$="-trigger"]')].map(trigger => trigger.getAttribute('data-testid'));
+	return { player, container, pick, openGroup, groups };
 };
 
-const box = (name: string) => screen.getByRole('checkbox', { name });
-// The texts a checkbox is described by: the row's summary, then the duplicate reason when there is one.
-const descriptions = (name: string) => (box(name).getAttribute('aria-describedby') ?? '').split(' ').map(id => document.getElementById(id)?.textContent);
-const hasLabelTooltip = (name: string) => screen.getByText(name, { selector: 'label' }).hasAttribute('data-tooltip-id');
-const totalIterations = () => screen.getByTestId('bulk-total-iterations').textContent;
+const text = (testId: string) => screen.getByTestId(testId).textContent;
+const simulate = () => screen.getByTestId('bulk-settings-btn') as HTMLButtonElement;
 
 beforeEach(() => {
 	localStorage.clear();
+	limits.iterations = null;
 });
 
 describe('BulkSettings', () => {
@@ -144,293 +257,103 @@ describe('BulkSettings', () => {
 		expect(JSON.parse(localStorage.getItem('test-__bulkSettingsGroups')!)).toEqual(['freezes']);
 	});
 
-	it('shows only the encounter, talent, enchant and frozen slot groups, even for a spec with the gear optimizer', () => {
-		const { container } = mount({ reforger: { settings: {} } });
-
-		const triggers = [...container.querySelectorAll('[data-testid^="bulk-settings-group-"][data-testid$="-trigger"]')];
-
-		expect(triggers.map(trigger => trigger.getAttribute('data-testid'))).toEqual([
-			'bulk-settings-group-encounters-trigger',
-			'bulk-settings-group-talents-trigger',
-			'bulk-settings-group-enchants-trigger',
-			'bulk-settings-group-freezes-trigger',
-		]);
-	});
-
-	it('shows the encounter and talent groups only in Builds mode, keeping what they have checked', () => {
-		const checked = [BulkEncounterRef.create({ name: 'Patchwerk', preset: true })];
-		const checkedTalents = [BulkTalentRef.create({ name: 'Arms', preset: true })];
-		const { player, container } = mount({
-			presets: [{ name: 'Patchwerk', encounter: Encounter.create({ duration: 300, durationVariation: 30, targets: [Target.create()] }) }],
-			checked,
-			talentPresets: [{ name: 'Arms', data: SavedTalents.create({ talentsString: ARMS }) }],
-			checkedTalents,
-			iterations: 100,
-			mode: 'gear',
-		});
-		const groups = () =>
-			[...container.querySelectorAll('[data-testid^="bulk-settings-group-"][data-testid$="-trigger"]')].map(trigger =>
-				trigger.getAttribute('data-testid'),
-			);
+	it('shows the enchant and frozen slot groups and no encounter or talent group in Gear mode, even for a spec with the gear optimizer', () => {
+		const { groups } = mount({ reforger: { settings: {} }, encounterPairs: [COUNCIL_PAIR], talentPairs: [ARMS_SIMPLE_PAIR] });
 
 		expect(groups()).toEqual(['bulk-settings-group-enchants-trigger', 'bulk-settings-group-freezes-trigger']);
-		expect(screen.queryByTestId('bulk-runs-count')).toBeNull();
-		expect(totalIterations()).toBe('100');
-
-		act(() => setBulkMode(player, 'builds'));
-
-		expect(groups()).toEqual([
-			'bulk-settings-group-encounters-trigger',
-			'bulk-settings-group-talents-trigger',
-			'bulk-settings-group-enchants-trigger',
-			'bulk-settings-group-freezes-trigger',
-		]);
-		expect(screen.getByTestId('bulk-runs-count').textContent).toBe('bulk_tab.settings.runs.total');
-		expect(totalIterations()).toBe('400');
-		expect(bulkState(player).encounters).toEqual(checked);
-		expect(bulkState(player).talents).toEqual(checkedTalents);
-	});
-});
-
-describe('BulkSettings encounters group', () => {
-	const PATCHWERK = Encounter.create({ duration: 300, durationVariation: 30, targets: [Target.create()] });
-	const COUNCIL = Encounter.create({ duration: 240, durationVariation: 10, targets: [Target.create(), Target.create(), Target.create()] });
-	const SAME_AS_CURRENT = Encounter.create({ ...createSimStore().getState().encounter, ...CURRENT });
-	const ref = (name: string, preset = false) => BulkEncounterRef.create({ name, preset });
-
-	const openEncounters = (options: MountOptions = {}) => {
-		const mounted = mount(options);
-		mounted.openGroup('encounters');
-		return mounted;
-	};
-	const rows = () => screen.queryAllByTestId('bulk-encounter');
-
-	it('lists the presets, then the saved encounters, under their headings, each with its summary as a tooltip', () => {
-		openEncounters({ presets: [{ name: 'Patchwerk', encounter: PATCHWERK }], saved: { Council: COUNCIL } });
-
-		expect(rows()).toHaveLength(2);
-		expect(rows().map(row => row.querySelector('label')?.textContent)).toEqual(['Patchwerk', 'Council']);
-		expect(descriptions('Patchwerk')).toEqual(['5:00 ±30s · bulk_tab.settings.encounters.targets.']);
-		expect(descriptions('Council')).toEqual(['4:00 ±10s · bulk_tab.settings.encounters.targets.']);
-		expect(hasLabelTooltip('Patchwerk')).toBe(true);
-		expect(hasLabelTooltip('Council')).toBe(true);
-		expect(screen.getByText('bulk_tab.settings.encounters.presets')).toBeTruthy();
-		expect(screen.getByText('bulk_tab.settings.encounters.saved')).toBeTruthy();
-		expect(screen.queryByText('bulk_tab.settings.encounters.empty')).toBeNull();
 	});
 
-	it('omits the heading of an empty list', () => {
-		openEncounters({ saved: { Council: COUNCIL } });
+	it('shows only the run card in Builds mode', () => {
+		const { groups } = mount({ mode: 'builds' });
 
-		expect(screen.queryByText('bulk_tab.settings.encounters.presets')).toBeNull();
-		expect(screen.getByText('bulk_tab.settings.encounters.saved')).toBeTruthy();
+		expect(screen.getByTestId('bulk-run-card')).toBeTruthy();
+		expect(screen.queryByTestId('bulk-settings-group-enchants')).toBeNull();
+		expect(groups()).toEqual([]);
 	});
 
-	it('shows the current encounter as a ticked, locked row that follows the live encounter', () => {
-		const { player } = openEncounters();
-		const name = 'bulk_tab.settings.encounters.current';
-		const current = box(name);
-
-		expect(current.getAttribute('aria-checked')).toBe('true');
-		expect(current.getAttribute('aria-disabled')).toBe('true');
-		expect(hasLabelTooltip(name)).toBe(true);
-		expect(descriptions(name)).toEqual(['3:00 ±5s · bulk_tab.settings.encounters.targets.']);
-
-		act(() => patchSlice(player.sim.store, 'encounter', { duration: 200, useHealth: true }));
-
-		expect(descriptions(name)).toEqual(['bulk_tab.settings.encounters.health_summary · bulk_tab.settings.encounters.targets.']);
-	});
-
-	it('stores the checked refs in list order', () => {
-		const { player } = openEncounters({ presets: [{ name: 'Patchwerk', encounter: PATCHWERK }], saved: { Council: COUNCIL } });
-
-		fireEvent.click(box('Council'));
-		fireEvent.click(box('Patchwerk'));
-
-		const expected = [ref('Patchwerk', true), ref('Council')];
-		expect(bulkState(player).encounters).toEqual(expected);
-		expect(loadStoredBulkEncounters(player)?.encounters).toEqual(expected);
-		expect(box('Council').getAttribute('aria-checked')).toBe('true');
-	});
-
-	it('hides an encounter equal to the current one and keeps its stored state', () => {
-		const { player } = openEncounters({ saved: { 'Same as current': SAME_AS_CURRENT, Council: COUNCIL }, checked: [ref('Same as current')] });
-
-		expect(rows()).toHaveLength(1);
-		expect(screen.queryByRole('checkbox', { name: 'Same as current' })).toBeNull();
-
-		fireEvent.click(box('Council'));
-
-		expect(bulkState(player).encounters).toEqual([ref('Same as current'), ref('Council')]);
-	});
-
-	it('marks the checkbox of a checked encounter equal to an earlier checked one', () => {
-		openEncounters({
-			presets: [{ name: 'Patchwerk', encounter: PATCHWERK }],
-			saved: { 'Patchwerk again': PATCHWERK, Council: COUNCIL },
-			checked: [ref('Patchwerk', true), ref('Patchwerk again')],
-		});
-
-		expect(['Patchwerk', 'Patchwerk again', 'Council'].map(name => box(name).getAttribute('aria-invalid'))).toEqual([null, 'true', null]);
-		expect(descriptions('Patchwerk again')).toEqual(['5:00 ±30s · bulk_tab.settings.encounters.targets.', 'bulk_tab.settings.encounters.duplicate']);
-		expect(descriptions('Council')).toEqual(['4:00 ±10s · bulk_tab.settings.encounters.targets.']);
-		expect(descriptions('Patchwerk')).toEqual(['5:00 ±30s · bulk_tab.settings.encounters.targets.']);
-	});
-
-	it('points to the saved encounters when there is nothing to pick', () => {
-		openEncounters();
-
-		expect(rows()).toHaveLength(0);
-		expect(screen.getByText('bulk_tab.settings.encounters.empty')).toBeTruthy();
-		expect(screen.getByTestId('bulk-encounter-current')).toBeTruthy();
-	});
-
-	it('counts every encounter the batch will run', () => {
-		mount({
-			presets: [{ name: 'Patchwerk', encounter: PATCHWERK }],
-			saved: { Council: COUNCIL },
-			checked: [ref('Patchwerk', true), ref('Council')],
+	it('shows combinations and iterations only with power tools off, and keeps the stored pairs as they are', () => {
+		const { player, groups } = mount({
+			powerTools: false,
+			mode: 'builds',
 			iterations: 100,
+			buildEnchantPresets: ['Cloaks'],
+			encounterPairs: [COUNCIL_PAIR],
+			talentPairs: [ARMS_SIMPLE_PAIR],
 		});
 
-		expect(screen.getByTestId('bulk-runs-count').textContent).toBe('bulk_tab.settings.runs.total');
-		expect(totalIterations()).toBe('300');
-	});
-
-	it('hides the group and counts the current encounter alone with power tools off, keeping the checked ones', () => {
-		const checked = [ref('Patchwerk', true), ref('Council')];
-		const presets = [{ name: 'Patchwerk', encounter: PATCHWERK }];
-		const { player, container } = mount({ presets, saved: { Council: COUNCIL }, checked, iterations: 100, powerTools: false });
-		const trigger = () => container.querySelector('[data-testid="bulk-settings-group-encounters-trigger"]');
-
-		expect(trigger()).toBeNull();
+		expect(text('bulk-combinations')).toBe('0');
+		expect(text('bulk-total-iterations')).toBe('100');
+		expect(screen.queryByTestId('bulk-gear-setups')).toBeNull();
 		expect(screen.queryByTestId('bulk-runs-count')).toBeNull();
-		expect(totalIterations()).toBe('100');
-		expect(bulkState(player).encounters).toEqual(checked);
+		expect(groups()).toEqual(['bulk-settings-group-enchants-trigger', 'bulk-settings-group-freezes-trigger']);
 
 		act(() => patchSlice(player.sim.store, 'ui', { showPowerTools: true }));
 
-		expect(trigger()).not.toBeNull();
-		expect(screen.getByTestId('bulk-runs-count').textContent).toBe('bulk_tab.settings.runs.total');
-		expect(totalIterations()).toBe('300');
-	});
-});
-
-describe('BulkSettings talents group', () => {
-	const tref = (name: string, preset = false) => BulkTalentRef.create({ name, preset });
-	const preset = (name: string, talentsString: string) => ({ name, data: SavedTalents.create({ talentsString }) });
-	const ARMS_PRESET = preset('Arms', ARMS);
-	const PATCHWERK = Encounter.create({ duration: 300, durationVariation: 30, targets: [Target.create()] });
-
-	const openTalents = (options: MountOptions = {}) => {
-		const mounted = mount(options);
-		mounted.openGroup('talents');
-		return mounted;
-	};
-	const rows = () => screen.queryAllByTestId('bulk-talent');
-
-	it('lists the preset talents, then the saved ones, under their headings, each with its talent string as a tooltip', () => {
-		openTalents({ talentPresets: [ARMS_PRESET], savedTalents: { Fury: FURY } });
-
-		expect(rows()).toHaveLength(2);
-		expect(rows().map(row => row.querySelector('label')?.textContent)).toEqual(['Arms', 'Fury']);
-		expect(descriptions('Arms')).toEqual([`${ARMS}.`]);
-		expect(descriptions('Fury')).toEqual([`${FURY}.`]);
-		expect(hasLabelTooltip('Arms')).toBe(true);
-		expect(hasLabelTooltip('Fury')).toBe(true);
-		expect(screen.getByText('bulk_tab.settings.talents.presets')).toBeTruthy();
-		expect(screen.getByText('bulk_tab.settings.talents.saved')).toBeTruthy();
-		expect(screen.queryByText('bulk_tab.settings.talents.empty')).toBeNull();
+		expect(text('bulk-gear-setups')).toBe('2');
+		expect(groups()).toEqual([]);
+		expect(bulkState(player).encounterPairs).toEqual([COUNCIL_PAIR]);
+		expect(bulkState(player).talentPairs).toEqual([ARMS_SIMPLE_PAIR]);
 	});
 
-	it('shows the current talents as a ticked, locked row that follows the live talents', () => {
-		const { player } = openTalents();
-		const name = 'bulk_tab.settings.talents.current';
-		const current = box(name);
+	it('counts the gear setups as gear sets × enchant presets after duplicates drop', () => {
+		// The current gear, Raid and Dungeon, each with either cloak enchant; Raid copy holds the Raid set and drops.
+		mount({ mode: 'builds', gearSets: [gearSet('Raid', true), gearSet('Raid copy'), gearSet('Dungeon')], buildEnchantPresets: ['Cloaks'] });
 
-		expect(current.getAttribute('aria-checked')).toBe('true');
-		expect(current.getAttribute('aria-disabled')).toBe('true');
-		expect(hasLabelTooltip(name)).toBe(true);
-		expect(descriptions(name)).toEqual([`${LIVE}.`]);
-
-		act(() => patchKeyed(player.sim.store, 'players', STORE_KEY, { talentsString: ARMS }));
-
-		expect(descriptions(name)).toEqual([`${ARMS}.`]);
+		expect(text('bulk-gear-setups')).toBe('6');
 	});
 
-	it('stores the checked setups in list order', () => {
-		const { player } = openTalents({ talentPresets: [ARMS_PRESET], savedTalents: { Fury: FURY } });
-
-		fireEvent.click(box('Fury'));
-		fireEvent.click(box('Arms'));
-
-		const expected = [tref('Arms', true), tref('Fury')];
-		expect(bulkState(player).talents).toEqual(expected);
-		expect(loadStoredBulkTalents(player)?.talents).toEqual(expected);
-		expect(box('Fury').getAttribute('aria-checked')).toBe('true');
-	});
-
-	it('hides a setup equal to the current talents and keeps its stored state', () => {
-		const { player } = openTalents({ savedTalents: { 'Same as current': `${LIVE}000--`, Fury: FURY }, checkedTalents: [tref('Same as current')] });
-
-		expect(rows()).toHaveLength(1);
-		expect(screen.queryByRole('checkbox', { name: 'Same as current' })).toBeNull();
-
-		fireEvent.click(box('Fury'));
-
-		expect(bulkState(player).talents).toEqual([tref('Same as current'), tref('Fury')]);
-	});
-
-	it('marks the checkbox of a checked setup equal to an earlier checked one', () => {
-		openTalents({
-			talentPresets: [ARMS_PRESET],
-			savedTalents: { 'Arms again': `${ARMS}0`, Fury: FURY },
-			checkedTalents: [tref('Arms', true), tref('Arms again')],
-		});
-
-		expect(['Arms', 'Arms again', 'Fury'].map(name => box(name).getAttribute('aria-invalid'))).toEqual([null, 'true', null]);
-		expect(descriptions('Arms again')).toEqual([`${ARMS}0.`, 'bulk_tab.settings.talents.duplicate']);
-		expect(descriptions('Fury')).toEqual([`${FURY}.`]);
-		expect(descriptions('Arms')).toEqual([`${ARMS}.`]);
-	});
-
-	it('points to the saved talents when there is nothing to pick', () => {
-		openTalents();
-
-		expect(rows()).toHaveLength(0);
-		expect(screen.getByText('bulk_tab.settings.talents.empty')).toBeTruthy();
-		expect(screen.getByTestId('bulk-talent-current')).toBeTruthy();
-	});
-
-	it('counts every encounter and talent setup the batch will run', () => {
+	it('counts the planned runs after splits and collapses', () => {
+		// The current talent pair runs both setups in one request; Arms with a Simple rotation resolves otherwise for the
+		// two-hand set, so its setups split into two requests: 2 encounter pairs × (1 + 2).
 		mount({
-			presets: [{ name: 'Patchwerk', encounter: PATCHWERK }],
-			checked: [BulkEncounterRef.create({ name: 'Patchwerk', preset: true })],
-			talentPresets: [ARMS_PRESET],
-			checkedTalents: [tref('Arms', true)],
-			iterations: 100,
+			mode: 'builds',
+			gearSets: [gearSet('Two-hand', true)],
+			buildEnchantPresets: ['Agility'],
+			encounterPairs: [COUNCIL_PAIR],
+			talentPairs: [ARMS_SIMPLE_PAIR],
 		});
-		const runs = screen.getByTestId('bulk-runs-count');
 
-		expect(runs.textContent).toBe('bulk_tab.settings.runs.total');
-		expect(runs.previousElementSibling!.textContent).toBe('bulk_tab.settings.runs.encounters × bulk_tab.settings.runs.talents');
-		expect(totalIterations()).toBe('400');
+		expect(text('bulk-gear-setups')).toBe('2');
+		expect(text('bulk-runs-label')).toBe('2 encounter setups × 2 talent setups');
+		expect(text('bulk-runs-count')).toBe('= 6 runs');
 	});
 
-	it('hides the group and runs the current talents alone with power tools off, keeping the checked setups', () => {
-		const checkedTalents = [tref('Arms', true)];
-		const { player, container } = mount({ talentPresets: [ARMS_PRESET], checkedTalents, iterations: 100, powerTools: false });
-		const trigger = () => container.querySelector('[data-testid="bulk-settings-group-talents-trigger"]');
+	it('shows the minimum iterations of every run', () => {
+		// The current gear with the Agility enchant is the baseline; the other three setups are one request's candidates.
+		mount({ mode: 'builds', gearSets: [gearSet('Raid', true)], buildEnchantPresets: ['Cloaks'] });
 
-		expect(trigger()).toBeNull();
+		expect(text('bulk-total-iterations')).toBe('40,000');
+	});
+
+	it('disables Simulate with a hint while no enchant preset is ticked', () => {
+		const { player } = mount({ mode: 'builds' });
+
+		expect(text('bulk-gear-setups')).toBe('0');
+		expect(text('bulk-no-gear-setups')).toBe('Tick an enchant preset to make gear setups.');
 		expect(screen.queryByTestId('bulk-runs-count')).toBeNull();
-		expect(totalIterations()).toBe('100');
-		expect(bulkState(player).talents).toEqual(checkedTalents);
+		expect(simulate().disabled).toBe(true);
 
-		act(() => patchSlice(player.sim.store, 'ui', { showPowerTools: true }));
+		act(() => setBulkEnchantPickChecked(player, 'Cloaks', true, ['Agility', 'Cloaks']));
 
-		expect(trigger()).not.toBeNull();
-		expect(totalIterations()).toBe('200');
+		expect(text('bulk-gear-setups')).toBe('2');
+		expect(screen.queryByTestId('bulk-no-gear-setups')).toBeNull();
+		expect(simulate().disabled).toBe(false);
+	});
+
+	it('judges the warning on the largest request’s iterations in Builds mode', () => {
+		// Each encounter pair runs one request with one candidate: 20,000 iterations each, 40,000 in all.
+		const options = { mode: 'builds' as const, buildEnchantPresets: ['Cloaks'], encounterPairs: [COUNCIL_PAIR] };
+		limits.iterations = 30_000;
+		mount(options);
+
+		expect(text('bulk-total-iterations')).toBe('40,000');
+		expect(screen.queryByTestId('warning')).toBeNull();
+		cleanup();
+
+		limits.iterations = 19_999;
+		mount(options);
+
+		expect(screen.getByTestId('warning')).toBeTruthy();
 	});
 });
 
@@ -452,8 +375,7 @@ const renderSettings = (props: Partial<BulkSettingsViewProps> = {}) => {
 			combinationsCount={<span data-testid="count" />}
 			canRun
 			openGroups={['freezes']}
-			encounters={null}
-			talents={null}
+			groups
 			enchants={null}
 			frozenItems={[RING_VIEW]}
 			weaponFreeze={null}

@@ -19,16 +19,7 @@ import {
 	type WeaponSkillValue,
 	type WeaponType,
 } from '@generated/proto/common';
-import {
-	type BulkEnchantPreset,
-	type BulkEncounterPair,
-	type BulkEncounterRef,
-	type BulkGearSetRef,
-	type BulkRotationRef,
-	type BulkTalentPair,
-	type BulkTalentRef,
-	DatabaseFilters,
-} from '@generated/proto/ui';
+import { type BulkEnchantPreset, type BulkEncounterPair, type BulkGearSetRef, type BulkTalentPair, DatabaseFilters } from '@generated/proto/ui';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
@@ -229,7 +220,7 @@ export interface StatSweepSlice {
 	v: { settings: number };
 }
 
-// Gear runs the current encounter and talents alone; Builds adds the checked encounters and talent setups.
+// Gear runs the current encounter and talents alone; Builds runs gear setups with the checked encounter and talent pairs.
 export type BulkMode = 'gear' | 'builds';
 
 // Bulk (batch) sim tab, one slice per player. The autosave and the combination
@@ -243,16 +234,10 @@ export interface BulkSlice {
 	frozenWeaponSlot: ItemSlot.ItemSlotMainHand | ItemSlot.ItemSlotOffHand | undefined;
 	weaponTypeFilters: ReadonlyMap<ItemSlot.ItemSlotMainHand | ItemSlot.ItemSlotOffHand, WeaponType[]>;
 	enchantPresets: readonly BulkEnchantPreset[];
-	// The checked saved encounters, in list order; the current encounter is read live and never stored here.
-	encounters: readonly BulkEncounterRef[];
-	// The checked saved talent setups, in list order; the current talents are read live and never stored here.
-	talents: readonly BulkTalentRef[];
 	// The checked gear sets Builds mode runs, in list order; the current gear is read live and never stored here.
 	gearSets: readonly BulkGearSetRef[];
 	// The names of the enchant presets Builds mode runs every gear set with, in list order; not the Gear mode's checked ones.
 	buildEnchantPresets: readonly string[];
-	// The checked rotations Builds mode runs, in list order; the current rotation is read live and never stored here.
-	rotations: readonly BulkRotationRef[];
 	// The encounter and settings pairs Builds mode lists, in list order; the current pair runs anyway and is never stored here.
 	encounterPairs: readonly BulkEncounterPair[];
 	// The talent and rotation pairs Builds mode lists, in list order; the current pair runs anyway and is never stored here.

@@ -7,45 +7,59 @@ import { Spinner } from '@ui-kit/Spinner';
 import { Tooltip, tooltipAnchorProps } from '@ui-kit/Tooltip';
 import { TooltipButton } from '@ui-kit/TooltipButton';
 import clsx from 'clsx';
-import { useId, useMemo } from 'react';
+import { useId } from 'react';
 
-import { useBulkEncounters } from '../../hooks/useBulkEncounters';
 import { useBulkState } from '../../hooks/useBulkState';
-import { useBulkTalents } from '../../hooks/useBulkTalents';
-import { bulkEncounterRuns } from '../../model/encounters';
+import type { BulkBuildsCount } from '../../model/builds';
 import { bulkIterationsLimit } from '../../model/limits';
-import { bulkTalentRuns } from '../../model/talents';
+
+export type CombinationsCountBuilds = Pick<
+	BulkBuildsCount,
+	'setups' | 'encounterPairs' | 'talentPairs' | 'runs' | 'totalIterations' | 'largestRequestIterations'
+>;
 
 export interface CombinationsCountViewProps {
 	pending: boolean;
 	combinations: number;
 	iterations: number;
 	iterationsLimit: number;
-	encounters: number;
-	talentSetups: number;
+	/** Null in Gear mode, which counts the combinations and iterations of its one run. */
+	builds: CombinationsCountBuilds | null;
 	// Why the selection gives no combination, shown under the numbers.
 	error?: string | null;
 }
 
-export const CombinationsCountView = ({ pending, combinations, iterations, iterationsLimit, encounters, talentSetups, error }: CombinationsCountViewProps) => {
+export const CombinationsCountView = ({ pending, combinations, iterations, iterationsLimit, builds, error }: CombinationsCountViewProps) => {
 	const tooltipId = useId();
-	const runs = encounters * talentSetups;
-	const overLimit = !pending && iterations > iterationsLimit;
+	const countPending = pending && !builds;
+	// A Builds batch sends its runs one at a time, so the limit is per run.
+	const overLimit = builds ? builds.largestRequestIterations > iterationsLimit : !pending && iterations > iterationsLimit;
 	const warningText = i18n.t('bulk_tab.warning.iterations_limit', { limit: formatToNumber(iterationsLimit) });
 
 	return (
 		<dl className="mb-0 grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2" data-testid="bulk-combinations-count">
-			<dt className="font-normal">{i18n.t('bulk_tab.settings.combinations')}</dt>
-			<dd className="mb-0 text-right font-bold tabular-nums" data-testid="bulk-combinations">
-				{pending ? <Spinner size="sm" /> : formatToNumber(combinations)}
-			</dd>
-			{runs > 1 && (
+			{builds ? (
 				<>
-					<dt className="font-normal">
-						{`${i18n.t('bulk_tab.settings.runs.encounters', { count: encounters })} × ${i18n.t('bulk_tab.settings.runs.talents', { count: talentSetups })}`}
+					<dt className="font-normal">{i18n.t('bulk_tab.settings.gear_setups')}</dt>
+					<dd className="mb-0 text-right font-bold tabular-nums" data-testid="bulk-gear-setups">
+						{formatToNumber(builds.setups)}
+					</dd>
+				</>
+			) : (
+				<>
+					<dt className="font-normal">{i18n.t('bulk_tab.settings.combinations')}</dt>
+					<dd className="mb-0 text-right font-bold tabular-nums" data-testid="bulk-combinations">
+						{pending ? <Spinner size="sm" /> : formatToNumber(combinations)}
+					</dd>
+				</>
+			)}
+			{builds && builds.setups > 0 && (
+				<>
+					<dt className="font-normal" data-testid="bulk-runs-label">
+						{`${i18n.t('bulk_tab.settings.runs.encounters', { count: builds.encounterPairs })} × ${i18n.t('bulk_tab.settings.runs.talents', { count: builds.talentPairs })}`}
 					</dt>
 					<dd className="mb-0 text-right font-bold tabular-nums" data-testid="bulk-runs-count">
-						{i18n.t('bulk_tab.settings.runs.total', { count: runs, runs: formatToNumber(runs) })}
+						{i18n.t('bulk_tab.settings.runs.total', { count: builds.runs, runs: formatToNumber(builds.runs) })}
 					</dd>
 				</>
 			)}
@@ -74,9 +88,14 @@ export const CombinationsCountView = ({ pending, combinations, iterations, itera
 						<Tooltip id={tooltipId} place="left" content={warningText} />
 					</>
 				)}
-				{pending ? <Spinner size="sm" /> : formatToNumber(iterations * runs)}
+				{countPending ? <Spinner size="sm" /> : formatToNumber(builds ? builds.totalIterations : iterations)}
 			</dd>
-			{!pending && error && (
+			{builds?.setups === 0 && (
+				<dd className="col-span-2 mb-0" data-testid="bulk-no-gear-setups">
+					{i18n.t('bulk_tab.settings.no_gear_setups')}
+				</dd>
+			)}
+			{!builds && !pending && error && (
 				<dd className="col-span-2 mb-0 text-danger" role="alert" data-testid="bulk-combinations-error">
 					{error}
 				</dd>
@@ -85,19 +104,12 @@ export const CombinationsCountView = ({ pending, combinations, iterations, itera
 	);
 };
 
-export const CombinationsCount = () => {
+export const CombinationsCount = ({ builds }: Pick<CombinationsCountViewProps, 'builds'>) => {
 	const sim = useSim();
 	const pending = useBulkState(slice => slice.combinationsPending);
 	const combinations = useBulkState(slice => slice.combinations);
 	const iterations = useBulkState(slice => slice.iterations);
 	const error = useBulkState(slice => slice.combinationsError);
-	const { current, entries, checked, builds } = useBulkEncounters();
-	const encounters = useMemo(() => bulkEncounterRuns(current, entries, checked, builds).length, [current, entries, checked, builds]);
-	const { playerSpec, current: currentTalents, entries: talentEntries, checked: checkedTalents } = useBulkTalents();
-	const talentSetups = useMemo(
-		() => bulkTalentRuns(playerSpec, currentTalents, talentEntries, checkedTalents, builds).length,
-		[playerSpec, currentTalents, talentEntries, checkedTalents, builds],
-	);
 
 	return (
 		<CombinationsCountView
@@ -105,8 +117,7 @@ export const CombinationsCount = () => {
 			combinations={combinations}
 			iterations={iterations}
 			iterationsLimit={bulkIterationsLimit(sim.isNative)}
-			encounters={encounters}
-			talentSetups={talentSetups}
+			builds={builds}
 			error={error}
 		/>
 	);

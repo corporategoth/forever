@@ -1,24 +1,12 @@
 import { EnchantPresetsView } from '@features/enchant-presets/components/EnchantPresets/EnchantPresets';
 import { ItemSlot } from '@generated/proto/common';
-import i18n from '@i18n/config';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { StoryBoolean } from '@testing/storybook/fixtures/settings_reforge_bulk';
 import { useState } from 'react';
 import { fn } from 'storybook/test';
 
-import { BulkCheckList, type BulkCheckListProps } from '../BulkCheckList';
 import { BulkSettingsView, type BulkSettingsViewProps } from './BulkSettings';
 import { CombinationsCountView } from './CombinationsCount';
-
-const stringsOf = (group: 'encounters' | 'talents'): BulkCheckListProps['strings'] => {
-	const t = (key: string) => i18n.t(`bulk_tab.settings.${group}.${key}`);
-	return { presets: t('presets'), saved: t('saved'), empty: t('empty'), duplicate: t('duplicate') };
-};
-
-const currentOf = (group: 'encounters' | 'talents', summary: string): BulkCheckListProps['current'] => ({
-	label: i18n.t(`bulk_tab.settings.${group}.current`),
-	summary,
-});
 
 const pair = (id: string, label: string, first: [string, ItemSlot], second: [string, ItemSlot]) => ({
 	id,
@@ -63,33 +51,12 @@ const meta = {
 	tags: ['autodocs'],
 	render: args => <StatefulBulkSettings {...args} />,
 	args: {
-		combinationsCount: (
-			<CombinationsCountView pending={false} combinations={48} iterations={96000} iterationsLimit={1000000} encounters={1} talentSetups={2} />
-		),
+		combinationsCount: <CombinationsCountView pending={false} combinations={48} iterations={96000} iterationsLimit={1000000} builds={null} />,
 		canRun: true,
 		onRun: fn(),
 		openGroups: ['freezes'],
 		onOpenGroupsChange: fn(),
-		encounters: (
-			<BulkCheckList
-				strings={stringsOf('encounters')}
-				current={currentOf('encounters', '3:00 ±5s · 1 target')}
-				presets={[]}
-				saved={[]}
-				onCheckedChange={fn()}
-				testIds={{ list: 'bulk-encounters', row: 'bulk-encounter', current: 'bulk-encounter-current' }}
-			/>
-		),
-		talents: (
-			<BulkCheckList
-				strings={stringsOf('talents')}
-				current={currentOf('talents', '30305001302')}
-				presets={[{ ref: { name: 'Arms', preset: true }, name: 'Arms', summary: '3030500130', checked: true, duplicate: false }]}
-				saved={[]}
-				onCheckedChange={fn()}
-				testIds={{ list: 'bulk-talents', row: 'bulk-talent', current: 'bulk-talent-current' }}
-			/>
-		),
+		groups: true,
 		enchants: (
 			<EnchantPresetsView
 				presets={[
@@ -112,8 +79,6 @@ const meta = {
 	},
 	argTypes: {
 		combinationsCount: { control: false },
-		encounters: { control: false },
-		talents: { control: false },
 		enchants: { control: false },
 		frozenItems: { control: false },
 		weaponFreeze: { control: false },
@@ -128,3 +93,18 @@ export const Default: Story = {};
 export const DualWield: Story = { args: { weaponFreeze: { value: -1, weaponTypes: WEAPON_TYPES } } };
 
 export const CannotRun: Story = { args: { canRun: false } };
+
+export const Builds: Story = {
+	args: {
+		groups: false,
+		combinationsCount: (
+			<CombinationsCountView
+				pending={false}
+				combinations={0}
+				iterations={0}
+				iterationsLimit={1000000}
+				builds={{ setups: 6, encounterPairs: 2, talentPairs: 2, runs: 6, totalIterations: 240000, largestRequestIterations: 60000 }}
+			/>
+		),
+	},
+};

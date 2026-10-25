@@ -3,16 +3,7 @@
 // is `bulk[player.storeKey]` and the key is the player's spec prefix.
 import { BulkSettings as BulkSettingsProto } from '@generated/proto/api';
 import { ItemSlot } from '@generated/proto/common';
-import {
-	BulkEnchantPresets,
-	BulkEnchantPresetSelection,
-	BulkEncounterPairs,
-	BulkEncounterSelection,
-	BulkGearSetSelection,
-	BulkRotationSelection,
-	BulkTalentPairs,
-	BulkTalentSelection,
-} from '@generated/proto/ui';
+import { BulkEnchantPresets, BulkEnchantPresetSelection, BulkEncounterPairs, BulkGearSetSelection, BulkTalentPairs } from '@generated/proto/ui';
 import type { IMessageType } from '@protobuf-ts/runtime';
 
 import { BulkSimItemSlot } from '../bulk/constants_auto_gen';
@@ -23,11 +14,8 @@ import { specStorageKey } from '../state/storage_keys';
 const BULK_SETTINGS_STORAGE_KEY = 'bulk-settings.v2';
 const LEGACY_BULK_SETTINGS_STORAGE_KEY = 'bulk-settings.v1';
 const BULK_ENCHANT_PRESETS_STORAGE_KEY = 'bulk-enchant-presets.v1';
-const BULK_ENCOUNTERS_STORAGE_KEY = 'bulk-encounters.v1';
-const BULK_TALENTS_STORAGE_KEY = 'bulk-talents.v1';
 const BULK_GEAR_SETS_STORAGE_KEY = 'bulk-gear-sets.v1';
 const BULK_BUILD_ENCHANT_PRESETS_STORAGE_KEY = 'bulk-build-enchant-presets.v1';
-const BULK_ROTATIONS_STORAGE_KEY = 'bulk-rotations.v1';
 const BULK_ENCOUNTER_PAIRS_STORAGE_KEY = 'bulk-encounter-pairs.v1';
 const BULK_TALENT_PAIRS_STORAGE_KEY = 'bulk-talent-pairs.v1';
 const BULK_MODE_STORAGE_KEY = 'bulk-mode.v1';
@@ -45,11 +33,8 @@ const initialBulkSlice = (): BulkSlice => ({
 		[ItemSlot.ItemSlotOffHand, []],
 	]),
 	enchantPresets: [],
-	encounters: [],
-	talents: [],
 	gearSets: [],
 	buildEnchantPresets: [],
-	rotations: [],
 	encounterPairs: [],
 	talentPairs: [],
 	mode: 'gear',
@@ -117,18 +102,6 @@ export const loadStoredEnchantPresets = (player: Player<any>): BulkEnchantPreset
 export const storeEnchantPresets = (player: Player<any>, presets: BulkEnchantPresets) =>
 	storeProto(player, BULK_ENCHANT_PRESETS_STORAGE_KEY, BulkEnchantPresets, presets);
 
-export const loadStoredBulkEncounters = (player: Player<any>): BulkEncounterSelection | null =>
-	loadStoredProto(player, BULK_ENCOUNTERS_STORAGE_KEY, BulkEncounterSelection);
-
-export const storeBulkEncounters = (player: Player<any>, selection: BulkEncounterSelection) =>
-	storeProto(player, BULK_ENCOUNTERS_STORAGE_KEY, BulkEncounterSelection, selection);
-
-export const loadStoredBulkTalents = (player: Player<any>): BulkTalentSelection | null =>
-	loadStoredProto(player, BULK_TALENTS_STORAGE_KEY, BulkTalentSelection);
-
-export const storeBulkTalents = (player: Player<any>, selection: BulkTalentSelection) =>
-	storeProto(player, BULK_TALENTS_STORAGE_KEY, BulkTalentSelection, selection);
-
 export const loadStoredBulkGearSets = (player: Player<any>): BulkGearSetSelection | null =>
 	loadStoredProto(player, BULK_GEAR_SETS_STORAGE_KEY, BulkGearSetSelection);
 
@@ -140,12 +113,6 @@ export const loadStoredBulkBuildEnchantPresets = (player: Player<any>): BulkEnch
 
 export const storeBulkBuildEnchantPresets = (player: Player<any>, selection: BulkEnchantPresetSelection) =>
 	storeProto(player, BULK_BUILD_ENCHANT_PRESETS_STORAGE_KEY, BulkEnchantPresetSelection, selection);
-
-export const loadStoredBulkRotations = (player: Player<any>): BulkRotationSelection | null =>
-	loadStoredProto(player, BULK_ROTATIONS_STORAGE_KEY, BulkRotationSelection);
-
-export const storeBulkRotations = (player: Player<any>, selection: BulkRotationSelection) =>
-	storeProto(player, BULK_ROTATIONS_STORAGE_KEY, BulkRotationSelection, selection);
 
 export const loadStoredBulkEncounterPairs = (player: Player<any>): BulkEncounterPairs | null =>
 	loadStoredProto(player, BULK_ENCOUNTER_PAIRS_STORAGE_KEY, BulkEncounterPairs);

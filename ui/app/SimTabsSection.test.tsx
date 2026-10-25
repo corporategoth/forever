@@ -1,6 +1,6 @@
 import { BULK_TAB_ID } from '@features/hooks/useActivateTab';
-import { Encounter, ItemSlot, Target } from '@generated/proto/common';
-import { BulkEncounterRef } from '@generated/proto/ui';
+import { APLRotation } from '@generated/proto/apl';
+import type { ItemSlot } from '@generated/proto/common';
 import { SimHostProvider } from '@sim/context/SimHostContext';
 import type { Player } from '@sim/player/player';
 import { PlayerSpecs } from '@sim/player/specs';
@@ -43,20 +43,22 @@ const mount = ({ powerTools }: { powerTools: boolean }) => {
 		storeKey: STORE_KEY,
 		getGear: () => gear,
 		getPlayerSpec: () => PlayerSpecs.DpsWarrior,
+		aplRotation: APLRotation.create(),
 	} as unknown as Player<any>;
 	seedBulkSettings(player);
-	const patchwerk = Encounter.create({ duration: 300, durationVariation: 30, targets: [Target.create()] });
-	patchBulkState(player, { encounters: [BulkEncounterRef.create({ name: 'Patchwerk', preset: true })] });
 	const host = {
 		player,
 		sim: player.sim,
 		simDisabled: false,
 		reforger: null,
 		reforgeOptions: null,
-		individualConfig: { presets: { encounters: [{ name: 'Patchwerk', encounter: patchwerk }], talents: [] } },
+		individualConfig: { presets: { gear: [], encounters: [], talents: [], rotations: [] } },
 		getStorageKey: (key: string) => `test-${key}`,
+		getSavedGearStorageKey: () => 'test-saved-gear',
 		getSavedEncounterStorageKey: () => 'test-saved-encounters',
+		getSavedSettingsStorageKey: () => 'test-saved-settings',
 		getSavedTalentsStorageKey: () => 'test-saved-talents',
+		getSavedRotationStorageKey: () => 'test-saved-rotations',
 	} as unknown as SimHostObject<any>;
 	render(
 		<SimHostProvider host={host}>
@@ -109,7 +111,7 @@ describe('SimTabsSection batch tab', () => {
 		expect(batchTab().getAttribute('aria-selected')).toBe('true');
 	});
 
-	it('switches to Builds from the menu, opening the batch tab with the encounter and talent groups', async () => {
+	it('switches to Builds from the menu, opening the batch tab with the run card alone', async () => {
 		const player = mount({ powerTools: true });
 		await click(batchTab());
 
@@ -119,12 +121,8 @@ describe('SimTabsSection batch tab', () => {
 		expect(loadStoredBulkMode(player)).toBe('builds');
 		expect(batchTab().textContent).toBe('bulk_tab.modes.builds.tab');
 		expect(batchTab().getAttribute('aria-selected')).toBe('true');
-		expect(groups()).toEqual([
-			'bulk-settings-group-encounters-trigger',
-			'bulk-settings-group-talents-trigger',
-			'bulk-settings-group-enchants-trigger',
-			'bulk-settings-group-freezes-trigger',
-		]);
+		expect(groups()).toEqual([]);
+		expect(screen.getByTestId('bulk-run-card')).toBeTruthy();
 	});
 
 	it('keeps the stored mode with power tools off, and runs Gear until they are back on', () => {
@@ -137,6 +135,6 @@ describe('SimTabsSection batch tab', () => {
 		act(() => patchSlice(player.sim.store, 'ui', { showPowerTools: true }));
 
 		expect(batchTab().textContent).toBe('bulk_tab.modes.builds.tab');
-		expect(groups()).toHaveLength(4);
+		expect(groups()).toEqual([]);
 	});
 });

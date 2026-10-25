@@ -5,13 +5,10 @@ import type { EquippedItem } from '@sim/proto/equipped_item';
 import {
 	loadStoredBulkBuildEnchantPresets,
 	loadStoredBulkEncounterPairs,
-	loadStoredBulkEncounters,
 	loadStoredBulkGearSets,
 	loadStoredBulkMode,
-	loadStoredBulkRotations,
 	loadStoredBulkSettings,
 	loadStoredBulkTalentPairs,
-	loadStoredBulkTalents,
 	loadStoredEnchantPresets,
 	patchBulkState,
 	seedBulkSettings,
@@ -53,16 +50,6 @@ const loadSettings = (player: Player<any>) => {
 		patchBulkState(player, { enchantPresets: enchantPresets.presets }, ['settings']);
 	}
 
-	const encounters = loadStoredBulkEncounters(player);
-	if (encounters != null) {
-		patchBulkState(player, { encounters: encounters.encounters });
-	}
-
-	const talents = loadStoredBulkTalents(player);
-	if (talents != null) {
-		patchBulkState(player, { talents: talents.talents });
-	}
-
 	const gearSets = loadStoredBulkGearSets(player);
 	if (gearSets != null) {
 		patchBulkState(player, { gearSets: gearSets.gearSets });
@@ -71,11 +58,6 @@ const loadSettings = (player: Player<any>) => {
 	const buildEnchantPresets = loadStoredBulkBuildEnchantPresets(player);
 	if (buildEnchantPresets != null) {
 		patchBulkState(player, { buildEnchantPresets: buildEnchantPresets.names });
-	}
-
-	const rotations = loadStoredBulkRotations(player);
-	if (rotations != null) {
-		patchBulkState(player, { rotations: rotations.rotations });
 	}
 
 	const encounterPairs = loadStoredBulkEncounterPairs(player);

@@ -1227,32 +1227,20 @@
 		},
 		"settings": {
 			"combinations": "Combinations",
+			"gear_setups": "Gear setups",
+			"no_gear_setups": "Tick an enchant preset to make gear setups.",
 			"total_iterations": "Minimum iterations",
 			"total_iterations_tooltip": "The batch sims at least this many iterations. The error target adds more as it runs.",
 			"groups": {
-				"encounters": "Encounters",
-				"talents": "Talents",
 				"enchants": "Enchants",
 				"frozen_slots": "Frozen slots"
 			},
 			"encounters": {
-				"description": "The batch runs once per encounter, and each encounter gets its own results. Save encounters in Settings → Saved Encounters.",
-				"current": "Current encounter",
-				"presets": "Presets",
-				"saved": "Saved",
-				"empty": "No saved encounters yet. Save one in Settings → Saved Encounters to run the batch against it too.",
-				"duplicate": "Same as another encounter, skipped",
 				"health_summary": "Health",
 				"targets_one": "{{count}} target",
 				"targets_other": "{{count}} targets"
 			},
 			"talents": {
-				"description": "The batch runs every gear set with each talent setup and ranks them together. Save talents in Talents → Saved Talents.",
-				"current": "Current talents",
-				"presets": "Presets",
-				"saved": "Saved",
-				"empty": "No saved talents yet. Save some in Talents → Saved Talents to run the batch with them too.",
-				"duplicate": "Same as another talent setup, skipped",
 				"no_points": "No talent points"
 			},
 			"gear_sets": {
@@ -1276,9 +1264,9 @@
 				"slots_other": "{{count}} slots"
 			},
 			"runs": {
-				"encounters": "{{count}} encounters",
-				"encounters_one": "{{count}} encounter",
-				"encounters_other": "{{count}} encounters",
+				"encounters": "{{count}} encounter setups",
+				"encounters_one": "{{count}} encounter setup",
+				"encounters_other": "{{count}} encounter setups",
 				"talents": "{{count}} talent setups",
 				"talents_one": "{{count}} talent setup",
 				"talents_other": "{{count}} talent setups",
