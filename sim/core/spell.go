@@ -638,6 +638,8 @@ func (spell *Spell) rangesToRecord(target *Unit, value float64) *hitRanges {
 	return hr
 }
 
+// Called with the total each hit feeds, so a range follows its total: damage records in combat only,
+// heals and shields always.
 func (spell *Spell) recordHit(target *Unit, kind proto.HitKind, value float64) {
 	if hr := spell.rangesToRecord(target, value); hr != nil {
 		hr.kinds[kind].add(value)
@@ -930,6 +932,8 @@ func (spell *Spell) ExpectedTickDamageFromCurrentSnapshot(sim *Simulation, targe
 // for 150%, melee and ranged attacks for 200%. Multiplicative modifiers (the slaying
 // talents on the attack table, SpellMod_CritMultiplier_Pct) scale that base; additive
 // ones (Ruin, Impale, SpellMod_CritMultiplier_Flat) scale only the bonus part above 100%.
+// Aura 163 (aura 50 for healing) multiplies PseudoStats.CritDamageMultiplier, so 2% gives 204% melee
+// and 153% spell crits, and Vengeance 5/5 on top gives (1.53 - 1) × 2 + 1 = 206%.
 // https://web.archive.org/web/20081014064638/http://elitistjerks.com/f31/t12595-relentless_earthstorm_diamond_-_melee_only/p4/
 func (spell *Spell) CritDamageMultiplier(at *AttackTable) float64 {
 	var base float64

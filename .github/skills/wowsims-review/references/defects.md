@@ -151,6 +151,6 @@ reads the row. The cases name the row and the numbers, so each one can be checke
 
 ## Proc triggers
 
-The `wowsims-spells` traps cover the two that silence a row-built trigger: a trigger named after its row
+The `wowsims-procs` `## Traps` cover the two that silence a row-built trigger: a trigger named after its row
 collides with an `AuraConfig` buff of the same label, and a periodic row decodes to `ProcMaskSpellDamage`,
 which a bleed tick does not carry.
