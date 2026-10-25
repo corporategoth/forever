@@ -1249,7 +1249,7 @@
 				"current": "Current gear",
 				"presets": "Presets",
 				"saved": "Saved",
-				"empty": "No saved gear sets yet. Save one in Gear → Gear sets to run it too.",
+				"empty": "No saved gear sets yet. Save one in Gear → Gear Sets to run it too.",
 				"duplicate": "Same as another gear set, skipped",
 				"items": "{{count}} items.",
 				"items_one": "{{count}} item.",

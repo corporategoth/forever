@@ -33,3 +33,7 @@ export const pickableBulkTalents = (host: IndividualSimHost<any>): BulkTalentEnt
 // The current talents run unnamed; every view calls them "Current talents".
 export const talentsLabel = ({ isCurrent, name }: Pick<BulkTalentSetup, 'isCurrent' | 'name'>): string =>
 	isCurrent ? i18n.t('bulk_tab.results.current_talents') : name;
+
+// The pill on a Builds row and a Compare row: "Current talents", or the saved setup's name under "Talent preset".
+export const talentPillLabel = (setup: Pick<BulkTalentSetup, 'isCurrent' | 'name'>): string =>
+	setup.isCurrent ? talentsLabel(setup) : i18n.t('bulk_tab.results.talent_preset', { name: setup.name });

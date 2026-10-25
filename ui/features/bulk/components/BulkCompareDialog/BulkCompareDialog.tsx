@@ -13,8 +13,8 @@ import { bulkEntryLabel } from '../../model/encounter_pairs';
 import { formatEncounterDuration } from '../../model/encounters';
 import { formatBulkDps } from '../../model/format';
 import { gearSetupLabel } from '../../model/gear_setups';
-import { rotationLabel } from '../../model/rotations';
-import { talentsLabel } from '../../model/talents';
+import { rotationLabel, rotationPillLabel } from '../../model/rotations';
+import { talentPillLabel } from '../../model/talents';
 import { BulkCompareTable, type BulkCompareTableProps } from '../BulkCompareTable';
 
 const t = (key: string, options?: Record<string, unknown>) => i18n.t(`bulk_tab.compare.${key}`, options);
@@ -55,8 +55,8 @@ const tableProps = (entries: readonly BulkEncounterResults[], canDualWield: bool
 		rows: rows.map(({ key, set, talents, rotation, cells }) => ({
 			key,
 			label: set ? shortLabel(set.number) : currentLabel(),
-			talents: !showTalents ? null : talents.isCurrent ? talentsLabel(talents) : i18n.t('bulk_tab.results.talent_preset', { name: talents.name }),
-			rotation: !showRotation ? null : rotation.isCurrent ? rotationLabel(rotation) : i18n.t('bulk_tab.results.rotation', { name: rotation.name }),
+			talents: !showTalents ? null : talentPillLabel(talents),
+			rotation: !showRotation ? null : rotationPillLabel(rotation),
 			changes: set?.gearSetup ? [gearSetupLabel(set.gearSetup)] : set && current ? changesOf(set.gear, current, canDualWield) : [],
 			cells: cells.map(
 				(cell, index) =>

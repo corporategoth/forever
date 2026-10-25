@@ -12,7 +12,8 @@
 			}
 		}
 
-		&[data-checked] {
+		/* A radio row shows only its check; the raised background marks the other checked items. */
+		&[data-checked]:not(:has(.ui-menu-radio-indicator)) {
 			@apply bg-surface-raised;
 		}
 

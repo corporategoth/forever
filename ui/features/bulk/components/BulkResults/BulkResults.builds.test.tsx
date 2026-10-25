@@ -12,6 +12,8 @@ import type { BulkEncounterResults, BulkGearSetup, BulkPlayerSettingsSetup, Bulk
 import { Stats } from '@sim/proto/stats';
 import { patchBulkState, seedBulkSettings } from '@sim/settings/bulk_settings';
 import { subscribeGated } from '@sim/state/batch';
+import { classTalentsConfig } from '@sim/talents/factory';
+import { parseTalentsString, treePointTotal } from '@sim/talents/talents_string';
 import { renderWithHost } from '@testing/react';
 import { makeIndividualSim, serveDatabase } from '@testing/sim/individual_sim';
 import { compareGearSet, CURRENT_ROTATION_SETUP, CURRENT_TALENT_SETUP } from '@testing/storybook/fixtures/bulk-compare';
@@ -128,6 +130,26 @@ describe('BulkResults in Builds', () => {
 		expect(rotation.hasAttribute('data-tooltip-id')).toBe(false);
 	});
 
+	it('lists the talents that hold points under their trees in the talent pill’s tooltip, each with its rank', async () => {
+		const { player } = await mount(2);
+		const config = classTalentsConfig[player.getClass()];
+		const points = parseTalentsString(config, ARMS.talentsString);
+		const spent = points.flatMap((tree, treeIdx) =>
+			tree.flatMap((value, talentIdx) => (value > 0 ? [`${value}/${config[treeIdx].talents[talentIdx].maxPoints}`] : [])),
+		);
+		const treesWithPoints = config.filter((_, treeIdx) => treePointTotal(points, treeIdx) > 0);
+
+		fireEvent.mouseEnter(within(rows()[0]).getByTestId('bulk-result-talents-anchor'));
+
+		const grid = await screen.findByTestId('bulk-talents-grid');
+		const trees = within(grid).getAllByTestId('bulk-talents-grid-tree');
+		expect(trees.map(tree => tree.firstElementChild!.textContent)).toEqual(
+			treesWithPoints.map(tree => `${tree.name}${treePointTotal(points, config.indexOf(tree))}`),
+		);
+		const talents = within(grid).getAllByTestId('bulk-talents-grid-talent');
+		expect(talents.map(talent => talent.querySelector('.ui-talent-picker-points')!.textContent)).toEqual(spent);
+	});
+
 	it('shows neither pill when it ran one', async () => {
 		await mount(1);
 
@@ -141,7 +163,8 @@ describe('BulkResults in Builds', () => {
 		const { sim, player } = await makeIndividualSim();
 		seedBulkSettings(player);
 		const base = ranked(1000, { gear: compareGearSet(1), talents: CURRENT_TALENT_SETUP, rotation: CURRENT_ROTATION_SETUP, gearSetup: null });
-		const arms = ranked(1100, { gear: compareGearSet(1), talents: ARMS, rotation: CURRENT_ROTATION_SETUP, gearSetup: null });
+		const wearsCurrentGear: BulkGearSetup = { gearSet: '', enchantPreset: '', gear: compareGearSet(1), bonusStats: new Stats() };
+		const arms = ranked(1100, { gear: compareGearSet(1), talents: ARMS, rotation: CURRENT_ROTATION_SETUP, gearSetup: wearsCurrentGear });
 		const results = { chains: [[arms], [base]], originalGearResults: base, iterations: 100, talentPairs: 2 };
 		patchBulkState(player, { started: true, results: [{ ...entry(2, HEALER), results }] });
 		renderWithHost(<BulkResults onActivateTab={vi.fn()} selected={0} />, { sim, player });

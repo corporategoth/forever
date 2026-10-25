@@ -39,3 +39,7 @@ export const pickableBulkRotations = (host: IndividualSimHost<any>): BulkRotatio
 // The current rotation runs unnamed; every view calls it "Current rotation".
 export const rotationLabel = ({ isCurrent, name }: Pick<BulkRotationSetup, 'isCurrent' | 'name'>): string =>
 	isCurrent ? i18n.t('bulk_tab.results.current_rotation') : name;
+
+// The pill on a Builds row and a Compare row: "Current rotation", or the saved rotation's name under "Rotation".
+export const rotationPillLabel = (setup: Pick<BulkRotationSetup, 'isCurrent' | 'name'>): string =>
+	setup.isCurrent ? rotationLabel(setup) : i18n.t('bulk_tab.results.rotation', { name: setup.name });

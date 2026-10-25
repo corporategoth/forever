@@ -209,9 +209,9 @@ and `ReforgeSettings` share; keep the two apart in request shaping and serializa
   point, as its icon and rank under its tree's name and points, the talent's name as screen reader text. Equip
   (`equipBulkResult`) applies the gear, bonus stats, talents, rotation and the pair's settings in one `batch`; a
   current-settings row leaves the live settings alone. In Gear mode Equip applies the gear only and leaves the talents
-  alone. The CSV (`results_csv.ts`) has the columns `encounter`,
-  `settings`, `duration`, `variation`, `rank`, `current_gear`, `dps`, `dps_margin_95`, `diff`, `diff_pct`, `talents`,
-  `talents_string`, `gear_set`, `enchant_preset` and `rotation`, then four per slot.
+  alone. The CSV (`results_csv.ts`) has the columns `encounter`, `settings`, `duration`, `variation`, `rank`,
+  `current_gear`, `dps`, `dps_margin_95`, `diff`, `diff_pct`, `talents`, `talents_string`, `gear_set`,
+  `enchant_preset` and `rotation`, then four per slot.
 - Stored per spec: `bulk-gear-sets.v1` (checked gear set refs), `bulk-build-enchant-presets.v1` (the enchant presets
   checked in Builds, apart from Gear mode's pick in `bulk-enchant-presets.v1`), `bulk-encounter-pairs.v1` and
   `bulk-talent-pairs.v1`. None of them bumps the slice's `settings` counter.

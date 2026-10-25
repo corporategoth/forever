@@ -104,7 +104,7 @@ describe('SimTabsSection batch tab', () => {
 		expect(groups()).toEqual(['bulk-settings-group-enchants-trigger', 'bulk-settings-group-freezes-trigger']);
 	});
 
-	it('moves along the tab strip with ArrowLeft and ArrowRight onto and off the batch tab and its mode menu', async () => {
+	it('moves along the tab strip with ArrowLeft and ArrowRight onto and off the batch tab', async () => {
 		mount({ powerTools: true });
 		const gear = within(document.querySelector('header')!).getByTestId('gear-tab');
 

@@ -22,9 +22,9 @@ import { type ReactNode, useId } from 'react';
 import { formatBulkDps } from '../../model/format';
 import { gearSetupLabel } from '../../model/gear_setups';
 import { type BulkEquipped, bulkResultKey, equipBulkResult } from '../../model/results';
-import { rotationLabel } from '../../model/rotations';
+import { rotationLabel, rotationPillLabel } from '../../model/rotations';
 import { getSwappableItemSlotPair, itemSpecPairsEqualUnordered } from '../../model/swappable_slots';
-import { talentsLabel } from '../../model/talents';
+import { talentPillLabel, talentsLabel } from '../../model/talents';
 import { BulkTalentsGrid } from '../BulkTalentsGrid';
 
 export interface BulkResultRowViewProps {
@@ -100,7 +100,7 @@ export const BulkResultRowView = ({
 									className="cursor-default focus-visible:focus-ring"
 									testId="bulk-result-talents-anchor"
 									{...tooltipAnchorProps(talentsTooltipId)}>
-									{talents.isCurrent ? talents.label : i18n.t('bulk_tab.results.talent_preset', { name: talents.label })}
+									{talentPillLabel({ isCurrent: talents.isCurrent, name: talents.label })}
 								</Pill>
 								<Tooltip
 									id={talentsTooltipId}
@@ -111,7 +111,7 @@ export const BulkResultRowView = ({
 						)}
 						{rotation && (
 							<Pill rounded="xs" testId="bulk-result-rotation">
-								{rotation.isCurrent ? rotation.label : i18n.t('bulk_tab.results.rotation', { name: rotation.label })}
+								{rotationPillLabel({ isCurrent: rotation.isCurrent, name: rotation.label })}
 							</Pill>
 						)}
 					</div>
