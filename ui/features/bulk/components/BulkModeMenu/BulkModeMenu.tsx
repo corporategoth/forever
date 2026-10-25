@@ -31,7 +31,7 @@ export const BulkModeMenuView = ({ tab, onPick }: BulkModeMenuViewProps) => {
 			sideOffset={-1}>
 			{modes.map(({ mode, label, description }) => (
 				<MenuItem key={mode} layout="block" testId={`bulk-mode-${mode}`} onClick={() => onPick(mode)}>
-					<span className="block font-bold">{label}</span>
+					<span className="block text-sm font-medium">{label}</span>
 					<span className="block text-xs text-muted">{description}</span>
 				</MenuItem>
 			))}
