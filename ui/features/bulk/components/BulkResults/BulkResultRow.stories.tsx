@@ -1,3 +1,4 @@
+import { warriorTalentsConfig } from '@sim/talents/warrior';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ItemCell, ItemCellIcon } from '@ui-kit/ItemCell';
 import { fn } from 'storybook/test';
@@ -55,14 +56,16 @@ export const CurrentGear: Story = { args: { avg: 1370.27, isBase: true, children
 export const DamageHidden: Story = { args: { showDamage: false } };
 
 /** An encounter that ran more than one talent setup: the row names its own above the gear. */
-export const WithTalents: Story = { args: { talents: { label: 'Arms', talentsString: '30305001302-05050005025012251', isCurrent: false } } };
+export const WithTalents: Story = {
+	args: { talents: { label: 'Arms', talentsString: '30305001302-05050005025012251', isCurrent: false, config: warriorTalentsConfig } },
+};
 
 /** The current gear with another talent setup: no gear changes, but a difference and an equip button for the talents. */
 export const CurrentGearOtherTalents: Story = {
 	args: {
 		avg: 1388.4,
 		delta: { text: '+18.13 (1.32%)', tone: 'positive' },
-		talents: { label: 'Arms', talentsString: '30305001302-05050005025012251', isCurrent: false },
+		talents: { label: 'Arms', talentsString: '30305001302-05050005025012251', isCurrent: false, config: warriorTalentsConfig },
 		gearUnchanged: true,
 		children: null,
 	},

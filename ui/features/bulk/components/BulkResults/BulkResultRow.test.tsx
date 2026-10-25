@@ -1,7 +1,14 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { warriorTalentsConfig } from '@sim/talents/warrior';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { BulkResultRowView, type BulkResultRowViewProps } from './BulkResultRow';
+
+vi.mock('@sim/hooks/useActionId', () => ({
+	useActionId: () => ({ iconUrl: '', name: '', href: '', ready: true }),
+}));
+
+const ARMS = { label: 'Arms', talentsString: '3030500130', isCurrent: false, config: warriorTalentsConfig };
 
 const renderRow = (props: Partial<BulkResultRowViewProps> = {}) => {
 	const onEquip = vi.fn();
@@ -77,7 +84,7 @@ describe('BulkResultRowView', () => {
 	});
 
 	it('names the row’s talent setup above the gear and as a talent preset', () => {
-		renderRow({ talents: { label: 'Arms', talentsString: '3030500130', isCurrent: false } });
+		renderRow({ talents: ARMS });
 
 		const line = screen.getByTestId('bulk-result-talents');
 		expect(line.textContent).toBe('bulk_tab.results.talent_preset');
@@ -85,8 +92,23 @@ describe('BulkResultRowView', () => {
 		expect(screen.getByTestId('gear-cells')).toBeTruthy();
 	});
 
+	it('lists every talent with a point and its rank in the talent line’s tooltip, under its tree', async () => {
+		renderRow({ talents: ARMS });
+
+		fireEvent.mouseEnter(screen.getByTestId('bulk-result-talents-anchor'));
+		const grid = await screen.findByTestId('bulk-talents-grid');
+
+		const trees = within(grid).getAllByTestId('bulk-talents-grid-tree');
+		expect(trees.map(tree => tree.firstElementChild!.textContent)).toEqual(['Arms13']);
+		expect(
+			within(grid)
+				.getAllByTestId('bulk-talents-grid-talent')
+				.map(talent => talent.textContent),
+		).toEqual(['Improved Heroic Strike3/3', 'Improved Rend3/3', 'Improved Tactical Mastery5/5', 'Deep Wounds1/3', 'Spearing Strike1/1']);
+	});
+
 	it('names the current talents plainly, without the talent preset wording', () => {
-		renderRow({ talents: { label: 'bulk_tab.results.current_talents', talentsString: '3030500130', isCurrent: true } });
+		renderRow({ talents: { ...ARMS, label: 'bulk_tab.results.current_talents', isCurrent: true } });
 
 		expect(screen.getByTestId('bulk-result-talents').textContent).toBe('bulk_tab.results.current_talents');
 	});
@@ -98,7 +120,7 @@ describe('BulkResultRowView', () => {
 	});
 
 	it('says the gear is unchanged for the current gear with another talent setup, and offers Equip', () => {
-		renderRow({ gearUnchanged: true, talents: { label: 'Arms', talentsString: '3030500130', isCurrent: false } });
+		renderRow({ gearUnchanged: true, talents: ARMS });
 
 		expect(screen.getByTestId('bulk-result-gear-unchanged').textContent).toBe('bulk_tab.results.gear_unchanged');
 		expect(screen.queryByTestId('gear-cells')).toBeNull();

@@ -8,18 +8,22 @@ import type { BulkRankedResult } from '@sim/bulk/types';
 import { getBulkPlayerCanDualWield } from '@sim/bulk/utils';
 import { useSimHost } from '@sim/context/SimHostContext';
 import { useDisplayMetrics } from '@sim/hooks/useDisplayMetrics';
+import type { TalentsConfig } from '@sim/talents/config';
+import { classTalentsConfig } from '@sim/talents/factory';
 import { type DeltaText, formatDeltaText, formatSignificance, formatToNumber } from '@sim/utils/format';
 import { stDevToConf95, zTest } from '@sim/utils/math';
 import { Button } from '@ui-kit/Button';
+import { Pill } from '@ui-kit/Pill';
 import { toastManager } from '@ui-kit/Toast';
-import { Tooltip } from '@ui-kit/Tooltip';
+import { Tooltip, tooltipAnchorProps } from '@ui-kit/Tooltip';
 import clsx from 'clsx';
 import { type ReactNode, useId } from 'react';
 
 import { formatBulkDps } from '../../model/format';
 import { bulkResultKey, equipBulkResult } from '../../model/results';
 import { getSwappableItemSlotPair, itemSpecPairsEqualUnordered } from '../../model/swappable_slots';
-import { formatTalentsSummary, talentsLabel } from '../../model/talents';
+import { talentsLabel } from '../../model/talents';
+import { BulkTalentsGrid } from '../BulkTalentsGrid';
 
 export interface BulkResultRowViewProps {
 	showDamage: boolean;
@@ -29,8 +33,8 @@ export interface BulkResultRowViewProps {
 	isBase: boolean;
 	delta: DeltaText;
 	significance: string;
-	/** The row's talent setup, named when the encounter ran more than one; null shows none. */
-	talents: { label: string; talentsString: string; isCurrent: boolean } | null;
+	/** The row's talent setup, named when the encounter ran more than one, with its talents in the label's tooltip; null shows none. */
+	talents: { label: string; talentsString: string; isCurrent: boolean; config: TalentsConfig<any> } | null;
 	/** The current gear with another talent setup: says so in place of the gear cells. */
 	gearUnchanged: boolean;
 	onEquip: () => void;
@@ -51,6 +55,7 @@ export const BulkResultRowView = ({
 }: BulkResultRowViewProps) => {
 	const marginTooltipId = useId();
 	const deltaTooltipId = useId();
+	const talentsTooltipId = useId();
 
 	return (
 		<div
@@ -78,7 +83,18 @@ export const BulkResultRowView = ({
 			<div className="flex min-w-0 flex-1 flex-wrap gap-1 max-md:order-last max-md:basis-full" data-testid="bulk-gear-combo">
 				{talents && (
 					<div className="basis-full text-sm wrap-break-word" data-testid="bulk-result-talents">
-						{talents.isCurrent ? talents.label : i18n.t('bulk_tab.results.talent_preset', { name: talents.label })}
+						<Pill
+							tabIndex={0}
+							className="cursor-default focus-visible:focus-ring"
+							testId="bulk-result-talents-anchor"
+							{...tooltipAnchorProps(talentsTooltipId)}>
+							{talents.isCurrent ? talents.label : i18n.t('bulk_tab.results.talent_preset', { name: talents.label })}
+						</Pill>
+						<Tooltip
+							id={talentsTooltipId}
+							align="start"
+							content={<BulkTalentsGrid config={talents.config} talentsString={talents.talentsString} />}
+						/>
 					</div>
 				)}
 				{gearUnchanged ? (
@@ -136,8 +152,9 @@ export const BulkResultRow = ({ result, baseResult, iterations, showTalents, onA
 				showTalents
 					? {
 							label: talentsLabel(result.talents),
-							talentsString: formatTalentsSummary(result.talents.talentsString),
+							talentsString: result.talents.talentsString,
 							isCurrent: result.talents.isCurrent,
+							config: classTalentsConfig[host.player.getClass()],
 						}
 					: null
 			}
